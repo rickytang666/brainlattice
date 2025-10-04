@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from routers import extract, digest, relationships, overview, audio_script, audio, project
 from dotenv import load_dotenv
 import os
@@ -42,6 +44,20 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+# Serve audio files
+@app.get("/audio/{filename}")
+async def get_audio(filename: str):
+    """
+    Serve generated audio files
+    """
+    output_dir = os.path.join(os.path.dirname(__file__), 'output')
+    filepath = os.path.join(output_dir, filename)
+    
+    if os.path.exists(filepath) and filename.endswith('.mp3'):
+        return FileResponse(filepath, media_type="audio/mpeg", filename=filename)
+    else:
+        return {"error": "Audio file not found"}
 
 if __name__ == "__main__":
     import uvicorn

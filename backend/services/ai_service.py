@@ -588,52 +588,145 @@ async def generate_overview(digest_data: Dict[str, Any], graph_data: Optional[Di
     except Exception as e:
         raise Exception(f"Failed to generate overview: {str(e)}")
 
-async def generate_audio_script(graph_data: Dict[str, Any]) -> str:
+async def generate_audio_script(digest_data: Dict[str, Any], graph_data: Optional[Dict[str, Any]] = None) -> str:
     """
-    Use OpenRouter (Grok 4 Fast) to generate audio script for podcast/newsletter
+    Use OpenRouter (Grok 4 Fast) to generate audio script for podcast/newsletter from AI digest
     """
     try:
+        # Extract data from digest
+        course_info = digest_data.get('course_info', {})
+        sequential_concepts = digest_data.get('sequential_concepts', [])
+        key_formulas = digest_data.get('key_formulas', [])
+        techniques_methods = digest_data.get('techniques_methods', [])
+        important_notes = digest_data.get('important_notes', [])
+        
         prompt = f"""
-        Create a podcast-style audio script (5-7 minutes) based on this knowledge graph:
+        Create a sharp, concise audio script (1-2 minutes MAX) based on this AI digest.
         
-        {json.dumps(graph_data, indent=2)}
+        COURSE INFO:
+        - Title: {course_info.get('title', 'Course Overview')}
+        - Subject: {course_info.get('subject', 'Unknown')}
+        - Difficulty: {course_info.get('difficulty_level', 'Unknown')}
         
-        Make it engaging and conversational, like a morning newsletter podcast.
-        Include:
-        1. Introduction to the topic
-        2. Key concepts explained simply
-        3. How concepts connect
-        4. Study tips and recommendations
-        5. Encouraging conclusion
+        KEY CONCEPTS (first 12):
+        {json.dumps(sequential_concepts[:12], indent=2)}
         
-        Write for audio delivery - use conversational tone, natural transitions.
+        KEY FORMULAS (first 6):
+        {json.dumps(key_formulas[:6], indent=2) if key_formulas else "None"}
+        
+        TECHNIQUES (first 5):
+        {json.dumps(techniques_methods[:5], indent=2) if techniques_methods else "None"}
+        
+        IMPORTANT NOTES (first 4):
+        {json.dumps(important_notes[:4], indent=2) if important_notes else "None"}
+        
+        Write like a smart buddy explaining this over coffee. Direct, casual, zero BS.
+        
+        STRUCTURE (1-2 minutes total):
+        1. **Quick Intro** (5 seconds)
+           - One punchy line. Jump right in.
+           - "Alright, [topic]..." or "Here's the deal with [topic]..."
+        
+        2. **Core Ideas** (45-60 seconds)
+           - Hit the 3-5 most critical concepts
+           - Each concept: one sharp sentence, maybe two
+           - 10-15 seconds per concept MAX
+           - How they connect (one line)
+        
+        3. **Key Takeaway** (10-15 seconds)
+           - One main thing to lock in
+           - Quick study tip if relevant
+           - Done. No outro needed.
+        
+        STYLE - CRITICAL (BRO/BUDDY VIBE):
+        - **NO YAPPING** - cut all filler, every word counts
+        - Casual but sharp - like texting a smart friend
+        - Use contractions: "it's", "you're", "here's", "that's"
+        - Direct statements: "This does X" not "So this is kinda doing X"
+        - Confident, no hedging: "This is" not "This might be" or "This could be"
+        - Short, punchy sentences
+        - Occasional casual interjections: "Look", "Real talk", "Here's the thing"
+        - Get in, drop knowledge, get out
+        
+        MATH & SYMBOLS - CRITICAL FOR AUDIO:
+        - **USE PLAIN ENGLISH** - this is for text-to-speech!
+        - Write "sine" not "sin", "cosine" not "cos", "tangent" not "tan"
+        - Write "f of g of x" not "f(g(x))"
+        - Write "x squared" not "x²" or "x^2"
+        - Write "the integral of" not "∫"
+        - Write "pi" not "π", "theta" not "θ"
+        - Write "equals" not "=", "plus" not "+"
+        - NO mathematical notation or symbols - they sound terrible when read aloud
+        - Example: "The derivative of sine x equals cosine x" NOT "d/dx sin(x) = cos(x)"
+        
+        EXAMPLES OF GOOD VS BAD:
+        ❌ BAD: "So, let's talk about derivatives. Now, derivatives are really interesting because they help us understand how things change over time, and that's super important in calculus."
+        ✅ GOOD: "Alright, derivatives. They measure rate of change. How fast something's moving? That's your derivative."
+        
+        ❌ BAD: "And another thing I wanted to mention is that when you're working with these formulas..."
+        ✅ GOOD: "Here's the thing: nail the formulas first, everything else follows."
+        
+        ❌ BAD: "I think it's important to understand that this concept is fundamental..."
+        ✅ GOOD: "This is the core concept. Everything builds from here."
+        
+        ❌ BAD (MATH): "The chain rule is d/dx f(g(x)) = f'(g(x)) · g'(x)"
+        ✅ GOOD (MATH): "Chain rule: derivative of f of g of x equals f prime of g of x times g prime of x"
+        
+        ❌ BAD (MATH): "sin²(x) + cos²(x) = 1"
+        ✅ GOOD (MATH): "Sine squared x plus cosine squared x equals one"
+        
+        AVOID:
+        - Any intro longer than 5 words
+        - Filler phrases: "basically", "essentially", "kind of", "sort of", "you know", "so", "well"
+        - Hedge words: "maybe", "possibly", "might", "could be", "I think"
+        - Long closings or motivational speeches
+        - Repeating yourself
+        - Meta-commentary: "let's talk about", "we're going to cover", "as I mentioned"
+        - Formality: "one must understand", "it is important to note"
+        
+        TARGET: 150-250 words MAX (1-2 minutes when spoken)
+        
+        Generate the script now - casual, sharp, buddy vibe, ZERO yapping:
         """
         
-        return await call_openrouter("x-ai/grok-4-fast", prompt, 1000)
+        return await call_openrouter("x-ai/grok-4-fast", prompt, 1500)
     
     except Exception as e:
         raise Exception(f"Failed to generate audio script: {str(e)}")
 
 async def generate_audio(script_text: str) -> str:
     """
-    Use ElevenLabs to generate audio from script
+    Use ElevenLabs to generate audio from script and save to output directory
     """
     try:
         # Initialize ElevenLabs client with API key
         client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 
         # Generate audio using ElevenLabs text-to-speech
-        audio = client.text_to_speech.convert(
-            voice_id="JBFqnCBsd6RMkjVDRZzb",  # Rachel - Professional, clear voice
+        audio_generator = client.text_to_speech.convert(
+            voice_id="pNInz6obpgDQGcFmaJgB",  # Adam - Deep, confident, casual buddy vibe
             text=script_text,
             model_id="eleven_multilingual_v2",
             output_format="mp3_44100_128"
         )
 
-        # In a real implementation, you'd save this to cloud storage (S3/Vercel Blob)
-        # For now, return a placeholder URL
-        # TODO: Implement actual audio file storage and return real URL
-        return "https://example.com/generated-audio.mp3"
+        # Collect audio bytes from generator
+        audio_bytes = b""
+        for chunk in audio_generator:
+            audio_bytes += chunk
+        
+        # Save to output directory with unique filename
+        import uuid
+        filename = f"audio_{uuid.uuid4().hex[:12]}.mp3"
+        output_dir = os.path.join(os.path.dirname(__file__), '..', 'output')
+        os.makedirs(output_dir, exist_ok=True)
+        filepath = os.path.join(output_dir, filename)
+        
+        with open(filepath, 'wb') as f:
+            f.write(audio_bytes)
+        
+        # Return the filename (frontend will construct the full URL)
+        return filename
 
     except Exception as e:
         raise Exception(f"Failed to generate audio: {str(e)}")

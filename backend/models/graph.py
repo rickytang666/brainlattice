@@ -46,7 +46,8 @@ class OverviewResponse(BaseModel):
     error_message: Optional[str] = None
 
 class AudioScriptRequest(BaseModel):
-    graph_data: Dict[str, Any]
+    digest_data: Dict[str, Any]
+    graph_data: Optional[Dict[str, Any]] = None  # Optional, for backward compatibility
 
 class AudioScriptResponse(BaseModel):
     script_text: str

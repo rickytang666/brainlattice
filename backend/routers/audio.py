@@ -10,7 +10,11 @@ async def generate_podcast_audio(request: AudioRequest):
     Use ElevenLabs to generate audio from script
     """
     try:
-        audio_url = await generate_audio(request.script_text)
+        # Generate audio and get filename
+        filename = await generate_audio(request.script_text)
+        
+        # Construct URL path (frontend will add base URL)
+        audio_url = f"/audio/{filename}"
         
         return AudioResponse(
             audio_url=audio_url,

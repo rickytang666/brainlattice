@@ -13,8 +13,14 @@ import {
   IconLayersLinked,
   IconDownload,
   IconRefresh,
+  IconVolume,
 } from "@tabler/icons-react";
-import { getProject, generateOverview } from "@/lib/api";
+import {
+  getProject,
+  generateOverview,
+  generateAudioScript,
+  generateAudio,
+} from "@/lib/api";
 
 interface ProjectData {
   title: string;
@@ -36,6 +42,9 @@ export default function ProjectPage() {
   const [error, setError] = useState("");
   const [overview, setOverview] = useState<string>("");
   const [generatingOverview, setGeneratingOverview] = useState(false);
+  const [audioScript, setAudioScript] = useState<string>("");
+  const [audioUrl, setAudioUrl] = useState<string>("");
+  const [generatingAudio, setGeneratingAudio] = useState(false);
 
   const loadProject = async () => {
     try {
@@ -131,6 +140,53 @@ export default function ProjectPage() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const handleGenerateAudio = async () => {
+    if (!project?.digest_data) return;
+
+    try {
+      setGeneratingAudio(true);
+
+      // Generate script first using digest data
+      const scriptResponse = await generateAudioScript(
+        project.digest_data,
+        project.graph_data as any
+      );
+      setAudioScript(scriptResponse.script_text);
+
+      // Then generate audio from script
+      const audioResponse = await generateAudio(scriptResponse.script_text);
+
+      // Construct full URL (audio_url comes as /audio/filename.mp3)
+      const API_BASE =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const baseUrl = API_BASE.replace("/api", ""); // Remove /api suffix
+      const fullAudioUrl = `${baseUrl}${audioResponse.audio_url}`;
+
+      setAudioUrl(fullAudioUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate audio");
+    } finally {
+      setGeneratingAudio(false);
+    }
+  };
+
+  const downloadAudio = () => {
+    if (!audioUrl) return;
+
+    // Create download link
+    const a = document.createElement("a");
+    a.href = audioUrl;
+    const cleanFilename =
+      project?.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "study-guide";
+    a.download = `${cleanFilename}-audio.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   if (loading) {
@@ -292,7 +348,7 @@ export default function ProjectPage() {
 
         {/* Overview Preview */}
         {overview && (
-          <Card className="p-6">
+          <Card className="p-6 mb-8">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               Study Guide Preview
             </h3>
@@ -303,6 +359,64 @@ export default function ProjectPage() {
             </div>
           </Card>
         )}
+
+        {/* Audio Podcast Card */}
+        <Card className="p-8 text-center mb-8">
+          <IconVolume className="h-16 w-16 mx-auto mb-4 text-green-600 dark:text-green-400" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Audio Study Podcast
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            Generate a 1-2 minute sharp, no-fluff podcast with AI narration
+          </p>
+          <div className="flex gap-3 justify-center mb-6">
+            <Button
+              onClick={handleGenerateAudio}
+              disabled={generatingAudio}
+              size="lg"
+              variant="outline"
+              className="px-8 py-6 text-lg"
+            >
+              {generatingAudio ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600 mr-2"></div>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <IconRefresh className="h-6 w-6 mr-2" />
+                  {audioScript ? "Regenerate" : "Generate"}
+                </>
+              )}
+            </Button>
+            {audioUrl && (
+              <Button
+                onClick={downloadAudio}
+                size="lg"
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg"
+              >
+                <IconDownload className="h-6 w-6 mr-2" />
+                Download MP3
+              </Button>
+            )}
+          </div>
+
+          {/* Audio Player */}
+          {audioUrl && (
+            <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 mt-6">
+              <div className="flex items-center gap-3 mb-4">
+                <IconVolume className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <span className="font-medium text-gray-700 dark:text-gray-300">
+                  Your audio podcast is ready!
+                </span>
+              </div>
+              <audio controls className="w-full">
+                <source src={audioUrl} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );

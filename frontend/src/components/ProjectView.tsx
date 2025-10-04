@@ -70,23 +70,50 @@ export default function ProjectView({ projectId, onBack }: ProjectViewProps) {
   };
 
   const handleGenerateAudio = async () => {
-    if (!projectData?.graph) return;
+    if (!projectData?.reference) return;
 
     try {
       setGeneratingAudio(true);
 
-      // Generate script first
-      const scriptResponse = await generateAudioScript(projectData.graph);
+      // Generate script first using digest data
+      const scriptResponse = await generateAudioScript(
+        projectData.reference,
+        projectData.graph
+      );
       setAudioScript(scriptResponse.script_text);
 
-      // Then generate audio
+      // Then generate audio from script
       const audioResponse = await generateAudio(scriptResponse.script_text);
-      setAudioUrl(audioResponse.audio_url);
+
+      // Construct full URL (audio_url comes as /audio/filename.mp3)
+      const API_BASE =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const baseUrl = API_BASE.replace("/api", ""); // Remove /api suffix
+      const fullAudioUrl = `${baseUrl}${audioResponse.audio_url}`;
+
+      setAudioUrl(fullAudioUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate audio");
     } finally {
       setGeneratingAudio(false);
     }
+  };
+
+  const downloadAudio = () => {
+    if (!audioUrl) return;
+
+    // Create download link
+    const a = document.createElement("a");
+    a.href = audioUrl;
+    const title = projectData?.graph?.graph_metadata?.title || "study-guide";
+    const cleanFilename = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    a.download = `${cleanFilename}-audio.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const downloadOverview = () => {
@@ -233,45 +260,84 @@ export default function ProjectView({ projectId, onBack }: ProjectViewProps) {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Audio Study Material
+              Audio Study Podcast
             </h3>
-            <Button
-              onClick={handleGenerateAudio}
-              disabled={generatingAudio}
-              size="sm"
-              variant="outline"
-            >
-              {generatingAudio ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              ) : (
-                <>
-                  <IconVolume className="mr-2 h-4 w-4" />
-                  Generate Audio
-                </>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleGenerateAudio}
+                disabled={generatingAudio}
+                size="sm"
+                variant="outline"
+              >
+                {generatingAudio ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <IconVolume className="mr-2 h-4 w-4" />
+                    {audioScript ? "Regenerate" : "Generate"}
+                  </>
+                )}
+              </Button>
+              {audioUrl && (
+                <Button
+                  onClick={downloadAudio}
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <IconDownload className="h-4 w-4 mr-2" />
+                  Download .mp3
+                </Button>
               )}
-            </Button>
+            </div>
           </div>
 
           {audioScript ? (
             <div className="space-y-4">
-              <div className="prose dark:prose-invert max-w-none">
-                <pre className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg max-h-48 overflow-y-auto">
-                  {audioScript}
-                </pre>
-              </div>
+              {/* Audio Player */}
               {audioUrl && (
-                <div className="text-center">
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-3 mb-3">
+                    <IconVolume className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Audio Ready to Play
+                    </span>
+                  </div>
                   <audio controls className="w-full">
                     <source src={audioUrl} type="audio/mpeg" />
                     Your browser does not support the audio element.
                   </audio>
                 </div>
               )}
+
+              {/* Script Preview */}
+              <details className="group">
+                <summary className="cursor-pointer list-none">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
+                    <span className="group-open:rotate-90 transition-transform">
+                      ▶
+                    </span>
+                    <span>View Script</span>
+                  </div>
+                </summary>
+                <div className="mt-2 prose dark:prose-invert max-w-none">
+                  <pre className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-700">
+                    {audioScript}
+                  </pre>
+                </div>
+              </details>
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              Click &quot;Generate Audio&quot; to create a podcast-style study
-              material
+              <p className="mb-2">
+                Click &quot;Generate&quot; to create an audio podcast
+              </p>
+              <p className="text-xs">
+                1-2 minute sharp, no-fluff study overview with ElevenLabs AI
+                voice
+              </p>
             </div>
           )}
         </Card>
