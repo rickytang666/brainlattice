@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import os
 import json
+import re
 from google import genai
 import requests
 from elevenlabs import ElevenLabs
@@ -18,6 +19,160 @@ def init_ai_services():
     global gemini_client
     # Gemini - using new SDK
     gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+def clean_math_symbols(text: str) -> str:
+    """
+    Clean mathematical symbols and special characters that might break JSON or AI processing
+    """
+    # Replace common math symbols with text equivalents
+    replacements = {
+        # Greek letters
+        'α': 'alpha', 'β': 'beta', 'γ': 'gamma', 'δ': 'delta', 'ε': 'epsilon',
+        'ζ': 'zeta', 'η': 'eta', 'θ': 'theta', 'ι': 'iota', 'κ': 'kappa',
+        'λ': 'lambda', 'μ': 'mu', 'ν': 'nu', 'ξ': 'xi', 'ο': 'omicron',
+        'π': 'pi', 'ρ': 'rho', 'σ': 'sigma', 'τ': 'tau', 'υ': 'upsilon',
+        'φ': 'phi', 'χ': 'chi', 'ψ': 'psi', 'ω': 'omega',
+        
+        # Uppercase Greek letters
+        'Α': 'Alpha', 'Β': 'Beta', 'Γ': 'Gamma', 'Δ': 'Delta', 'Ε': 'Epsilon',
+        'Ζ': 'Zeta', 'Η': 'Eta', 'Θ': 'Theta', 'Ι': 'Iota', 'Κ': 'Kappa',
+        'Λ': 'Lambda', 'Μ': 'Mu', 'Ν': 'Nu', 'Ξ': 'Xi', 'Ο': 'Omicron',
+        'Π': 'Pi', 'Ρ': 'Rho', 'Σ': 'Sigma', 'Τ': 'Tau', 'Υ': 'Upsilon',
+        'Φ': 'Phi', 'Χ': 'Chi', 'Ψ': 'Psi', 'Ω': 'Omega',
+        
+        # Math operators
+        '∑': 'sum', '∏': 'product', '∫': 'integral', '∂': 'partial',
+        '∇': 'nabla', '∞': 'infinity', '±': 'plus-minus', '∓': 'minus-plus',
+        '×': 'times', '÷': 'divided by', '√': 'square root', '∛': 'cube root',
+        '≤': 'less than or equal', '≥': 'greater than or equal', '≠': 'not equal',
+        '≈': 'approximately equal', '≡': 'equivalent', '∈': 'element of',
+        '∉': 'not element of', '⊂': 'subset', '⊃': 'superset', '∪': 'union',
+        '∩': 'intersection', '∅': 'empty set', '∀': 'for all', '∃': 'there exists',
+        
+        # Arrows
+        '→': 'arrow right', '←': 'arrow left', '↑': 'arrow up', '↓': 'arrow down',
+        '↔': 'arrow both', '⇒': 'implies', '⇐': 'implied by', '⇔': 'if and only if',
+        
+        # Other symbols
+        '°': 'degrees', '′': 'prime', '″': 'double prime', '‴': 'triple prime',
+        'ℵ': 'aleph', 'ℏ': 'h-bar', 'ℑ': 'imaginary part', 'ℜ': 'real part',
+    }
+    
+    # Apply replacements
+    for symbol, replacement in replacements.items():
+        text = text.replace(symbol, replacement)
+    
+    # Remove any remaining non-printable characters except spaces
+    text = ''.join(char if char.isprintable() or char.isspace() else ' ' for char in text)
+    
+    # Clean up multiple spaces
+    text = re.sub(r'\s+', ' ', text)
+    
+    return text.strip()
+
+def fix_json_response(response_text: str) -> str:
+    """
+    Attempt to fix common JSON issues in AI responses
+    """
+    # Remove any text before the first {
+    start_idx = response_text.find('{')
+    if start_idx > 0:
+        response_text = response_text[start_idx:]
+    
+    # Find the last complete closing brace
+    brace_count = 0
+    last_complete_idx = -1
+    
+    for i, char in enumerate(response_text):
+        if char == '{':
+            brace_count += 1
+        elif char == '}':
+            brace_count -= 1
+            if brace_count == 0:
+                last_complete_idx = i
+                break
+    
+    # If we found a complete JSON structure, use it
+    if last_complete_idx > 0:
+        response_text = response_text[:last_complete_idx + 1]
+    else:
+        # Fallback: remove any text after the last }
+        end_idx = response_text.rfind('}')
+        if end_idx > 0:
+            response_text = response_text[:end_idx + 1]
+    
+    # Fix common issues
+    # Remove trailing commas before closing braces/brackets
+    response_text = re.sub(r',(\s*[}\]])', r'\1', response_text)
+    
+    # Fix incomplete strings at the end
+    # If the response ends with an incomplete string, try to close it
+    if response_text.count('"') % 2 == 1:  # Odd number of quotes
+        response_text += '"'
+    
+    # Fix incomplete arrays/objects
+    if response_text.count('[') > response_text.count(']'):
+        response_text += ']'
+    if response_text.count('{') > response_text.count('}'):
+        response_text += '}'
+    
+    # Fix mathematical notation that breaks JSON
+    # Replace problematic single quotes in mathematical expressions
+    response_text = re.sub(r"(\w+)\s*'", r"\1'", response_text)  # Fix derivatives like (sin x)' -> (sin x)'
+    response_text = re.sub(r"'([^\"']*?)'", r"'\1'", response_text)  # Fix quoted expressions
+    
+    # More aggressive JSON repair for mathematical content
+    # Find and fix broken string values
+    import json
+    try:
+        # Try to parse and see where it fails
+        json.loads(response_text)
+        return response_text  # Already valid
+    except json.JSONDecodeError as e:
+        # Find the error position and try to fix it
+        error_pos = e.pos
+        if error_pos < len(response_text):
+            # Look for the problematic area around the error
+            start = max(0, error_pos - 100)
+            end = min(len(response_text), error_pos + 100)
+            problem_area = response_text[start:end]
+            
+            # Try to fix common issues in the problem area
+            # Fix unescaped quotes in string values
+            problem_area = re.sub(r':\s*"([^"]*?)(?="[,\}\]])', lambda m: f': "{m.group(1).replace(chr(39), chr(92) + chr(39))}"', problem_area)
+            
+            # Replace the problem area
+            response_text = response_text[:start] + problem_area + response_text[end:]
+    
+    return response_text
+
+def create_fallback_digest(response_text: str) -> Dict[str, Any]:
+    """
+    Create a fallback digest structure when JSON parsing fails
+    """
+    return {
+        "course_info": {
+            "title": "PDF Analysis",
+            "subject": "Unknown",
+            "difficulty_level": "Unknown"
+        },
+        "sequential_concepts": [
+            {
+                "name": "Content Analysis",
+                "brief_description": "PDF content was processed but AI response was malformed",
+                "unit": "General",
+                "prerequisites": []
+            }
+        ],
+        "key_formulas": [],
+        "specific_examples": [],
+        "techniques_methods": [],
+        "properties_rules": [],
+        "important_notes": [
+            "AI response contained malformed JSON. Raw response length: " + str(len(response_text))
+        ],
+        "raw_response_preview": response_text[:500] + "..." if len(response_text) > 500 else response_text
+    }
 
 async def generate_structured_json(text: str) -> Dict[str, Any]:
     """
@@ -67,6 +222,15 @@ async def generate_ai_digest(text: str) -> Dict[str, Any]:
     Use OpenRouter (Grok 4 Fast) to create concise AI-optimized concept outline
     """
     try:
+        print(f"DEBUG: Input text length: {len(text)}")
+        
+        # Clean the text (no length limit)
+        cleaned_text = text.replace(chr(10), ' ').replace(chr(13), ' ')
+        
+        # Clean math symbols and special characters
+        cleaned_text = clean_math_symbols(cleaned_text)
+        print(f"DEBUG: Cleaned text length: {len(cleaned_text)}")
+        
         prompt = f"""
         Analyze this PDF text and create a comprehensive concept outline optimized for building a deep knowledge graph.
 
@@ -89,16 +253,55 @@ async def generate_ai_digest(text: str) -> Dict[str, Any]:
         - Focus on actual mathematical content, not editorial comments
 
         Text to analyze:
-        {text}
+        {cleaned_text}
 
         Make this maximally efficient for another AI to understand and process.
+        
+        IMPORTANT JSON FORMATTING RULES:
+        - Use double quotes for all strings
+        - Escape any single quotes in text as \'
+        - Avoid mathematical notation like (sin x)' - use "derivative of sin x" instead
+        - Keep descriptions concise but complete
+        - Ensure all strings are properly closed
+        
         Return ONLY valid JSON, no explanations.
         """
         
-        response_text = await call_openrouter("x-ai/grok-4-fast", prompt, 1500)
-        return json.loads(response_text)
+        print(f"DEBUG: Prompt length: {len(prompt)}")
+        print(f"DEBUG: Calling OpenRouter...")
+        
+        response_text = await call_openrouter("x-ai/grok-4-fast", prompt, 4000)
+        
+        print(f"DEBUG: OpenRouter response length: {len(response_text)}")
+        print(f"DEBUG: First 200 chars of response: {response_text[:200]}")
+        
+        # Validate and clean JSON response
+        try:
+            # Try to parse the JSON
+            parsed_json = json.loads(response_text)
+            return parsed_json
+        except json.JSONDecodeError as json_error:
+            print(f"DEBUG: JSON parsing error: {str(json_error)}")
+            print(f"DEBUG: Response around error position: {response_text[max(0, json_error.pos-100):json_error.pos+100]}")
+            
+            # Try to fix common JSON issues
+            fixed_response = fix_json_response(response_text)
+            print(f"DEBUG: Attempting to fix JSON...")
+            
+            try:
+                parsed_json = json.loads(fixed_response)
+                print(f"DEBUG: JSON fixed successfully!")
+                return parsed_json
+            except json.JSONDecodeError as fix_error:
+                print(f"DEBUG: JSON fix failed: {str(fix_error)}")
+                # Return a fallback structure
+                return create_fallback_digest(response_text)
     
     except Exception as e:
+        print(f"DEBUG: Exception in generate_ai_digest: {str(e)}")
+        print(f"DEBUG: Exception type: {type(e)}")
+        import traceback
+        print(f"DEBUG: Traceback: {traceback.format_exc()}")
         raise Exception(f"Failed to generate AI digest: {str(e)}")
 
 async def generate_relationships(structured_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -205,18 +408,30 @@ async def call_openrouter(model: str, prompt: str, max_tokens: int = 1500) -> st
             "max_tokens": max_tokens
         }
         
+        print(f"DEBUG: OpenRouter request data: {data}")
+        
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers=headers,
             json=data
         )
         
+        print(f"DEBUG: OpenRouter response status: {response.status_code}")
+        print(f"DEBUG: OpenRouter response headers: {dict(response.headers)}")
+        
         if response.status_code == 200:
-            return response.json()["choices"][0]["message"]["content"]
+            response_json = response.json()
+            print(f"DEBUG: OpenRouter response JSON keys: {response_json.keys()}")
+            return response_json["choices"][0]["message"]["content"]
         else:
-            raise Exception(f"OpenRouter API error: {response.status_code}")
+            print(f"DEBUG: OpenRouter error response: {response.text}")
+            raise Exception(f"OpenRouter API error: {response.status_code} - {response.text}")
     
     except Exception as e:
+        print(f"DEBUG: Exception in call_openrouter: {str(e)}")
+        print(f"DEBUG: Exception type: {type(e)}")
+        import traceback
+        print(f"DEBUG: Traceback: {traceback.format_exc()}")
         raise Exception(f"Failed to call OpenRouter: {str(e)}")
 
 async def generate_overview(graph_data: Dict[str, Any]) -> str:
