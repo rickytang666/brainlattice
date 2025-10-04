@@ -59,3 +59,18 @@ class AudioResponse(BaseModel):
     audio_url: str
     success: bool
     error_message: Optional[str] = None
+
+class ProjectSaveRequest(BaseModel):
+    digest_data: Dict[str, Any]
+    graph_data: Dict[str, Any]
+
+class ProjectSaveResponse(BaseModel):
+    project_id: str
+    success: bool
+    error_message: Optional[str] = None
+
+class ProjectGetResponse(BaseModel):
+    project_data: Dict[str, Any]
+    success: bool
+    error_message: Optional[str] = None
+

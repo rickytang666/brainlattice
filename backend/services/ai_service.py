@@ -68,17 +68,28 @@ async def generate_ai_digest(text: str) -> Dict[str, Any]:
     """
     try:
         prompt = f"""
-        Analyze this PDF text and create a concise concept outline optimized for AI-to-AI communication.
+        Analyze this PDF text and create a comprehensive concept outline optimized for building a deep knowledge graph.
 
         Create a JSON structure with:
         1. "course_info": title, subject, difficulty_level
         2. "sequential_concepts": array of concepts in learning order
            - Each concept: name, brief_description, unit/chapter, prerequisites
-        3. "key_formulas": important formulas/equations (if any)
-        4. "important_notes": critical points for AI understanding
+        3. "key_formulas": ALL formulas, equations, identities, rules found in text
+        4. "specific_examples": concrete examples, applications, special cases
+        5. "techniques_methods": specific techniques, tests, procedures mentioned
+        6. "properties_rules": mathematical properties, rules, theorems
+        7. "important_notes": critical insights, common mistakes, key relationships
+
+        Instructions:
+        - Extract ONLY concepts students need to study (definitions, theorems, formulas, techniques)
+        - Find important mathematical concepts and methods
+        - Identify key formulas, identities, and rules students learn
+        - Capture essential properties and mathematical relationships
+        - EXCLUDE meta-commentary, teaching advice, style preferences
+        - Focus on actual mathematical content, not editorial comments
 
         Text to analyze:
-        {text[:3000]}
+        {text}
 
         Make this maximally efficient for another AI to understand and process.
         Return ONLY valid JSON, no explanations.
@@ -92,21 +103,66 @@ async def generate_ai_digest(text: str) -> Dict[str, Any]:
 
 async def generate_relationships(structured_data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Use Gemini 2.5 Flash Lite to transform AI digest into knowledge graph
+    Use Gemini 2.5 Flash Lite to transform AI digest into deep hierarchical knowledge graph
     """
     try:
         prompt = f"""
-        Transform this AI digest into a simple knowledge graph.
+        Create a comprehensive, hierarchical knowledge graph from this AI digest. Think like Obsidian's knowledge graph - deep, interconnected, with fine-grained concepts.
 
         AI Digest: {json.dumps(structured_data, indent=2)}
 
-        Create a JSON object with:
-        1. "nodes": array of simple concept nodes
-           - Each node: name (string), ins (array of prerequisite node names), outs (array of dependent node names)
-        2. "graph_metadata": title, subject, total_concepts
+        Instructions:
+        1. FOCUS ON STUDY CONCEPTS: Only include concepts students actually need to study and learn
+        2. CREATE HIERARCHICAL TREE: function → trigonometric function → sine function → pythagorean identity
+        3. MEANINGFUL NODES: Each node should be a concept students study (not meta-commentary)
+        4. FIND RELATIONSHIPS: Find relationships between actual study concepts
 
-        Focus on prerequisite relationships. Keep it simple - just name and connections.
-        Return ONLY valid JSON, no markdown code blocks, no explanations, just the raw JSON object.
+        WHAT TO INCLUDE (STUDY CONCEPTS):
+        - Mathematical definitions and theorems
+        - Important formulas and identities
+        - Techniques and methods students learn
+        - Properties and rules of mathematics
+        - Types of functions, equations, etc.
+
+        WHAT TO EXCLUDE (NOT STUDY CONCEPTS):
+        - Meta-commentary ("emphasis on...", "note that...")
+        - Teaching advice ("students should...")
+        - Style preferences ("traditional notation...")
+        - Editorial comments ("unfortunately...")
+        - General observations that aren't mathematical concepts
+
+        NAMING RULES (CRITICAL - FOLLOW EXACTLY):
+        1. ALL NAMES MUST BE LOWERCASE
+        2. NEVER USE FORMULAS: "quadratic function" not "f(x) = x²"
+        3. NEVER USE MATHEMATICAL NOTATION: "pythagorean identity" not "sin²(x) + cos²(x) = 1"
+        4. USE CONCEPTUAL NAMES ONLY: "square function" not "f(x) = x²"
+        5. BE CONSISTENT: "trigonometric function" not "trig function" or "trigonometric functions"
+        6. USE SINGULAR FORMS: "function" not "functions"
+        7. AVOID NAMING CONFLICTS: If you have "trigonometric function", don't create "trig function"
+        8. USE DESCRIPTIVE NAMES: "vertical line test" not "VLT"
+        9. NO SPECIFIC EXAMPLES: "quadratic function" not "f(x) = x² squares its input"
+
+        Create JSON with:
+        1. "nodes": array of concept nodes
+           - Each node: {{"name": "conceptual_name_lowercase", "ins": ["prerequisite concepts"], "outs": ["dependent concepts"]}}
+        2. "graph_metadata": {{"title": "course title", "subject": "subject", "total_concepts": number, "depth_levels": number}}
+
+        Examples of GOOD node names:
+        - "pythagorean identity" (not "sin²(x) + cos²(x) = 1")
+        - "vertical line test" (not "VLT")
+        - "trigonometric function" (not "trig function")
+        - "euler's formula" (not "e^(iπ) + 1 = 0")
+        - "domain of function" (not "domain")
+        - "inverse function" (not "f⁻¹(x)")
+        - "quadratic function" (not "f(x) = x²")
+        - "square function" (not "f(x) = x²")
+
+        BAD examples (DO NOT USE):
+        - "f(x) = x²" (use "quadratic function" instead)
+        - "sin²(x) + cos²(x) = 1" (use "pythagorean identity" instead)
+        - "trig function" (use "trigonometric function" instead)
+
+        Make it deep and comprehensive. Return ONLY valid JSON, no explanations.
         """
 
         response = gemini_client.models.generate_content(
