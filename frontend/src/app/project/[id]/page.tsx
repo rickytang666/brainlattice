@@ -21,6 +21,7 @@ import {
   generateAudioScript,
   generateAudio,
 } from "@/lib/api";
+import { GraphData } from "@/types/graph";
 
 interface ProjectData {
   title: string;
@@ -110,7 +111,7 @@ export default function ProjectPage() {
       // Use digest_data (reference) as primary input, with graph data as optional context
       const response = await generateOverview(
         project.digest_data,
-        project.graph_data as Record<string, unknown>
+        project.graph_data as GraphData | undefined
       );
       setOverview(response.overview_text);
     } catch (err) {
@@ -152,7 +153,7 @@ export default function ProjectPage() {
       // Generate script first using digest data
       const scriptResponse = await generateAudioScript(
         project.digest_data,
-        project.graph_data as Record<string, unknown>
+        project.graph_data as GraphData | undefined
       );
       setAudioScript(scriptResponse.script_text);
 
