@@ -76,18 +76,8 @@ export default function ProjectList() {
     }
   };
 
-  const handleViewGraph = (projectId: string) => {
-    // Fetch project data and navigate to graph
-    fetch(`http://localhost:8000/api/project/${projectId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        // Handle both old and new formats
-        const graphData =
-          data.project_data.graph_data || data.project_data.graph;
-        sessionStorage.setItem("graphData", JSON.stringify(graphData));
-        router.push("/graph");
-      })
-      .catch((err) => console.error("Failed to load project:", err));
+  const handleViewProject = (projectId: string) => {
+    router.push(`/project/${projectId}`);
   };
 
   const handleDelete = async (projectId: string, projectTitle: string) => {
@@ -143,7 +133,7 @@ export default function ProjectList() {
         <Card
           key={project.id}
           className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-          onClick={() => handleViewGraph(project.id)}
+          onClick={() => handleViewProject(project.id)}
         >
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
@@ -169,12 +159,12 @@ export default function ProjectList() {
             <Button
               onClick={(e) => {
                 e.stopPropagation();
-                handleViewGraph(project.id);
+                handleViewProject(project.id);
               }}
               className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
               <IconGraph className="h-4 w-4 mr-2" />
-              View Graph
+              View Project
             </Button>
             <Button
               onClick={(e) => {

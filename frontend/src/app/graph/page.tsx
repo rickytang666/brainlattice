@@ -10,11 +10,18 @@ export default function GraphPage() {
   const [graphData, setGraphData] = useState<Record<string, unknown> | null>(
     null
   );
+  const [projectId, setProjectId] = useState<string | null>(null);
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    // Get graph data from sessionStorage
+    // Get graph data and project ID from sessionStorage
     const storedData = sessionStorage.getItem("graphData");
+    const storedProjectId = sessionStorage.getItem("currentProjectId");
+
+    if (storedProjectId) {
+      setProjectId(storedProjectId);
+    }
+
     if (storedData && storedData !== "undefined" && storedData !== "null") {
       try {
         const parsed = JSON.parse(storedData);
@@ -56,16 +63,24 @@ export default function GraphPage() {
     );
   }
 
+  const handleBack = () => {
+    if (projectId) {
+      router.push(`/project/${projectId}`);
+    } else {
+      router.push("/");
+    }
+  };
+
   return (
     <div className="h-screen w-screen bg-gray-50 dark:bg-gray-900 p-4 flex flex-col">
       {/* Back Button */}
       <div className="mb-4">
         <Button
-          onClick={() => router.push("/")}
+          onClick={handleBack}
           variant="outline"
           className="flex items-center gap-2"
         >
-          ← Back to Projects
+          ← Back to {projectId ? "Project" : "Projects"}
         </Button>
       </div>
 
