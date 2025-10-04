@@ -91,6 +91,7 @@ export default function ProjectPage() {
 
   useEffect(() => {
     loadProject();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
   const handleViewGraph = () => {
@@ -109,7 +110,7 @@ export default function ProjectPage() {
       // Use digest_data (reference) as primary input, with graph data as optional context
       const response = await generateOverview(
         project.digest_data,
-        project.graph_data as any
+        project.graph_data as Record<string, unknown>
       );
       setOverview(response.overview_text);
     } catch (err) {
@@ -151,7 +152,7 @@ export default function ProjectPage() {
       // Generate script first using digest data
       const scriptResponse = await generateAudioScript(
         project.digest_data,
-        project.graph_data as any
+        project.graph_data as Record<string, unknown>
       );
       setAudioScript(scriptResponse.script_text);
 
