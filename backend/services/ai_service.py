@@ -222,14 +222,11 @@ async def generate_ai_digest(text: str) -> Dict[str, Any]:
     Use OpenRouter (Grok 4 Fast) to create concise AI-optimized concept outline
     """
     try:
-        print(f"DEBUG: Input text length: {len(text)}")
-        
         # Clean the text (no length limit)
         cleaned_text = text.replace(chr(10), ' ').replace(chr(13), ' ')
         
         # Clean math symbols and special characters
         cleaned_text = clean_math_symbols(cleaned_text)
-        print(f"DEBUG: Cleaned text length: {len(cleaned_text)}")
         
         prompt = f"""
         Analyze this PDF text and create a comprehensive concept outline optimized for building a deep knowledge graph.
@@ -267,41 +264,25 @@ async def generate_ai_digest(text: str) -> Dict[str, Any]:
         Return ONLY valid JSON, no explanations.
         """
         
-        print(f"DEBUG: Prompt length: {len(prompt)}")
-        print(f"DEBUG: Calling OpenRouter...")
-        
         response_text = await call_openrouter("x-ai/grok-4-fast", prompt, 4000)
-        
-        print(f"DEBUG: OpenRouter response length: {len(response_text)}")
-        print(f"DEBUG: First 200 chars of response: {response_text[:200]}")
         
         # Validate and clean JSON response
         try:
             # Try to parse the JSON
             parsed_json = json.loads(response_text)
             return parsed_json
-        except json.JSONDecodeError as json_error:
-            print(f"DEBUG: JSON parsing error: {str(json_error)}")
-            print(f"DEBUG: Response around error position: {response_text[max(0, json_error.pos-100):json_error.pos+100]}")
-            
+        except json.JSONDecodeError:
             # Try to fix common JSON issues
             fixed_response = fix_json_response(response_text)
-            print(f"DEBUG: Attempting to fix JSON...")
             
             try:
                 parsed_json = json.loads(fixed_response)
-                print(f"DEBUG: JSON fixed successfully!")
                 return parsed_json
-            except json.JSONDecodeError as fix_error:
-                print(f"DEBUG: JSON fix failed: {str(fix_error)}")
+            except json.JSONDecodeError:
                 # Return a fallback structure
                 return create_fallback_digest(response_text)
     
     except Exception as e:
-        print(f"DEBUG: Exception in generate_ai_digest: {str(e)}")
-        print(f"DEBUG: Exception type: {type(e)}")
-        import traceback
-        print(f"DEBUG: Traceback: {traceback.format_exc()}")
         raise Exception(f"Failed to generate AI digest: {str(e)}")
 
 async def generate_relationships(structured_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -310,62 +291,112 @@ async def generate_relationships(structured_data: Dict[str, Any]) -> Dict[str, A
     """
     try:
         prompt = f"""
-        Create a comprehensive, hierarchical knowledge graph from this AI digest. Think like Obsidian's knowledge graph - deep, interconnected, with fine-grained concepts.
+        Create a comprehensive, CENTRALIZED hierarchical knowledge graph from this AI digest. 
+        
+        CRITICAL STRUCTURE REQUIREMENT:
+        - Create ONE central "root" or "mother" concept that represents the CORE FUNDAMENTAL concept
+        - ALL other concepts must connect to this central concept either directly or through intermediate nodes
+        - Build a hierarchical tree structure, NOT disconnected islands
+        - Think: tree with a trunk (central concept) and branches (related concepts), not scattered bushes
 
         AI Digest: {json.dumps(structured_data, indent=2)}
 
         Instructions:
-        1. FOCUS ON STUDY CONCEPTS: Only include concepts students actually need to study and learn
-        2. CREATE HIERARCHICAL TREE: function → trigonometric function → sine function → pythagorean identity
-        3. MEANINGFUL NODES: Each node should be a concept students study (not meta-commentary)
-        4. FIND RELATIONSHIPS: Find relationships between actual study concepts
+        1. IDENTIFY CENTRAL CONCEPT: 
+           - Find the MOST FUNDAMENTAL concept that everything else builds upon
+           - NOT the document title or chapter name (e.g., NOT "review of functions" or "introduction to X")
+           - NOT meta descriptions (e.g., NOT "software engineering projects" or "calculus review")
+           - USE the core concept itself (e.g., "function" not "review of functions", "calculus" not "introduction to calculus")
+           - Think: What Wikipedia article would best represent this entire topic?
+           - Examples: "function", "calculus", "programming", "linear algebra", "machine learning"
+        2. CREATE ROOT NODE: Make this the central concept with empty "ins" array
+        3. BUILD DEEP HIERARCHY: 
+           - Create 3-5 levels of depth minimum
+           - Extract EVERY meaningful concept from the digest
+           - Break down complex topics into granular sub-concepts
+           - Include ALL formulas, theorems, techniques, and properties as nodes
+           - Don't skip concepts just because they seem minor - students need to study them!
+        4. ENSURE CONNECTIVITY: Every node must have a path back to the root concept
+        5. USE MEANINGFUL RELATIONSHIPS: "outs" should list direct logical dependencies or related concepts
+        
+        DEPTH GUIDELINES:
+        - Level 1 (Root): Central concept (e.g., "function")
+        - Level 2: Major categories (e.g., "polynomial function", "trigonometric function", "function properties")
+        - Level 3: Specific types (e.g., "quadratic function", "sine function", "domain and range")
+        - Level 4: Detailed concepts (e.g., "discriminant", "amplitude", "vertical line test")
+        - Level 5+: Formulas, theorems, techniques (e.g., "quadratic formula", "pythagorean identity", "completing the square")
 
-        WHAT TO INCLUDE (STUDY CONCEPTS):
-        - Mathematical definitions and theorems
-        - Important formulas and identities
-        - Techniques and methods students learn
-        - Properties and rules of mathematics
-        - Types of functions, equations, etc.
+        HIERARCHY EXAMPLE (Good):
+        Root: "function" (NOT "review of functions for calculus")
+        ├─→ "domain and range" → "function notation" → "function composition"
+        ├─→ "types of functions" → "linear function" → "slope"
+        └─→ "function properties" → "continuity" → "limits"
 
-        WHAT TO EXCLUDE (NOT STUDY CONCEPTS):
-        - Meta-commentary ("emphasis on...", "note that...")
-        - Teaching advice ("students should...")
-        - Style preferences ("traditional notation...")
-        - Editorial comments ("unfortunately...")
-        - General observations that aren't mathematical concepts
+        Another Good Example:
+        Root: "software engineering" (NOT "john's software projects")
+        ├─→ "programming fundamentals" → "python programming" → "object oriented programming"
+        ├─→ "robotics" → "sensor control" → "motor optimization"
+        └─→ "web development" → "frontend frameworks" → "react development"
+
+        BAD EXAMPLES (Avoid):
+        - Root: "review of functions for calculus" ❌ (too meta, use "function" instead)
+        - Root: "introduction to linear algebra" ❌ (use "linear algebra" instead)
+        - Root: "calculus review" ❌ (use "calculus" instead)
+        - Disconnected islands: "python programming", "sensor control", "react development" (no connection) ❌
 
         NAMING RULES (CRITICAL - FOLLOW EXACTLY):
         1. ALL NAMES MUST BE LOWERCASE
-        2. NEVER USE FORMULAS: "quadratic function" not "f(x) = x²"
-        3. NEVER USE MATHEMATICAL NOTATION: "pythagorean identity" not "sin²(x) + cos²(x) = 1"
-        4. USE CONCEPTUAL NAMES ONLY: "square function" not "f(x) = x²"
-        5. BE CONSISTENT: "trigonometric function" not "trig function" or "trigonometric functions"
-        6. USE SINGULAR FORMS: "function" not "functions"
-        7. AVOID NAMING CONFLICTS: If you have "trigonometric function", don't create "trig function"
-        8. USE DESCRIPTIVE NAMES: "vertical line test" not "VLT"
-        9. NO SPECIFIC EXAMPLES: "quadratic function" not "f(x) = x² squares its input"
+        2. NEVER USE FORMULAS OR NOTATION: "quadratic function" not "f(x) = x²"
+        3. USE CONCEPTUAL NAMES: "pythagorean identity" not "sin²(x) + cos²(x) = 1"
+        4. BE CONSISTENT: "trigonometric function" not "trig function"
+        5. USE SINGULAR FORMS: "function" not "functions"
+        6. NO ABBREVIATIONS: "vertical line test" not "VLT"
+        7. DESCRIPTIVE NAMES: Make them clear and specific
+
+        WHAT TO INCLUDE (Be Comprehensive):
+        - ALL core concepts, definitions, theorems from the digest
+        - EVERY technique, method, and procedure mentioned
+        - ALL formulas, identities, and rules (named conceptually, not as formulas)
+        - Properties, tests, and conditions
+        - Types and classifications (e.g., "linear function", "exponential function")
+        - Specific examples if they represent distinct concept types
+        - Skills, competencies, and problem-solving strategies
+        - Domain-specific terminology and notation concepts
+        
+        IMPORTANT: If the digest mentions 20+ concepts, your graph should have 20+ nodes (excluding very basic prerequisites)
+
+        WHAT TO EXCLUDE (Be Selective):
+        - Pure meta-commentary without substance ("emphasis on...", "note that...")
+        - Teaching style advice ("students should practice...")
+        - Document structure references ("in this chapter...", "as mentioned earlier...")
+        - Redundant variations of the same concept (pick the most standard name)
+        
+        QUALITY CHECK:
+        - If you have fewer than 15 nodes for a typical chapter/document, you're probably being too conservative
+        - Each concept in "sequential_concepts", "key_formulas", "techniques_methods" should become a node
+        - Break down compound concepts into multiple connected nodes
 
         Create JSON with:
         1. "nodes": array of concept nodes
-           - Each node: {{"name": "conceptual_name_lowercase", "ins": ["prerequisite concepts"], "outs": ["dependent concepts"]}}
-        2. "graph_metadata": {{"title": "course title", "subject": "subject", "total_concepts": number, "depth_levels": number}}
+           - Root node: {{"name": "central_concept", "ins": [], "outs": ["major_topic_1", "major_topic_2", ...]}}
+           - Other nodes: {{"name": "concept_name", "ins": ["prerequisite"], "outs": ["dependent_concepts"]}}
+        2. "graph_metadata": {{"title": "course/document title", "subject": "subject", "total_concepts": number, "depth_levels": number}}
 
-        Examples of GOOD node names:
-        - "pythagorean identity" (not "sin²(x) + cos²(x) = 1")
-        - "vertical line test" (not "VLT")
-        - "trigonometric function" (not "trig function")
-        - "euler's formula" (not "e^(iπ) + 1 = 0")
-        - "domain of function" (not "domain")
-        - "inverse function" (not "f⁻¹(x)")
-        - "quadratic function" (not "f(x) = x²")
-        - "square function" (not "f(x) = x²")
+        VERIFICATION CHECKLIST:
+        - ✓ EVERY node (except root) has at least one "ins" connection
+        - ✓ There's a path from the root to every node (no orphaned nodes)
+        - ✓ The root node has EMPTY ins array and multiple outs (3+ major branches)
+        - ✓ Depth is 3-5+ levels for comprehensive content
+        - ✓ Total node count matches the richness of the digest (15+ nodes minimum for typical content)
+        - ✓ Each item in "sequential_concepts", "key_formulas", "techniques_methods" is represented
+        - ✓ No meaningless filler concepts - every node is study-worthy
+        - ✓ No redundant concepts with different names
 
-        BAD examples (DO NOT USE):
-        - "f(x) = x²" (use "quadratic function" instead)
-        - "sin²(x) + cos²(x) = 1" (use "pythagorean identity" instead)
-        - "trig function" (use "trigonometric function" instead)
+        FINAL REMINDER: 
+        Create a DEEP, COMPREHENSIVE graph. Don't be conservative. Students need ALL concepts to study effectively.
+        Better to have 40 meaningful nodes than 10 overly-broad ones.
 
-        Make it deep and comprehensive. Return ONLY valid JSON, no explanations.
+        Return ONLY valid JSON, no explanations.
         """
 
         response = gemini_client.models.generate_content(
@@ -408,30 +439,19 @@ async def call_openrouter(model: str, prompt: str, max_tokens: int = 1500) -> st
             "max_tokens": max_tokens
         }
         
-        print(f"DEBUG: OpenRouter request data: {data}")
-        
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers=headers,
             json=data
         )
         
-        print(f"DEBUG: OpenRouter response status: {response.status_code}")
-        print(f"DEBUG: OpenRouter response headers: {dict(response.headers)}")
-        
         if response.status_code == 200:
             response_json = response.json()
-            print(f"DEBUG: OpenRouter response JSON keys: {response_json.keys()}")
             return response_json["choices"][0]["message"]["content"]
         else:
-            print(f"DEBUG: OpenRouter error response: {response.text}")
             raise Exception(f"OpenRouter API error: {response.status_code} - {response.text}")
     
     except Exception as e:
-        print(f"DEBUG: Exception in call_openrouter: {str(e)}")
-        print(f"DEBUG: Exception type: {type(e)}")
-        import traceback
-        print(f"DEBUG: Traceback: {traceback.format_exc()}")
         raise Exception(f"Failed to call OpenRouter: {str(e)}")
 
 async def generate_overview(graph_data: Dict[str, Any]) -> str:

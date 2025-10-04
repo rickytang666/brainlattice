@@ -21,10 +21,17 @@ def save_project_data(project_id: str, reference_data: Dict[str, Any], graph_dat
     try:
         db = init_firebase()
         
-        # Save reference data (detailed AI analysis)
+        # Extract metadata from graph_data
+        metadata = graph_data.get('graph_metadata', {})
+        
+        # Save project with metadata
         db.collection('projects').document(project_id).set({
-            'reference': reference_data,
-            'graph': graph_data,
+            'title': metadata.get('title', 'Untitled Project'),
+            'subject': metadata.get('subject', 'Unknown'),
+            'total_concepts': metadata.get('total_concepts', 0),
+            'depth_levels': metadata.get('depth_levels', 0),
+            'digest_data': reference_data,
+            'graph_data': graph_data,
             'created_at': firestore.SERVER_TIMESTAMP,
             'updated_at': firestore.SERVER_TIMESTAMP
         })
@@ -61,3 +68,20 @@ def list_projects() -> list:
     
     except Exception as e:
         raise Exception(f"Failed to list projects: {str(e)}")
+
+def delete_project_data(project_id: str) -> bool:
+    """
+    Delete project from Firebase Firestore
+    """
+    try:
+        db = init_firebase()
+        doc_ref = db.collection('projects').document(project_id)
+        
+        # Check if document exists
+        if doc_ref.get().exists:
+            doc_ref.delete()
+            return True
+        return False
+    
+    except Exception as e:
+        raise Exception(f"Failed to delete project: {str(e)}")

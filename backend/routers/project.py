@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from services.db_service import save_project_data, get_project_data
+from services.db_service import save_project_data, get_project_data, list_projects, delete_project_data
 from models.graph import ProjectSaveRequest, ProjectSaveResponse, ProjectGetResponse
 import uuid
 
@@ -32,6 +32,18 @@ async def save_project(request: ProjectSaveRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving project: {str(e)}")
 
+@router.get("/projects/list")
+async def list_all_projects():
+    """
+    List all projects from Firebase
+    """
+    try:
+        projects = list_projects()
+        return projects
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error listing projects: {str(e)}")
+
 @router.get("/project/{project_id}", response_model=ProjectGetResponse)
 async def get_project(project_id: str):
     """
@@ -50,3 +62,19 @@ async def get_project(project_id: str):
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving project: {str(e)}")
+
+@router.delete("/project/{project_id}")
+async def delete_project(project_id: str):
+    """
+    Delete project from Firebase
+    """
+    try:
+        success = delete_project_data(project_id)
+        
+        if success:
+            return {"success": True, "message": "Project deleted successfully"}
+        else:
+            raise HTTPException(status_code=404, detail="Project not found")
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting project: {str(e)}")

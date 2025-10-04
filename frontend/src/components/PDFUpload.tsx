@@ -18,7 +18,11 @@ import {
   saveProject,
 } from "@/lib/api";
 
-export default function PDFUpload() {
+interface PDFUploadProps {
+  onComplete?: () => void;
+}
+
+export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
   const router = useRouter();
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -34,66 +38,74 @@ export default function PDFUpload() {
     setIsDragOver(true);
   }, []);
 
-  const handleFileUpload = useCallback(async (file: File) => {
-    if (file.type !== "application/pdf") {
-      setError("Please upload a PDF file");
-      return;
-    }
+  const handleFileUpload = useCallback(
+    async (file: File) => {
+      if (file.type !== "application/pdf") {
+        setError("Please upload a PDF file");
+        return;
+      }
 
-    setIsUploading(true);
-    setError("");
-    setUploadProgress(0);
-    setUploadStage("Processing PDF...");
-
-    try {
-      // Step 1: Extract text from PDF
-      setUploadStage("Extracting text from PDF...");
-      setUploadProgress(25);
-
-      const extractData = await extractPDFText(file);
-      setUploadProgress(50);
-
-      // Step 2: Create AI digest
-      setUploadStage("Creating AI digest...");
-      setUploadProgress(60);
-
-      const digestData = await createAIDigest(extractData.text);
-      setUploadProgress(80);
-
-      // Step 3: Generate knowledge graph
-      setUploadStage("Generating knowledge graph...");
-      setUploadProgress(90);
-
-      const graphData = await generateRelationships(digestData.digest_data);
-      setUploadProgress(95);
-
-      // Store the knowledge graph
-      setGraphData(graphData.graph_data);
-
-      // Step 4: Save to Firebase
-      setUploadStage("Saving to Firebase...");
-      setUploadProgress(98);
-
-      const saveData = await saveProject(
-        digestData.digest_data,
-        graphData.graph_data
-      );
-
-      setUploadProgress(100);
-      setUploadStage("Complete!");
-
-      // Stop the spinner
-      setIsUploading(false);
-
-      // Log the project ID for debugging
-      console.log("Project saved with ID:", saveData.project_id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
-      setIsUploading(false);
+      setIsUploading(true);
+      setError("");
       setUploadProgress(0);
-      setUploadStage("");
-    }
-  }, []);
+      setUploadStage("Processing PDF...");
+
+      try {
+        // Step 1: Extract text from PDF
+        setUploadStage("Extracting text from PDF...");
+        setUploadProgress(25);
+
+        const extractData = await extractPDFText(file);
+        setUploadProgress(50);
+
+        // Step 2: Create AI digest
+        setUploadStage("Creating AI digest...");
+        setUploadProgress(60);
+
+        const digestData = await createAIDigest(extractData.text);
+        setUploadProgress(80);
+
+        // Step 3: Generate knowledge graph
+        setUploadStage("Generating knowledge graph...");
+        setUploadProgress(90);
+
+        const graphData = await generateRelationships(digestData.digest_data);
+        setUploadProgress(95);
+
+        // Store the knowledge graph
+        setGraphData(graphData.graph_data);
+
+        // Step 4: Save to Firebase
+        setUploadStage("Saving to Firebase...");
+        setUploadProgress(98);
+
+        const saveData = await saveProject(
+          digestData.digest_data,
+          graphData.graph_data
+        );
+
+        setUploadProgress(100);
+        setUploadStage("Complete!");
+
+        // Stop the spinner
+        setIsUploading(false);
+
+        // Log the project ID for debugging
+        console.log("Project saved with ID:", saveData.project_id);
+
+        // Call onComplete callback if provided
+        if (onComplete) {
+          setTimeout(() => onComplete(), 2000); // Give user time to see success message
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Upload failed");
+        setIsUploading(false);
+        setUploadProgress(0);
+        setUploadStage("");
+      }
+    },
+    [onComplete]
+  );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();

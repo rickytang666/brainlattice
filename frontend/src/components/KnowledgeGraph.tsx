@@ -37,10 +37,8 @@ export default function KnowledgeGraph({ graphData }: KnowledgeGraphProps) {
   // Customize link distance after mount
   useEffect(() => {
     if (fgRef.current) {
-      // Make links longer by increasing link distance
-      fgRef.current.d3Force("link").distance(150);
-      // Increase charge repulsion to push nodes further apart
-      fgRef.current.d3Force("charge").strength(-400);
+      // Set shorter link distance for tighter graph
+      fgRef.current.d3Force("link").distance(10);
     }
   }, []);
 
