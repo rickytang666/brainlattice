@@ -88,10 +88,6 @@ firebase-debug.*.log
 # Vercel
 .vercel
 
-# Docker
-.dockerignore
-docker-compose.override.yml
-
 # Temporary files
 tmp/
 temp/
