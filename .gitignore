@@ -123,3 +123,6 @@ audio-output/
 
 # Context folder
 context/
+
+# Secrets
+secrets/
