@@ -4,7 +4,7 @@ import json
 import re
 from google import genai
 import requests
-from elevenlabs import ElevenLabs
+from elevenlabs.client import ElevenLabs
 from typing import Dict, Any, Optional
 
 # Load environment variables
