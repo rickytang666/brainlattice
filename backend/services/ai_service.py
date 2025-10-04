@@ -696,7 +696,7 @@ async def generate_audio_script(digest_data: Dict[str, Any], graph_data: Optiona
 
 async def generate_audio(script_text: str) -> str:
     """
-    Use ElevenLabs to generate audio from script and save to output directory
+    Use ElevenLabs to generate audio from script and return as base64 data URL
     """
     try:
         # Initialize ElevenLabs client with API key
@@ -715,18 +715,12 @@ async def generate_audio(script_text: str) -> str:
         for chunk in audio_generator:
             audio_bytes += chunk
         
-        # Save to output directory with unique filename
-        import uuid
-        filename = f"audio_{uuid.uuid4().hex[:12]}.mp3"
-        output_dir = os.path.join(os.path.dirname(__file__), '..', 'output')
-        os.makedirs(output_dir, exist_ok=True)
-        filepath = os.path.join(output_dir, filename)
+        # Convert to base64 for transmission
+        import base64
+        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
         
-        with open(filepath, 'wb') as f:
-            f.write(audio_bytes)
-        
-        # Return the filename (frontend will construct the full URL)
-        return filename
+        # Return data URL that can be used directly in audio player
+        return f"data:audio/mpeg;base64,{audio_base64}"
 
     except Exception as e:
         raise Exception(f"Failed to generate audio: {str(e)}")

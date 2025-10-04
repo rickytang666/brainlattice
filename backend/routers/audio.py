@@ -7,17 +7,14 @@ router = APIRouter()
 @router.post("/audio", response_model=AudioResponse)
 async def generate_podcast_audio(request: AudioRequest):
     """
-    Use ElevenLabs to generate audio from script
+    Use ElevenLabs to generate audio from script and return base64 data URL
     """
     try:
-        # Generate audio and get filename
-        filename = await generate_audio(request.script_text)
-        
-        # Construct URL path (frontend will add base URL)
-        audio_url = f"/audio/{filename}"
+        # Generate audio and get base64 data URL
+        audio_data_url = await generate_audio(request.script_text)
         
         return AudioResponse(
-            audio_url=audio_url,
+            audio_url=audio_data_url,
             success=True
         )
     

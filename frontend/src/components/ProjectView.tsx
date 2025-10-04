@@ -85,13 +85,8 @@ export default function ProjectView({ projectId, onBack }: ProjectViewProps) {
       // Then generate audio from script
       const audioResponse = await generateAudio(scriptResponse.script_text);
 
-      // Construct full URL (audio_url comes as /audio/filename.mp3)
-      const API_BASE =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-      const baseUrl = API_BASE.replace("/api", ""); // Remove /api suffix
-      const fullAudioUrl = `${baseUrl}${audioResponse.audio_url}`;
-
-      setAudioUrl(fullAudioUrl);
+      // audio_url is already a data URL (data:audio/mpeg;base64,...)
+      setAudioUrl(audioResponse.audio_url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate audio");
     } finally {
