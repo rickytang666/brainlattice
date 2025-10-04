@@ -11,8 +11,10 @@ import {
   IconBrain,
   IconCalendar,
   IconLayersLinked,
+  IconDownload,
+  IconRefresh,
 } from "@tabler/icons-react";
-import { getProject } from "@/lib/api";
+import { getProject, generateOverview } from "@/lib/api";
 
 interface ProjectData {
   title: string;
@@ -32,6 +34,8 @@ export default function ProjectPage() {
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [overview, setOverview] = useState<string>("");
+  const [generatingOverview, setGeneratingOverview] = useState(false);
 
   const loadProject = async () => {
     try {
@@ -86,6 +90,47 @@ export default function ProjectPage() {
       sessionStorage.setItem("currentProjectId", projectId);
       router.push("/graph");
     }
+  };
+
+  const handleGenerateOverview = async () => {
+    if (!project?.digest_data) return;
+
+    try {
+      setGeneratingOverview(true);
+      // Use digest_data (reference) as primary input, with graph data as optional context
+      const response = await generateOverview(
+        project.digest_data,
+        project.graph_data as any
+      );
+      setOverview(response.overview_text);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to generate overview"
+      );
+    } finally {
+      setGeneratingOverview(false);
+    }
+  };
+
+  const downloadOverview = () => {
+    if (!overview) return;
+
+    // Create a clean filename from the title
+    const cleanFilename =
+      project?.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "study-guide";
+
+    const blob = new Blob([overview], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${cleanFilename}-cheatsheet.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   if (loading) {
@@ -180,28 +225,84 @@ export default function ProjectPage() {
           </Card>
         </div>
 
-        {/* View Graph Button */}
-        <Card className="p-8 text-center">
-          <IconGraph className="h-16 w-16 mx-auto mb-4 text-blue-600 dark:text-blue-400" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Knowledge Graph
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Explore the interactive visualization of concepts and their
-            relationships
-          </p>
-          <Button
-            onClick={handleViewGraph}
-            size="lg"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg"
-          >
-            <IconGraph className="h-6 w-6 mr-2" />
-            View Interactive Graph
-          </Button>
-        </Card>
+        {/* Action Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* View Graph Button */}
+          <Card className="p-8 text-center">
+            <IconGraph className="h-16 w-16 mx-auto mb-4 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Knowledge Graph
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Explore the interactive visualization of concepts and their
+              relationships
+            </p>
+            <Button
+              onClick={handleViewGraph}
+              size="lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg"
+            >
+              <IconGraph className="h-6 w-6 mr-2" />
+              View Interactive Graph
+            </Button>
+          </Card>
 
-        {/* Future sections can go here */}
-        {/* e.g., Study Guide, Audio Summary, etc. */}
+          {/* Study Guide */}
+          <Card className="p-8 text-center">
+            <IconBook className="h-16 w-16 mx-auto mb-4 text-purple-600 dark:text-purple-400" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Study Guide
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Generate a comprehensive markdown cheatsheet for download
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button
+                onClick={handleGenerateOverview}
+                disabled={generatingOverview}
+                size="lg"
+                variant="outline"
+                className="px-8 py-6 text-lg"
+              >
+                {generatingOverview ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600 mr-2"></div>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <IconRefresh className="h-6 w-6 mr-2" />
+                    {overview ? "Regenerate" : "Generate"}
+                  </>
+                )}
+              </Button>
+              {overview && (
+                <Button
+                  onClick={downloadOverview}
+                  size="lg"
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg"
+                >
+                  <IconDownload className="h-6 w-6 mr-2" />
+                  Download
+                </Button>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        {/* Overview Preview */}
+        {overview && (
+          <Card className="p-6">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Study Guide Preview
+            </h3>
+            <div className="prose dark:prose-invert max-w-none overflow-y-auto max-h-[500px]">
+              <div className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-6 rounded-lg font-mono border border-gray-200 dark:border-gray-700">
+                {overview}
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );

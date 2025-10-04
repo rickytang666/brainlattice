@@ -5,7 +5,7 @@ import re
 from google import genai
 import requests
 from elevenlabs import ElevenLabs
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 # Load environment variables
 load_dotenv()
@@ -454,27 +454,136 @@ async def call_openrouter(model: str, prompt: str, max_tokens: int = 1500) -> st
     except Exception as e:
         raise Exception(f"Failed to call OpenRouter: {str(e)}")
 
-async def generate_overview(graph_data: Dict[str, Any]) -> str:
+async def generate_overview(digest_data: Dict[str, Any], graph_data: Optional[Dict[str, Any]] = None) -> str:
     """
-    Use OpenRouter (Grok 4 Fast) to generate study guide overview
+    Use OpenRouter (Grok 4 Fast) to generate study guide overview in Markdown format from AI digest
     """
     try:
+        # Extract metadata from digest
+        course_info = digest_data.get('course_info', {})
+        sequential_concepts = digest_data.get('sequential_concepts', [])
+        key_formulas = digest_data.get('key_formulas', [])
+        specific_examples = digest_data.get('specific_examples', [])
+        techniques_methods = digest_data.get('techniques_methods', [])
+        properties_rules = digest_data.get('properties_rules', [])
+        important_notes = digest_data.get('important_notes', [])
+        
+        # Get graph metadata if available
+        graph_metadata = graph_data.get('graph_metadata', {}) if graph_data else {}
+        
         prompt = f"""
-        Create a comprehensive study guide overview based on this knowledge graph:
+        Create a comprehensive, beautifully formatted Markdown study guide/cheatsheet based on this AI digest.
         
-        {json.dumps(graph_data, indent=2)}
+        COURSE INFORMATION:
+        - Title: {course_info.get('title', 'Study Guide')}
+        - Subject: {course_info.get('subject', 'Unknown')}
+        - Difficulty: {course_info.get('difficulty_level', 'Unknown')}
+        {f"- Total Concepts: {graph_metadata.get('total_concepts', 0)}" if graph_metadata else ""}
         
-        Format as a structured study guide with:
-        1. Course Overview
-        2. Key Concepts (with brief explanations)
-        3. Learning Path (recommended order)
-        4. Study Tips
-        5. Practice Recommendations
+        SEQUENTIAL CONCEPTS:
+        {json.dumps(sequential_concepts[:30], indent=2)}
         
-        Make it concise but informative, suitable for students.
+        KEY FORMULAS & EQUATIONS:
+        {json.dumps(key_formulas[:20], indent=2) if key_formulas else "None specified"}
+        
+        TECHNIQUES & METHODS:
+        {json.dumps(techniques_methods[:15], indent=2) if techniques_methods else "None specified"}
+        
+        PROPERTIES & RULES:
+        {json.dumps(properties_rules[:15], indent=2) if properties_rules else "None specified"}
+        
+        SPECIFIC EXAMPLES:
+        {json.dumps(specific_examples[:10], indent=2) if specific_examples else "None specified"}
+        
+        IMPORTANT NOTES:
+        {json.dumps(important_notes[:10], indent=2) if important_notes else "None specified"}
+        
+        Create a Markdown document with the following structure:
+        
+        # [Title] - Study Guide & Cheatsheet
+        
+        > Generated knowledge map for efficient learning
+        
+        ## 📚 Course Overview
+        - Brief description of the subject and scope
+        - Learning objectives
+        - Difficulty level assessment
+        
+        ## 🎯 Core Concepts
+        For each major concept from the sequential_concepts:
+        - **Concept Name** (from sequential_concepts)
+        - Brief description
+        - Unit/chapter context
+        - Prerequisites needed
+        
+        ## 📐 Key Formulas & Equations
+        List all important formulas from key_formulas section:
+        - Formula name or description
+        - When to use it
+        - Key variables or parameters
+        Use $ for inline math: $E = mc^2$ or $$ for display math
+        
+        ## 🔧 Techniques & Methods
+        From techniques_methods section:
+        - Step-by-step procedures
+        - When to apply each technique
+        - Tips and tricks
+        
+        ## 📋 Properties & Rules
+        From properties_rules section:
+        - Mathematical properties
+        - Important theorems
+        - Rules to remember
+        
+        ## 💡 Important Notes & Insights
+        From important_notes section:
+        - Critical insights
+        - Common mistakes to avoid
+        - Key relationships between concepts
+        
+        ## 🗺️ Learning Path
+        Recommended study order based on sequential_concepts and prerequisites:
+        1. **Foundation Concepts**: Start here (concepts with no/few prerequisites)
+        2. **Intermediate Concepts**: Build on foundations
+        3. **Advanced Concepts**: Final topics requiring prior knowledge
+        
+        ## 📖 Examples & Applications
+        From specific_examples section:
+        - Concrete examples
+        - Real-world applications
+        - Practice problems to try
+        
+        ## ✅ Quick Reference Cheatsheet
+        A condensed one-page summary of the most critical formulas, concepts, and rules
+        
+        ---
+        
+        **Formatting Requirements:**
+        - Use proper Markdown headers (# ## ###)
+        - Use **bold** for concept names and emphasis
+        - Use bullet points and numbered lists
+        - Use > blockquotes for important notes
+        - For math expressions, preferred using LaTeX notation. e.g. $E = mc^2$
+        - Use --- for section dividers
+        - Keep it visually scannable and well-organized
+        - Make it printer-friendly
+        - Focus on practical study value
+        
+        **Content Instructions:**
+        - Use ALL the information provided from the digest sections above
+        - Include actual formula content from key_formulas (not just names)
+        - Reference specific examples from specific_examples section
+        - Include all techniques from techniques_methods
+        - List all properties/rules from properties_rules
+        - Incorporate all important_notes insights
+        - Follow the sequential_concepts order for learning path
+        
+        **Tone:** Professional, clear, student-friendly. This is a study tool optimized for exam prep and quick reference.
+        
+        Generate the complete Markdown document now:
         """
         
-        return await call_openrouter("x-ai/grok-4-fast", prompt, 1500)
+        return await call_openrouter("x-ai/grok-4-fast", prompt, 3500)
     
     except Exception as e:
         raise Exception(f"Failed to generate overview: {str(e)}")

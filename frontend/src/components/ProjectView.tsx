@@ -50,11 +50,15 @@ export default function ProjectView({ projectId, onBack }: ProjectViewProps) {
   }, [loadProject]);
 
   const handleGenerateOverview = async () => {
-    if (!projectData?.graph) return;
+    if (!projectData?.reference) return;
 
     try {
       setGeneratingOverview(true);
-      const response = await generateOverview(projectData.graph);
+      // Use reference (digest) data as primary input, with graph data as optional context
+      const response = await generateOverview(
+        projectData.reference,
+        projectData.graph
+      );
       setOverview(response.overview_text);
     } catch (err) {
       setError(
@@ -88,13 +92,18 @@ export default function ProjectView({ projectId, onBack }: ProjectViewProps) {
   const downloadOverview = () => {
     if (!overview) return;
 
-    const blob = new Blob([overview], { type: "text/markdown" });
+    // Create a clean filename from the title
+    const title = projectData?.graph?.graph_metadata?.title || "study-guide";
+    const cleanFilename = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    const blob = new Blob([overview], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${
-      projectData?.graph?.graph_metadata?.title || "study-guide"
-    }.md`;
+    a.download = `${cleanFilename}-cheatsheet.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -168,9 +177,9 @@ export default function ProjectView({ projectId, onBack }: ProjectViewProps) {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Study Guide Overview
+              Study Guide & Cheatsheet
             </h3>
-            <div className="space-x-2">
+            <div className="flex gap-2">
               <Button
                 onClick={handleGenerateOverview}
                 disabled={generatingOverview}
@@ -178,28 +187,44 @@ export default function ProjectView({ projectId, onBack }: ProjectViewProps) {
                 variant="outline"
               >
                 {generatingOverview ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    Generating...
+                  </>
                 ) : (
-                  "Generate"
+                  <>
+                    <IconRefresh className="h-4 w-4 mr-2" />
+                    {overview ? "Regenerate" : "Generate"}
+                  </>
                 )}
               </Button>
               {overview && (
-                <Button onClick={downloadOverview} size="sm" variant="outline">
-                  <IconDownload className="h-4 w-4" />
+                <Button
+                  onClick={downloadOverview}
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <IconDownload className="h-4 w-4 mr-2" />
+                  Download .md
                 </Button>
               )}
             </div>
           </div>
 
           {overview ? (
-            <div className="prose dark:prose-invert max-w-none">
-              <pre className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+            <div className="prose dark:prose-invert max-w-none overflow-y-auto max-h-[600px]">
+              <div className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-6 rounded-lg font-mono border border-gray-200 dark:border-gray-700">
                 {overview}
-              </pre>
+              </div>
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              Click &quot;Generate&quot; to create a study guide overview
+              <p className="mb-2">
+                Click &quot;Generate&quot; to create a study guide overview
+              </p>
+              <p className="text-xs">
+                This will create a formatted Markdown cheatsheet for download
+              </p>
             </div>
           )}
         </Card>

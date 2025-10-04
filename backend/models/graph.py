@@ -37,7 +37,8 @@ class RelationshipResponse(BaseModel):
     error_message: Optional[str] = None
 
 class OverviewRequest(BaseModel):
-    graph_data: Dict[str, Any]
+    digest_data: Dict[str, Any]
+    graph_data: Optional[Dict[str, Any]] = None  # Optional, for backward compatibility
 
 class OverviewResponse(BaseModel):
     overview_text: str
