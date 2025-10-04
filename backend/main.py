@@ -7,9 +7,13 @@ import os
 # Load environment variables
 load_dotenv()
 
-# Initialize AI services
+# Initialize AI services (will fail gracefully if keys not set)
 from services.ai_service import init_ai_services
-init_ai_services()
+try:
+    init_ai_services()
+except Exception as e:
+    print(f"Warning: AI services initialization failed: {e}")
+    print("App will start but AI features may not work until environment variables are set")
 
 app = FastAPI(
     title="BrainLattice API",
