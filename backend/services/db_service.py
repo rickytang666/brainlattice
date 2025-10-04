@@ -83,6 +83,26 @@ def list_projects() -> list:
     except Exception as e:
         raise Exception(f"Failed to list projects: {str(e)}")
 
+def update_project_title(project_id: str, new_title: str) -> bool:
+    """
+    Update project title in Firebase Firestore
+    """
+    try:
+        db = init_firebase()
+        doc_ref = db.collection('projects').document(project_id)
+        
+        # Check if document exists
+        if doc_ref.get().exists:
+            doc_ref.update({
+                'title': new_title,
+                'updated_at': firestore.SERVER_TIMESTAMP
+            })
+            return True
+        return False
+    
+    except Exception as e:
+        raise Exception(f"Failed to update project title: {str(e)}")
+
 def delete_project_data(project_id: str) -> bool:
     """
     Delete project from Firebase Firestore

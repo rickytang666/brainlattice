@@ -1,9 +1,13 @@
 from fastapi import APIRouter, HTTPException
-from services.db_service import save_project_data, get_project_data, list_projects, delete_project_data
+from services.db_service import save_project_data, get_project_data, list_projects, delete_project_data, update_project_title
 from models.graph import ProjectSaveRequest, ProjectSaveResponse, ProjectGetResponse
+from pydantic import BaseModel
 import uuid
 
 router = APIRouter()
+
+class UpdateTitleRequest(BaseModel):
+    title: str
 
 @router.post("/project/save", response_model=ProjectSaveResponse)
 async def save_project(request: ProjectSaveRequest):
@@ -62,6 +66,22 @@ async def get_project(project_id: str):
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving project: {str(e)}")
+
+@router.patch("/project/{project_id}/title")
+async def update_title(project_id: str, request: UpdateTitleRequest):
+    """
+    Update project title in Firebase
+    """
+    try:
+        success = update_project_title(project_id, request.title)
+        
+        if success:
+            return {"success": True, "message": "Title updated successfully"}
+        else:
+            raise HTTPException(status_code=404, detail="Project not found")
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating title: {str(e)}")
 
 @router.delete("/project/{project_id}")
 async def delete_project(project_id: str):

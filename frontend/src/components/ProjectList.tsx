@@ -4,14 +4,18 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   IconBrain,
   IconCalendar,
   IconBook,
   IconGraph,
   IconTrash,
+  IconEdit,
+  IconCheck,
+  IconX,
 } from "@tabler/icons-react";
-import { listProjects, deleteProject } from "@/lib/api";
+import { listProjects, deleteProject, updateProjectTitle } from "@/lib/api";
 
 interface Project {
   id: string;
@@ -26,6 +30,8 @@ export default function ProjectList() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
 
   useEffect(() => {
     loadProjects();
@@ -78,6 +84,38 @@ export default function ProjectList() {
 
   const handleViewProject = (projectId: string) => {
     router.push(`/project/${projectId}`);
+  };
+
+  const handleStartEdit = (projectId: string, currentTitle: string) => {
+    setEditingId(projectId);
+    setEditTitle(currentTitle);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditTitle("");
+  };
+
+  const handleSaveEdit = async (projectId: string) => {
+    if (!editTitle.trim()) {
+      alert("Title cannot be empty");
+      return;
+    }
+
+    try {
+      await updateProjectTitle(projectId, editTitle.trim());
+      // Update local state
+      setProjects(
+        projects.map((p) =>
+          p.id === projectId ? { ...p, title: editTitle.trim() } : p
+        )
+      );
+      setEditingId(null);
+      setEditTitle("");
+    } catch (err) {
+      console.error("Failed to update title:", err);
+      alert("Failed to update title. Please try again.");
+    }
   };
 
   const handleDelete = async (projectId: string, projectTitle: string) => {
@@ -137,9 +175,55 @@ export default function ProjectList() {
         >
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-                {project.title}
-              </h3>
+              {editingId === project.id ? (
+                <div className="flex items-center gap-2 mb-2">
+                  <Input
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-lg font-semibold"
+                    autoFocus
+                  />
+                  <Button
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSaveEdit(project.id);
+                    }}
+                    className="bg-green-600 hover:bg-green-700 shrink-0"
+                  >
+                    <IconCheck className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancelEdit();
+                    }}
+                    className="shrink-0"
+                  >
+                    <IconX className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2 flex-1">
+                    {project.title}
+                  </h3>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleStartEdit(project.id, project.title);
+                    }}
+                    className="shrink-0 h-8 w-8"
+                  >
+                    <IconEdit className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
               <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-1">
                 <IconBook className="h-4 w-4 mr-1" />
                 {project.subject}

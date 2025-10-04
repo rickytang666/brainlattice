@@ -212,6 +212,22 @@ export async function listProjects(): Promise<Array<{ id: string; [key: string]:
   return response.json();
 }
 
+export async function updateProjectTitle(projectId: string, newTitle: string): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(`${API_BASE_URL}/project/${projectId}/title`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ title: newTitle }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to update project title: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 export async function deleteProject(projectId: string): Promise<{ success: boolean; message: string }> {
   const response = await fetch(`${API_BASE_URL}/project/${projectId}`, {
     method: "DELETE",
