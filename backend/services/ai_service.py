@@ -232,7 +232,10 @@ async def generate_ai_digest(text: str) -> Dict[str, Any]:
         Analyze this PDF text and create a comprehensive concept outline optimized for building a deep knowledge graph.
 
         Create a JSON structure with:
-        1. "course_info": title, subject, difficulty_level
+        1. "course_info": 
+           - "title": A descriptive yet concise title that captures the CORE topic (e.g., "Functions and Trigonometry", "Linear Algebra Fundamentals", "Intro to Machine Learning"). NOT generic like "PDF Analysis" or verbose chapter names.
+           - "subject": The academic subject (e.g., "Mathematics", "Computer Science", "Physics")
+           - "difficulty_level": Basic, Intermediate, or Advanced
         2. "sequential_concepts": array of concepts in learning order
            - Each concept: name, brief_description, unit/chapter, prerequisites
         3. "key_formulas": ALL formulas, equations, identities, rules found in text
@@ -248,6 +251,7 @@ async def generate_ai_digest(text: str) -> Dict[str, Any]:
         - Capture essential properties and mathematical relationships
         - EXCLUDE meta-commentary, teaching advice, style preferences
         - Focus on actual mathematical content, not editorial comments
+        - For the title: Be specific about what's being taught, not how it's being taught
 
         Text to analyze:
         {cleaned_text}
