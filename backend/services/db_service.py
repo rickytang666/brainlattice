@@ -2,19 +2,28 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from typing import Dict, Any, Optional
 import os
+import json
 
 # Initialize Firebase
 def init_firebase():
     """Initialize Firebase Admin SDK"""
     if not firebase_admin._apps:
-        # Use service account JSON file
-        service_account_path = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH", "secrets/firebase_private.json")
+        # Try to get credentials from environment variable (JSON string)
+        firebase_creds_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
         
-        # Check if service account file exists
-        if not os.path.exists(service_account_path):
-            raise Exception(f"Firebase service account file not found at {service_account_path}. Please set FIREBASE_SERVICE_ACCOUNT_PATH environment variable or provide the file.")
+        if firebase_creds_json:
+            # Use credentials from environment variable
+            cred_dict = json.loads(firebase_creds_json)
+            cred = credentials.Certificate(cred_dict)
+        else:
+            # Fall back to file path
+            service_account_path = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH", "secrets/firebase_private.json")
+            
+            if not os.path.exists(service_account_path):
+                raise Exception(f"Firebase credentials not found. Set FIREBASE_CREDENTIALS_JSON environment variable or provide file at {service_account_path}.")
+            
+            cred = credentials.Certificate(service_account_path)
         
-        cred = credentials.Certificate(service_account_path)
         firebase_admin.initialize_app(cred)
     
     return firestore.client()
