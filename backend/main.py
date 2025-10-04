@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import extract, structure, relationships, overview, audio_script, audio
+from routers import extract, digest, relationships, overview, audio_script, audio
 from dotenv import load_dotenv
 import os
 
@@ -28,7 +28,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(extract.router, prefix="/api", tags=["extract"])
-app.include_router(structure.router, prefix="/api", tags=["structure"])
+app.include_router(digest.router, prefix="/api", tags=["digest"])
 app.include_router(relationships.router, prefix="/api", tags=["relationships"])
 app.include_router(overview.router, prefix="/api", tags=["overview"])
 app.include_router(audio_script.router, prefix="/api", tags=["audio-script"])

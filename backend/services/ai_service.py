@@ -3,69 +3,133 @@ import os
 import json
 from google import genai
 import requests
-from elevenlabs.client import ElevenLabs
+from elevenlabs import ElevenLabs
 from typing import Dict, Any
 
 # Load environment variables
 load_dotenv()
 
+# Initialize Gemini client globally
+gemini_client = None
+
 # Initialize AI services
 def init_ai_services():
     """Initialize all AI service API keys"""
-    # Gemini
-    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+    global gemini_client
+    # Gemini - using new SDK
+    gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 async def generate_structured_json(text: str) -> Dict[str, Any]:
     """
     Use Gemini 2.5 Flash Lite to convert raw text to structured JSON
     """
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
-        
         prompt = f"""
         Convert the following PDF text into a structured JSON format representing concepts and their relationships.
-        
+
         Return a JSON object with:
         1. "concepts": array of concept objects with name, description, level, and special_notes
         2. "hierarchy": nested structure showing concept relationships
         3. "metadata": course info, difficulty level, estimated study time
-        
+
         Text to analyze:
-        {text[:8000]}  # Limit to avoid token limits
-        
-        Return only valid JSON, no additional text.
+        {text[:2000]}
+
+        Return ONLY valid JSON, no markdown code blocks, no explanations, just the raw JSON object.
         """
-        
-        response = model.generate_content(prompt)
-        return json.loads(response.text)
-    
+
+        response = gemini_client.models.generate_content(
+            model='gemini-2.5-flash-lite',
+            contents=prompt,
+            config={
+                'temperature': 0.1,
+                'response_mime_type': 'application/json'
+            }
+        )
+
+        # Clean response text - remove markdown code blocks if present
+        response_text = response.text.strip()
+        if response_text.startswith('```json'):
+            response_text = response_text[7:]
+        if response_text.startswith('```'):
+            response_text = response_text[3:]
+        if response_text.endswith('```'):
+            response_text = response_text[:-3]
+        response_text = response_text.strip()
+
+        return json.loads(response_text)
+
     except Exception as e:
         raise Exception(f"Failed to generate structured JSON: {str(e)}")
 
-async def generate_relationships(structured_data: Dict[str, Any]) -> Dict[str, Any]:
+async def generate_ai_digest(text: str) -> Dict[str, Any]:
     """
-    Use Gemini 2.5 Flash Lite to extract concept relationships
+    Use OpenRouter (Grok 4 Fast) to create concise AI-optimized concept outline
     """
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
-        
         prompt = f"""
-        Analyze this structured course data and extract concept relationships.
-        
-        Data: {json.dumps(structured_data, indent=2)}
-        
-        Return a JSON object with:
-        1. "nodes": array of concept nodes for the graph
-        2. "edges": array of relationships between concepts
-        3. "graph_metadata": layout hints, difficulty levels, etc.
-        
-        Focus on prerequisite relationships, concept dependencies, and learning paths.
-        Return only valid JSON.
+        Analyze this PDF text and create a concise concept outline optimized for AI-to-AI communication.
+
+        Create a JSON structure with:
+        1. "course_info": title, subject, difficulty_level
+        2. "sequential_concepts": array of concepts in learning order
+           - Each concept: name, brief_description, unit/chapter, prerequisites
+        3. "key_formulas": important formulas/equations (if any)
+        4. "important_notes": critical points for AI understanding
+
+        Text to analyze:
+        {text[:3000]}
+
+        Make this maximally efficient for another AI to understand and process.
+        Return ONLY valid JSON, no explanations.
         """
         
-        response = model.generate_content(prompt)
-        return json.loads(response.text)
+        response_text = await call_openrouter("x-ai/grok-4-fast", prompt, 1500)
+        return json.loads(response_text)
     
+    except Exception as e:
+        raise Exception(f"Failed to generate AI digest: {str(e)}")
+
+async def generate_relationships(structured_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Use Gemini 2.5 Flash Lite to transform AI digest into knowledge graph
+    """
+    try:
+        prompt = f"""
+        Transform this AI digest into a simple knowledge graph.
+
+        AI Digest: {json.dumps(structured_data, indent=2)}
+
+        Create a JSON object with:
+        1. "nodes": array of simple concept nodes
+           - Each node: name (string), ins (array of prerequisite node names), outs (array of dependent node names)
+        2. "graph_metadata": title, subject, total_concepts
+
+        Focus on prerequisite relationships. Keep it simple - just name and connections.
+        Return ONLY valid JSON, no markdown code blocks, no explanations, just the raw JSON object.
+        """
+
+        response = gemini_client.models.generate_content(
+            model='gemini-2.5-flash-lite',
+            contents=prompt,
+            config={
+                'temperature': 0.1,
+                'response_mime_type': 'application/json'
+            }
+        )
+
+        # Clean response text - remove markdown code blocks if present
+        response_text = response.text.strip()
+        if response_text.startswith('```json'):
+            response_text = response_text[7:]
+        if response_text.startswith('```'):
+            response_text = response_text[3:]
+        if response_text.endswith('```'):
+            response_text = response_text[:-3]
+        response_text = response_text.strip()
+
+        return json.loads(response_text)
+
     except Exception as e:
         raise Exception(f"Failed to generate relationships: {str(e)}")
 
@@ -101,7 +165,7 @@ async def call_openrouter(model: str, prompt: str, max_tokens: int = 1500) -> st
 
 async def generate_overview(graph_data: Dict[str, Any]) -> str:
     """
-    Use OpenRouter (DeepSeek) to generate study guide overview
+    Use OpenRouter (Grok 4 Fast) to generate study guide overview
     """
     try:
         prompt = f"""
@@ -119,14 +183,14 @@ async def generate_overview(graph_data: Dict[str, Any]) -> str:
         Make it concise but informative, suitable for students.
         """
         
-        return await call_openrouter("deepseek/deepseek-chat", prompt, 1500)
+        return await call_openrouter("x-ai/grok-4-fast", prompt, 1500)
     
     except Exception as e:
         raise Exception(f"Failed to generate overview: {str(e)}")
 
 async def generate_audio_script(graph_data: Dict[str, Any]) -> str:
     """
-    Use OpenRouter (DeepSeek) to generate audio script for podcast/newsletter
+    Use OpenRouter (Grok 4 Fast) to generate audio script for podcast/newsletter
     """
     try:
         prompt = f"""
@@ -145,7 +209,7 @@ async def generate_audio_script(graph_data: Dict[str, Any]) -> str:
         Write for audio delivery - use conversational tone, natural transitions.
         """
         
-        return await call_openrouter("deepseek/deepseek-chat", prompt, 1000)
+        return await call_openrouter("x-ai/grok-4-fast", prompt, 1000)
     
     except Exception as e:
         raise Exception(f"Failed to generate audio script: {str(e)}")
@@ -157,17 +221,19 @@ async def generate_audio(script_text: str) -> str:
     try:
         # Initialize ElevenLabs client with API key
         client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
-        
-        # Generate audio using ElevenLabs
-        audio = client.generate(
+
+        # Generate audio using ElevenLabs text-to-speech
+        audio = client.text_to_speech.convert(
+            voice_id="JBFqnCBsd6RMkjVDRZzb",  # Rachel - Professional, clear voice
             text=script_text,
-            voice="Rachel",  # Professional, clear voice
-            model="eleven_multilingual_v2"
+            model_id="eleven_multilingual_v2",
+            output_format="mp3_44100_128"
         )
-        
-        # In a real implementation, you'd save this to cloud storage
+
+        # In a real implementation, you'd save this to cloud storage (S3/Vercel Blob)
         # For now, return a placeholder URL
+        # TODO: Implement actual audio file storage and return real URL
         return "https://example.com/generated-audio.mp3"
-    
+
     except Exception as e:
         raise Exception(f"Failed to generate audio: {str(e)}")

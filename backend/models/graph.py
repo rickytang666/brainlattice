@@ -20,6 +20,14 @@ class StructuredTextResponse(BaseModel):
     success: bool
     error_message: Optional[str] = None
 
+class DigestRequest(BaseModel):
+    text: str
+
+class DigestResponse(BaseModel):
+    digest_data: Dict[str, Any]
+    success: bool
+    error_message: Optional[str] = None
+
 class RelationshipRequest(BaseModel):
     structured_data: Dict[str, Any]
 
