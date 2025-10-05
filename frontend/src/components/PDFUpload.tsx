@@ -138,22 +138,22 @@ export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <Card className="p-8">
+      <Card className="p-8 border-cyan-500/30 bg-card/50 backdrop-blur-sm">
         <div className="text-center mb-6">
-          <IconFileText className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            Upload Your PDF
+          <IconFileText className="h-12 w-12 text-cyan-400 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-foreground mb-2 font-mono">
+            UPLOAD YOUR PDF
           </h3>
-          <p className="text-gray-600 dark:text-gray-300">
-            Drag and drop your PDF file here or click to browse
+          <p className="text-muted-foreground font-mono">
+            DRAG AND DROP YOUR PDF FILE HERE OR CLICK TO BROWSE
           </p>
         </div>
 
         <div
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+          className={`border-2 border-dashed rounded-sm p-8 text-center transition-all duration-300 ${
             isDragOver
-              ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
-              : "border-gray-300 dark:border-gray-600"
+              ? "border-cyan-500 bg-cyan-500/10 backdrop-blur-sm"
+              : "border-cyan-500/30 bg-card/50 backdrop-blur-sm"
           } ${isUploading ? "pointer-events-none opacity-50" : ""}`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -162,31 +162,31 @@ export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
           {isUploading ? (
             <div className="space-y-4">
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <p className="text-sm font-medium text-foreground font-mono">
                   {uploadStage}
                 </p>
                 <Progress value={uploadProgress} className="w-full" />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {uploadProgress}% complete
+                <p className="text-xs text-muted-foreground font-mono">
+                  {uploadProgress}% COMPLETE
                 </p>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
-              <IconUpload className="h-8 w-8 text-gray-400 mx-auto" />
+              <IconUpload className="h-8 w-8 text-cyan-400 mx-auto" />
               <div>
                 <Button
                   onClick={() => document.getElementById("file-input")?.click()}
                   variant="outline"
-                  className="mb-2"
+                  className="mb-2 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300 font-mono"
                 >
-                  Choose File
+                  CHOOSE FILE
                 </Button>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  or drag and drop your PDF here
+                <p className="text-sm text-muted-foreground font-mono">
+                  OR DRAG AND DROP YOUR PDF HERE
                 </p>
               </div>
               <input
@@ -201,34 +201,34 @@ export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
         </div>
 
         {error && (
-          <div className="mt-4 p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+          <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-sm backdrop-blur-sm">
             <div className="flex items-center">
-              <IconX className="h-5 w-5 text-red-600 dark:text-red-400 mr-2" />
-              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+              <IconX className="h-5 w-5 text-red-400 mr-2" />
+              <p className="text-sm text-red-400 font-mono">{error}</p>
             </div>
           </div>
         )}
 
         {uploadProgress === 100 && (
-          <div className="mt-4 p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+          <div className="mt-4 p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-sm backdrop-blur-sm">
             <div className="flex items-center">
-              <IconCheck className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
-              <p className="text-sm text-green-800 dark:text-green-200">
-                PDF processed successfully!
+              <IconCheck className="h-5 w-5 text-cyan-400 mr-2" />
+              <p className="text-sm text-cyan-400 font-mono">
+                PDF PROCESSED SUCCESSFULLY!
               </p>
             </div>
           </div>
         )}
 
         {graphData && (
-          <Card className="mt-6 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Knowledge Graph
+          <Card className="mt-6 p-6 border-cyan-500/30 bg-card/50 backdrop-blur-sm">
+            <h3 className="text-lg font-bold text-foreground mb-4 font-mono">
+              KNOWLEDGE GRAPH
             </h3>
-            <div className="mb-4 p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded">
-              <p className="text-sm text-green-800 dark:text-green-200 mb-3">
-                🕸️ Knowledge graph generated with nodes and relationships from
-                the AI digest.
+            <div className="mb-4 p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-sm backdrop-blur-sm">
+              <p className="text-sm text-cyan-400 mb-3 font-mono">
+                🕸️ KNOWLEDGE GRAPH GENERATED WITH NODES AND RELATIONSHIPS FROM
+                THE AI DIGEST.
               </p>
               <button
                 onClick={() => {
@@ -240,9 +240,9 @@ export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
                   // Navigate to graph page
                   router.push("/graph");
                 }}
-                className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+                className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-black rounded-sm font-semibold font-mono tracking-wide transition-colors shadow-sm"
               >
-                View Knowledge Graph →
+                VIEW KNOWLEDGE GRAPH →
               </button>
             </div>
           </Card>

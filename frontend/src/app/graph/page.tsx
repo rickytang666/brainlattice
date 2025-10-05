@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import KnowledgeGraph from "@/components/KnowledgeGraph";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import Logo from "@/components/Logo";
+import { IconArrowLeft } from "@tabler/icons-react";
 
 export default function GraphPage() {
   const router = useRouter();
@@ -37,15 +40,29 @@ export default function GraphPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            {error}
-          </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Please select a project from the home page to view its graph.
-          </p>
-          <Button onClick={() => router.push("/")}>← Back to Projects</Button>
+      <div className="min-h-screen bg-grid-pattern">
+        {/* Header */}
+        <header className="flex justify-between items-center p-6 border-b border-cyan-500/30 backdrop-blur-sm bg-background/80">
+          <Logo size="md" showText={true} />
+          <ThemeToggle />
+        </header>
+
+        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-foreground mb-4 font-mono">
+              {error}
+            </h2>
+            <p className="text-muted-foreground mb-6 text-lg">
+              Please select a project from the home page to view its graph.
+            </p>
+            <Button
+              onClick={() => router.push("/")}
+              className="bg-cyan-500 hover:bg-cyan-600 text-black font-semibold font-mono tracking-wide"
+            >
+              <IconArrowLeft className="h-4 w-4 mr-2" />
+              BACK TO PROJECTS
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -53,11 +70,19 @@ export default function GraphPage() {
 
   if (!graphData) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-300">
-            Loading graph data...
-          </p>
+      <div className="min-h-screen bg-grid-pattern">
+        {/* Header */}
+        <header className="flex justify-between items-center p-6 border-b border-cyan-500/30 backdrop-blur-sm bg-background/80">
+          <Logo size="md" showText={true} />
+          <ThemeToggle />
+        </header>
+
+        <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+          <div className="text-center">
+            <p className="text-muted-foreground text-lg font-mono">
+              LOADING GRAPH DATA...
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -72,33 +97,42 @@ export default function GraphPage() {
   };
 
   return (
-    <div className="h-screen w-screen bg-gray-50 dark:bg-gray-900 p-4 flex flex-col">
-      {/* Back Button */}
-      <div className="mb-4">
-        <Button
-          onClick={handleBack}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          ← Back to {projectId ? "Project" : "Projects"}
-        </Button>
-      </div>
+    <div className="min-h-screen bg-grid-pattern">
+      {/* Header */}
+      <header className="flex justify-between items-center p-6 border-b border-cyan-500/30 backdrop-blur-sm bg-background/80">
+        <Logo size="md" showText={true} />
+        <ThemeToggle />
+      </header>
 
-      {/* Graph */}
-      <div className="flex-1">
-        <KnowledgeGraph
-          graphData={
-            graphData as {
-              nodes: Array<{ name: string; ins: string[]; outs: string[] }>;
-              graph_metadata: {
-                title: string;
-                subject: string;
-                total_concepts: number;
-                depth_levels: number;
-              };
+      <div className="p-6 flex flex-col h-[calc(100vh-80px)]">
+        {/* Back Button */}
+        <div className="mb-6">
+          <Button
+            onClick={handleBack}
+            variant="outline"
+            className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300 font-mono"
+          >
+            <IconArrowLeft className="h-4 w-4 mr-2" />
+            BACK TO {projectId ? "PROJECT" : "PROJECTS"}
+          </Button>
+        </div>
+
+        {/* Graph */}
+        <div className="flex-1">
+          <KnowledgeGraph
+            graphData={
+              graphData as {
+                nodes: Array<{ name: string; ins: string[]; outs: string[] }>;
+                graph_metadata: {
+                  title: string;
+                  subject: string;
+                  total_concepts: number;
+                  depth_levels: number;
+                };
+              }
             }
-          }
-        />
+          />
+        </div>
       </div>
     </div>
   );
