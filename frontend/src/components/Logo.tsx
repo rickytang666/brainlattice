@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 
 interface LogoProps {
@@ -29,8 +30,9 @@ export default function Logo({
   };
 
   return (
-    <div
-      className={`flex items-center space-x-3 ${className}`}
+    <Link
+      href="/"
+      className={`flex items-center space-x-3 cursor-pointer ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -73,6 +75,6 @@ export default function Logo({
           BrainLattice
         </h1>
       )}
-    </div>
+    </Link>
   );
 }

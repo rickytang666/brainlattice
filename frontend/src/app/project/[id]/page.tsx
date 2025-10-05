@@ -205,7 +205,7 @@ export default function ProjectPage() {
           <p className="text-red-600 dark:text-red-400">
             {error || "Project not found"}
           </p>
-          <Button onClick={() => router.push("/")} className="mt-4">
+          <Button onClick={() => router.push("/projects")} className="mt-4">
             ← Back to Projects
           </Button>
         </Card>
@@ -224,7 +224,7 @@ export default function ProjectPage() {
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Back Button */}
         <Button
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/projects")}
           variant="outline"
           className="mb-8 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300 font-mono"
         >

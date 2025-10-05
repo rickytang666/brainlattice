@@ -1,120 +1,189 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { IconPlus } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
-import PDFUpload from "@/components/PDFUpload";
-import ProjectList from "@/components/ProjectList";
 import Logo from "@/components/Logo";
+import {
+  IconArrowRight,
+  IconBrain,
+  IconBoltFilled,
+  IconFlameFilled,
+} from "@tabler/icons-react";
 
-export default function Home() {
+export default function IntroPage() {
   const router = useRouter();
-  const [showUpload, setShowUpload] = useState(false);
-  const [hasSeenIntro, setHasSeenIntro] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [showElements, setShowElements] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
-    // Check if user has seen intro
-    const introSeen = localStorage.getItem("hasSeenIntro");
-    if (!introSeen) {
-      router.push("/intro");
-    } else {
-      setHasSeenIntro(true);
-      // Trigger fade-in animation after a short delay
-      setTimeout(() => setIsVisible(true), 100);
-    }
-  }, [router]);
+    // Trigger animations on mount
+    const timer1 = setTimeout(() => setIsVisible(true), 100);
+    const timer2 = setTimeout(() => setShowElements(true), 800);
 
-  if (!hasSeenIntro) {
-    return (
-      <div className="min-h-screen bg-grid-pattern flex items-center justify-center">
-        <div className="text-center">
-          <Logo size="lg" showText={true} />
-          <p className="text-muted-foreground mt-4 font-mono">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, []);
+
+  const handleGetStarted = () => {
+    setIsTransitioning(true);
+    localStorage.setItem("hasSeenIntro", "true");
+
+    // Wait for animation to complete before navigating
+    setTimeout(() => {
+      router.push("/projects");
+    }, 800);
+  };
 
   return (
     <div
-      className={`min-h-screen flex flex-col bg-grid-pattern transition-all duration-700 ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+      className={`min-h-screen bg-grid-pattern flex flex-col items-center justify-center relative overflow-hidden transition-all duration-800 ${
+        isTransitioning
+          ? "opacity-0 scale-95 blur-sm"
+          : "opacity-100 scale-100 blur-0"
       }`}
     >
-      {/* Header */}
-      <header className="flex justify-between items-center p-6 border-b border-cyan-500/30 backdrop-blur-sm bg-background/80">
-        <Logo size="md" showText={true} />
-        <div className="flex items-center gap-4">
-          <Button
-            onClick={() => router.push("/intro")}
-            variant="ghost"
-            className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 font-mono text-sm"
-          >
-            VIEW INTRO
-          </Button>
-          <ThemeToggle />
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Floating brain icons */}
+        <div
+          className={`absolute top-20 left-10 text-cyan-400/20 transition-all duration-2000 ${
+            showElements ? "animate-pulse" : "opacity-0"
+          }`}
+          style={{ animationDelay: "0s" }}
+        >
+          <IconBrain className="h-16 w-16" />
         </div>
-      </header>
+        <div
+          className={`absolute top-40 right-20 text-cyan-400/15 transition-all duration-2000 ${
+            showElements ? "animate-pulse" : "opacity-0"
+          }`}
+          style={{ animationDelay: "1s" }}
+        >
+          <IconBoltFilled className="h-12 w-12" />
+        </div>
+        <div
+          className={`absolute bottom-32 left-20 text-cyan-400/10 transition-all duration-2000 ${
+            showElements ? "animate-pulse" : "opacity-0"
+          }`}
+          style={{ animationDelay: "2s" }}
+        >
+          <IconFlameFilled className="h-20 w-20" />
+        </div>
+        <div
+          className={`absolute bottom-20 right-32 text-cyan-400/20 transition-all duration-2000 ${
+            showElements ? "animate-pulse" : "opacity-0"
+          }`}
+          style={{ animationDelay: "1.5s" }}
+        >
+          <IconBrain className="h-14 w-14" />
+        </div>
+      </div>
 
-      {/* Main Content */}
-      <main className="flex-1 px-6 py-8">
-        {!showUpload ? (
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-10">
-              <h2 className="text-4xl font-bold text-foreground mb-3 tracking-tight">
-                YOUR <span className="text-cyan-400 font-mono">PROJECTS</span>
-              </h2>
-              <p className="text-muted-foreground text-lg font-light">
-                Browse and manage your knowledge graphs
-              </p>
+      {/* Main content */}
+      <div className="text-center z-10 max-w-4xl mx-auto px-6">
+        {/* Logo with animation */}
+        <div
+          className={`mb-8 transition-all duration-1000 ${
+            isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
+          }`}
+        >
+          <Logo size="lg" showText={false} className="justify-center" />
+        </div>
+
+        {/* Title with stagger animation */}
+        <h1
+          className={`text-7xl md:text-8xl font-bold text-foreground mb-6 transition-all duration-1000 ${
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          }`}
+          style={{
+            transitionDelay: "200ms",
+            fontFamily: "var(--font-space-grotesk)",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          BrainLattice
+        </h1>
+
+        {/* Punchline with animation */}
+        <div
+          className={`mb-12 transition-all duration-1000 ${
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          }`}
+          style={{ transitionDelay: "400ms" }}
+        >
+          <p className="text-2xl md:text-3xl font-light mb-4 font-mono">
+            Your hell textbook just became ✨
+            <span className="italic font-serif text-cyan-400">
+              comeback mode
+            </span>
+            ✨
+          </p>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-light">
+            Drop that <span>200-page nightmare</span> → Get an{" "}
+            <span className="italic font-serif text-cyan-400">
+              actual brain map
+            </span>{" "}
+            that makes sense
+            <br />
+            <span className="text-cyan-400 font-mono text-sm mt-2 block">
+              No cap, this is straight fire 🔥
+            </span>
+          </p>
+        </div>
+
+        {/* CTA Button with animation */}
+        <div
+          className={`transition-all duration-1000 ${
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          }`}
+          style={{ transitionDelay: "600ms" }}
+        >
+          <Button
+            onClick={handleGetStarted}
+            size="lg"
+            className="bg-cyan-500 hover:bg-cyan-600 text-black font-bold px-12 py-6 text-xl rounded-sm border-glow-cyan transition-all duration-300 hover:scale-105 font-mono tracking-wide"
+          >
+            LET&apos;S GET <span className="italic font-serif">COOKING</span>
+            <IconArrowRight className="ml-2 h-6 w-6" />
+          </Button>
+        </div>
+
+        {/* Subtitle */}
+        <div
+          className={`mt-8 transition-all duration-1000 ${
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          }`}
+          style={{ transitionDelay: "800ms" }}
+        >
+          <p className="text-sm text-muted-foreground/70 font-mono">
+            Stop suffering through{" "}
+            <span className="text-cyan-400">unreadable walls of text</span> •
+            Start actually{" "}
+            <span className="font-bold">understanding stuff</span>
+          </p>
+        </div>
+      </div>
+
+      {/* Transition Loading Overlay */}
+      {isTransitioning && (
+        <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="relative mb-6">
+              <div className="w-16 h-16 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin mx-auto"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 bg-cyan-400 rounded-full animate-pulse"></div>
+              </div>
             </div>
-
-            {/* Project List */}
-            <ProjectList />
-
-            {/* Upload Button */}
-            <div className="mt-12 flex justify-center">
-              <Button
-                onClick={() => setShowUpload(true)}
-                size="lg"
-                className="relative bg-cyan-500 hover:bg-cyan-600 text-black font-semibold px-10 py-7 text-lg border-glow-cyan transition-all duration-300 hover:scale-105"
-              >
-                <IconPlus className="mr-2 h-6 w-6" />
-                <span className="font-mono tracking-wide">
-                  UPLOAD NEW PROJECT
-                </span>
-              </Button>
-            </div>
+            <p className="text-cyan-400 font-mono text-lg animate-pulse">
+              Loading your comeback...
+            </p>
           </div>
-        ) : (
-          <div className="max-w-4xl mx-auto">
-            {/* Back Button */}
-            <Button
-              onClick={() => setShowUpload(false)}
-              variant="outline"
-              className="mb-8 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300 font-mono"
-            >
-              ← BACK TO PROJECTS
-            </Button>
-
-            <div className="text-center mb-10">
-              <h2 className="text-5xl font-bold text-foreground mb-4 tracking-tight">
-                UPLOAD NEW{" "}
-                <span className="text-cyan-400 font-mono">PROJECT</span>
-              </h2>
-              <p className="text-xl text-muted-foreground font-light">
-                Transform your PDF into an interactive knowledge graph
-              </p>
-            </div>
-
-            {/* Upload Section */}
-            <PDFUpload onComplete={() => setShowUpload(false)} />
-          </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@
 
 _Textbook becomes mind map, **before** you even finish reading._
 
-**BrainLattice** = your brain's neural network + the lattice structure of knowledge. Because learning should work like your mind does.
+**BrainLattice** = your brain's neural network + the lattice structure of knowledge. Because learning should work the way your mind does.
 
 </div>
 
@@ -14,9 +14,9 @@ _Textbook becomes mind map, **before** you even finish reading._
 
 Traditional learning is backwards. You read 200 pages sequentially, memorize isolated facts, and somehow expect to understand how everything connects. It's like trying to understand a city by walking down one street.
 
-Your brain thinks in networks, not lines. When you truly get something, you see how concept A influences concept B, which builds toward concept C. That's the difference between knowing facts and understanding systems.
+Your brain thinks in networks, not lines. When you truly understand something, you see how concept A influences concept B, which builds toward concept C. That's the difference between knowing facts and understanding systems.
 
-BrainLattice flips this. Upload a textbook, get the entire landscape first. See connections, identify core concepts, dive deep into what matters. Perfect for course catchup, exam prep, or just getting complex subjects.
+BrainLattice flips this. Upload a textbook, get the entire landscape first. See connections, identify core concepts, dive deep into what matters. Perfect for course catchup, exam prep, or understanding complex subjects.
 
 ## Features
 
@@ -90,7 +90,7 @@ FIREBASE_SERVICE_ACCOUNT_PATH=secrets/firebase_private.json
 - **PyPDF** - PDF text extraction
 - **OpenRouter (Grok 4 Fast)** - AI digest, cheatsheets, audio scripts
 - **Google Gemini 2.5 Flash Lite** - Deep concept analysis, relationship mapping
-- **Google Gemini 2.0 Flash Lite** - Overview of concepts when the user cmd + shift + clicks on a node
+- **Google Gemini 2.0 Flash Lite** - Overview of concepts when user Cmd+Shift+clicks on a node
 - **ElevenLabs** - Text-to-speech audio generation
 - **Firebase Firestore** - NoSQL database
 - **Docker** - Containerization
@@ -114,4 +114,4 @@ FIREBASE_SERVICE_ACCOUNT_PATH=secrets/firebase_private.json
 
 _Your brain thinks in networks. Your textbook should too._
 
-_Studying with BrainLattice is navigating the earth on the atmosphere._
+_Studying with BrainLattice is just likenavigating the earth on the atmosphere._

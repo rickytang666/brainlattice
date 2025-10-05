@@ -105,12 +105,19 @@ export default function ConceptInsightsPanel({
     }
   }, [conceptName, graphMetadata, relatedConcepts]);
 
+  // Clear insights when concept changes or panel closes
+  useEffect(() => {
+    setInsights(null);
+    setError("");
+    setLoading(false);
+  }, [conceptName]);
+
   // Auto-fetch insights when panel opens
   useEffect(() => {
-    if (isOpen && !insights && !loading) {
+    if (isOpen && !loading) {
       fetchInsights();
     }
-  }, [isOpen, insights, loading, fetchInsights]);
+  }, [isOpen, fetchInsights]);
 
   if (!isOpen) return null;
 

@@ -56,7 +56,7 @@ export default function GraphPage() {
               Please select a project from the home page to view its graph.
             </p>
             <Button
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/projects")}
               className="bg-cyan-500 hover:bg-cyan-600 text-black font-semibold font-mono tracking-wide"
             >
               <IconArrowLeft className="h-4 w-4 mr-2" />
@@ -92,7 +92,7 @@ export default function GraphPage() {
     if (projectId) {
       router.push(`/project/${projectId}`);
     } else {
-      router.push("/");
+      router.push("/projects");
     }
   };
 
