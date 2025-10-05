@@ -79,7 +79,9 @@ export default function ConceptInsightsPanel({
         related_concepts: relatedConcepts,
       };
 
-      const response = await fetch("/api/concept-insights", {
+      const API_BASE_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const response = await fetch(`${API_BASE_URL}/concept-insights`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
