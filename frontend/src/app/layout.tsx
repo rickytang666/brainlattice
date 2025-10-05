@@ -16,9 +16,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BrainLattice - AI-Powered Knowledge Graphs",
-  description:
-    "Upload massive course PDFs → get interactive knowledge graphs + AI study materials",
+  title: "BrainLattice - textbook 2 mind map",
+  description: "Upload. See the network. Study smarter.",
   icons: {
     icon: "/favicon.ico",
   },

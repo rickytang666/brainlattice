@@ -8,6 +8,20 @@ _Textbook becomes mind map, **before** you even finish reading._
 
 </div>
 
+<!-- Badges -->
+
+[![Next.js 14](https://img.shields.io/badge/Next.js-14-black?logo=nextdotjs)](https://nextjs.org/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-%2306B6D4.svg?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Shadcn](https://img.shields.io/badge/Shadcn-UI-000000?logo=shadcn&logoColor=white)](https://ui.shadcn.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-%23009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Firebase](https://img.shields.io/badge/Firebase-ffca28?logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![OpenRouter](https://img.shields.io/badge/OpenRouter-111111)](https://openrouter.ai/)
+[![Google Gemini](https://img.shields.io/badge/Gemini-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
+[![ElevenLabs](https://img.shields.io/badge/ElevenLabs-Voice-orange)](https://www.elevenlabs.io/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![GCP](https://img.shields.io/badge/Google%20Cloud-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/)
+[![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white)](https://vercel.com/)
+
 ---
 
 ## Why It Exists
