@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="frontend/public/brainlattice.png" alt="BrainLattice Logo" width="200">
+<img src="frontend/public/brainlattice.png" alt="BrainLattice Logo" width="350">
 
 _Textbook becomes mind map, **before** you even finish reading._
 
@@ -82,3 +82,4 @@ Frontend: Connect repo to Vercel
 ---
 
 _Your brain thinks in networks. Your textbook should too._
+_Studying with BrainLattice is navigating the earth on the atmosphere._
