@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { IconPlus } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -9,14 +10,46 @@ import ProjectList from "@/components/ProjectList";
 import Logo from "@/components/Logo";
 
 export default function Home() {
+  const router = useRouter();
   const [showUpload, setShowUpload] = useState(false);
+  const [hasSeenIntro, setHasSeenIntro] = useState(false);
+
+  useEffect(() => {
+    // Check if user has seen intro
+    const introSeen = localStorage.getItem("hasSeenIntro");
+    if (!introSeen) {
+      router.push("/intro");
+    } else {
+      setHasSeenIntro(true);
+    }
+  }, [router]);
+
+  if (!hasSeenIntro) {
+    return (
+      <div className="min-h-screen bg-grid-pattern flex items-center justify-center">
+        <div className="text-center">
+          <Logo size="lg" showText={true} />
+          <p className="text-muted-foreground mt-4 font-mono">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-grid-pattern">
       {/* Header */}
       <header className="flex justify-between items-center p-6 border-b border-cyan-500/30 backdrop-blur-sm bg-background/80">
         <Logo size="md" showText={true} />
-        <ThemeToggle />
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={() => router.push("/intro")}
+            variant="ghost"
+            className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 font-mono text-sm"
+          >
+            VIEW INTRO
+          </Button>
+          <ThemeToggle />
+        </div>
       </header>
 
       {/* Main Content */}
