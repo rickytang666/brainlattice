@@ -476,115 +476,81 @@ async def generate_overview(digest_data: Dict[str, Any], graph_data: Optional[Di
         graph_metadata = graph_data.get('graph_metadata', {}) if graph_data else {}
         
         prompt = f"""
-        Create a comprehensive, beautifully formatted Markdown study guide/cheatsheet based on this AI digest.
+        You're helping your best friend crush their exam. They need a NO-BS overview that cuts straight to what matters.
+
+        COURSE: {course_info.get('title', 'Study Guide')} ({course_info.get('subject', 'Unknown')})
+        DIFFICULTY: {course_info.get('difficulty_level', 'Unknown')}
+
+        CONCEPTS TO MASTER:
+        {json.dumps(sequential_concepts[:20], indent=2)}
         
-        COURSE INFORMATION:
-        - Title: {course_info.get('title', 'Study Guide')}
-        - Subject: {course_info.get('subject', 'Unknown')}
-        - Difficulty: {course_info.get('difficulty_level', 'Unknown')}
-        {f"- Total Concepts: {graph_metadata.get('total_concepts', 0)}" if graph_metadata else ""}
+        FORMULAS TO MEMORIZE:
+        {json.dumps(key_formulas[:15], indent=2) if key_formulas else "None"}
         
-        SEQUENTIAL CONCEPTS:
-        {json.dumps(sequential_concepts[:30], indent=2)}
+        TECHNIQUES THAT ACTUALLY WORK:
+        {json.dumps(techniques_methods[:10], indent=2) if techniques_methods else "None"}
         
-        KEY FORMULAS & EQUATIONS:
-        {json.dumps(key_formulas[:20], indent=2) if key_formulas else "None specified"}
+        RULES & THEOREMS:
+        {json.dumps(properties_rules[:10], indent=2) if properties_rules else "None"}
         
-        TECHNIQUES & METHODS:
-        {json.dumps(techniques_methods[:15], indent=2) if techniques_methods else "None specified"}
+        EXAMPLES THAT MATTER:
+        {json.dumps(specific_examples[:8], indent=2) if specific_examples else "None"}
         
-        PROPERTIES & RULES:
-        {json.dumps(properties_rules[:15], indent=2) if properties_rules else "None specified"}
-        
-        SPECIFIC EXAMPLES:
-        {json.dumps(specific_examples[:10], indent=2) if specific_examples else "None specified"}
-        
-        IMPORTANT NOTES:
-        {json.dumps(important_notes[:10], indent=2) if important_notes else "None specified"}
-        
-        Create a Markdown document with the following structure:
-        
-        # [Title] - Study Guide & Cheatsheet
-        
-        > Generated knowledge map for efficient learning
-        
-        ## 📚 Course Overview
-        - Brief description of the subject and scope
-        - Learning objectives
-        - Difficulty level assessment
-        
-        ## 🎯 Core Concepts
-        For each major concept from the sequential_concepts:
-        - **Concept Name** (from sequential_concepts)
-        - Brief description
-        - Unit/chapter context
-        - Prerequisites needed
-        
-        ## 📐 Key Formulas & Equations
-        List all important formulas from key_formulas section:
-        - Formula name or description
-        - When to use it
-        - Key variables or parameters
-        Use $ for inline math: $E = mc^2$ or $$ for display math
-        
-        ## 🔧 Techniques & Methods
-        From techniques_methods section:
-        - Step-by-step procedures
-        - When to apply each technique
-        - Tips and tricks
-        
-        ## 📋 Properties & Rules
-        From properties_rules section:
-        - Mathematical properties
-        - Important theorems
-        - Rules to remember
-        
-        ## 💡 Important Notes & Insights
-        From important_notes section:
-        - Critical insights
+        GOTCHAS TO AVOID:
+        {json.dumps(important_notes[:8], indent=2) if important_notes else "None"}
+
+        Create a CRUSH-THE-EXAM overview with this structure:
+
+        # {course_info.get('title', 'Study Guide')} - The Stuff That Actually Matters
+
+        ## 🎯 Core Concepts (Master These = You're Golden)
+        List ONLY the essential concepts. Be direct:
+        - **Concept Name**: What it is, why it matters, when to use it
+        - No fluff, just the facts
+
+        ## 📐 Formulas You Need (Stop Forgetting These)
+        List the actual formulas with:
+        - Formula: $actual_formula_here$
+        - When to use: One line explanation
+        - Watch out for: Common mistakes
+
+        ## 🔧 Problem-Solving Techniques
+        Step-by-step methods that actually work:
+        - **Technique Name**: Step 1, Step 2, Step 3
+        - Pro tip: One insider tip
+
+        ## ⚡ Quick Rules & Theorems
+        The rules that show up on EVERY exam:
+        - **Rule Name**: What it says + when to use it
+
+        ## 💡 Exam Hacks & Gotchas
+        Stuff that trips people up:
         - Common mistakes to avoid
-        - Key relationships between concepts
-        
-        ## 🗺️ Learning Path
-        Recommended study order based on sequential_concepts and prerequisites:
-        1. **Foundation Concepts**: Start here (concepts with no/few prerequisites)
-        2. **Intermediate Concepts**: Build on foundations
-        3. **Advanced Concepts**: Final topics requiring prior knowledge
-        
-        ## 📖 Examples & Applications
-        From specific_examples section:
-        - Concrete examples
-        - Real-world applications
-        - Practice problems to try
-        
-        ## ✅ Quick Reference Cheatsheet
-        A condensed one-page summary of the most critical formulas, concepts, and rules
-        
-        ---
-        
-        **Formatting Requirements:**
-        - Use proper Markdown headers (# ## ###)
-        - Use **bold** for concept names and emphasis
-        - Use bullet points and numbered lists
-        - Use > blockquotes for important notes
-        - For math expressions, preferred using LaTeX notation. e.g. $E = mc^2$
-        - Use --- for section dividers
-        - Keep it visually scannable and well-organized
-        - Make it printer-friendly
-        - Focus on practical study value
-        
-        **Content Instructions:**
-        - Use ALL the information provided from the digest sections above
-        - Include actual formula content from key_formulas (not just names)
-        - Reference specific examples from specific_examples section
-        - Include all techniques from techniques_methods
-        - List all properties/rules from properties_rules
-        - Incorporate all important_notes insights
-        - Follow the sequential_concepts order for learning path
-        
-        **Tone:** Professional, clear, student-friendly. This is a study tool optimized for exam prep and quick reference.
-        
-        Generate the complete Markdown document now:
+        - Tricks that save time
+        - What professors love to test
+
+        ## 🚀 Study Order (Don't Study Random Stuff)
+        Master in this order:
+        1. **Foundation**: [List 3-4 core concepts]
+        2. **Build Up**: [List 4-5 intermediate concepts]  
+        3. **Advanced**: [List 2-3 final concepts]
+
+        ## 📋 Last-Minute Cheat Sheet
+        The absolute essentials you need memorized:
+        - Top 5 formulas: $formula1$, $formula2$, etc.
+        - Top 3 concepts: Brief definitions
+        - Top 3 rules: Quick statements
+
+        **TONE**: You're their smart friend who already aced this class. Be encouraging but direct. Use "you" and "your". No corporate speak. Tease them a little but make them feel confident they'll crush it.
+
+        **FORMATTING**: 
+        - Use **bold** for concept/formula names
+        - Use $math$ for formulas
+        - Keep it scannable
+        - No unnecessary sections
+        - Be concise but complete
+
+        Generate the overview now:
         """
         
         return await call_openrouter("x-ai/grok-4-fast", prompt, 3500)

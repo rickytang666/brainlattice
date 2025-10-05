@@ -10,10 +10,7 @@ import {
   IconFileText,
   IconX,
   IconCheck,
-  IconBrain,
-  IconBolt,
   IconSparkles,
-  IconLoader,
 } from "@tabler/icons-react";
 import {
   extractPDFText,
