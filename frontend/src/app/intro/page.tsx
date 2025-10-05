@@ -105,7 +105,7 @@ export default function IntroPage() {
             letterSpacing: "-0.02em",
           }}
         >
-          BRAINLATTICE
+          BrainLattice
         </h1>
 
         {/* Punchline with animation */}

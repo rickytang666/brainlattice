@@ -1,230 +1,84 @@
-# 🧠 BrainLattice
+<div align="center">
 
-_Upload 200-page PDFs → Get Knowledge Graphs + AI Study Guide_
+<img src="frontend/public/brainlattice.png" alt="BrainLattice Logo" width="200">
 
-Transform massive course PDFs into interactive concept graphs with AI-powered study materials. Perfect for students who want to understand the big picture and see how concepts connect.
+_Textbook becomes mind map, **before** you even finish reading._
 
-## ✨ Features
+**BrainLattice** = your brain's neural network + the lattice structure of knowledge. Because learning should work like your mind does.
 
-- **PDF Upload**: Drag-and-drop PDF upload with progress tracking
-- **AI Processing**: Multi-model AI pipeline for text extraction and analysis
-- **Interactive Knowledge Graph**: Visualize concept relationships using React Flow
-- **Study Materials**: Generate overviews, audio scripts, and downloadable study guides
-- **Responsive Design**: Works on desktop and mobile with dark/light theme support
-
-## 🚀 Quick Start
-
-### Backend Setup
-
-1. Navigate to backend directory:
-
-```bash
-cd backend
-```
-
-2. Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-3. Set up environment variables in `.env`:
-
-```bash
-# AI Service API Keys
-GEMINI_API_KEY=your_gemini_api_key
-OPENROUTER_API_KEY=your_openrouter_api_key
-ELEVENLABS_API_KEY=your_elevenlabs_api_key
-
-# Firebase Configuration
-FIREBASE_SERVICE_ACCOUNT_PATH=secrets/firebase_private.json
-```
-
-4. Start the backend server:
-
-```bash
-python main.py
-```
-
-The API will be available at `http://localhost:8000`
-
-### Frontend Setup
-
-1. Navigate to frontend directory:
-
-```bash
-cd frontend
-```
-
-2. Install dependencies:
-
-```bash
-npm install
-```
-
-3. Create `.env.local` file:
-
-```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
-```
-
-4. Start the development server:
-
-```bash
-npm run dev
-```
-
-The frontend will be available at `http://localhost:3000`
-
-## 🏗️ Architecture
-
-### Backend (Python FastAPI)
-
-- **PDF Processing**: PyPDF2 for text extraction
-- **AI Pipeline**: Multi-model approach using OpenRouter (Grok 4 Fast) and Gemini 2.5 Flash Lite
-- **Database**: Firebase Firestore for project storage
-- **API**: RESTful endpoints for all operations
-
-### Frontend (Next.js 14)
-
-- **Upload**: Drag-and-drop PDF upload with progress tracking
-- **Visualization**: React Flow for interactive knowledge graphs
-- **Study Materials**: Overview generation and audio script creation
-- **UI**: TailwindCSS with dark/light theme support
-
-## 📊 AI Processing Pipeline
-
-1. **PDF → Text**: Extract raw text using PyPDF2
-2. **Text → AI Digest**: OpenRouter (Grok 4 Fast) creates structured concept outline
-3. **Digest → Knowledge Graph**: Gemini 2.5 Flash Lite generates relationships and hierarchy
-4. **Graph → Study Materials**: OpenRouter generates overviews and audio scripts
-5. **Script → Audio**: ElevenLabs converts scripts to audio files
-
-## 🎯 API Endpoints
-
-- `POST /api/extract` - Extract text from PDF
-- `POST /api/digest` - Create AI digest from text
-- `POST /api/relationships` - Generate knowledge graph
-- `POST /api/overview` - Generate study guide overview
-- `POST /api/audio-script` - Generate audio script
-- `POST /api/audio` - Generate audio from script
-- `POST /api/project/save` - Save project to database
-- `GET /api/project/{id}` - Retrieve project data
-
-## 🛠️ Tech Stack
-
-### Backend
-
-- **FastAPI**: Modern Python web framework
-- **PyPDF2**: PDF text extraction
-- **Google Gemini**: AI model for relationship mapping
-- **OpenRouter**: AI model for text processing
-- **ElevenLabs**: Text-to-speech for audio generation
-- **Firebase Firestore**: NoSQL database
-
-### Frontend
-
-- **Next.js 14**: React framework with App Router
-- **React Flow**: Interactive graph visualization
-- **TailwindCSS**: Utility-first CSS framework
-- **TypeScript**: Type-safe JavaScript
-- **Tabler Icons**: Icon library
-
-## 📁 Project Structure
-
-```
-brainlattice/
-├── backend/                     # Python FastAPI
-│   ├── main.py                 # FastAPI application
-│   ├── routers/                # API endpoints
-│   ├── services/               # Business logic
-│   ├── models/                 # Pydantic schemas
-│   └── requirements.txt        # Python dependencies
-├── frontend/                   # Next.js App
-│   ├── src/
-│   │   ├── app/               # App Router pages
-│   │   ├── components/        # React components
-│   │   └── lib/              # Utilities and API
-│   └── package.json           # Node dependencies
-└── README.md                  # This file
-```
-
-## 🎨 UI Components
-
-- **PDFUpload**: Drag-and-drop file upload with progress tracking
-- **KnowledgeGraph**: Interactive graph visualization with React Flow
-- **ProjectView**: Complete project view with all study materials
-- **ProjectList**: List of all user projects (future enhancement)
-
-## 🔧 Development
-
-### Backend Development
-
-```bash
-cd backend
-python main.py  # Start development server
-```
-
-### Frontend Development
-
-```bash
-cd frontend
-npm run dev     # Start development server
-```
-
-### Testing
-
-Upload a PDF file through the frontend interface and watch the processing pipeline in action!
-
-## 🚀 Deployment
-
-### Backend (Vercel Serverless)
-
-1. Install Vercel CLI: `npm i -g vercel`
-2. Deploy: `vercel --prod`
-
-### Frontend (Vercel)
-
-1. Connect GitHub repository to Vercel
-2. Automatic deployment on push to main branch
-
-## 📝 Environment Variables
-
-### Backend (.env)
-
-```bash
-GEMINI_API_KEY=your_gemini_api_key
-OPENROUTER_API_KEY=your_openrouter_api_key
-ELEVENLABS_API_KEY=your_elevenlabs_api_key
-FIREBASE_SERVICE_ACCOUNT_PATH=secrets/firebase_private.json
-```
-
-### Frontend (.env.local)
-
-```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🙏 Acknowledgments
-
-- **OpenRouter** for fast, free AI text processing
-- **Google Gemini** for relationship mapping
-- **ElevenLabs** for high-quality text-to-speech
-- **React Flow** for interactive graph visualization
-- **Firebase** for scalable database storage
+</div>
 
 ---
 
-**BrainLattice** - See your entire course as an interactive graph. Know what to learn first.
+## Why It Exists
+
+Traditional learning is backwards. You read 200 pages sequentially, memorize isolated facts, and somehow expect to understand how everything connects. It's like trying to understand a city by walking down one street.
+
+Your brain thinks in networks, not lines. When you truly get something, you see how concept A influences concept B, which builds toward concept C. That's the difference between knowing facts and understanding systems.
+
+BrainLattice flips this. Upload a textbook, get the entire landscape first. See connections, identify core concepts, dive deep into what matters. Perfect for course catchup, exam prep, or just getting complex subjects.
+
+## Features
+
+- **Drag & drop PDFs** - Works with any textbook, lecture notes, research papers
+- **Interactive knowledge graphs** - Click nodes, explore connections, zoom in/out
+- **AI-generated study guides** - Overviews, summaries, key concepts
+- **Audio study materials** - Listen to your content while commuting/gym
+- **Smart concept mapping** - AI finds relationships you'd miss reading linearly
+- **Dark/light themes** - Study at 3am without burning your eyes
+
+## How It Works
+
+1. **PDF → Text** → PyPDF2 extracts raw content
+2. **Text → Concepts** → OpenRouter (Grok 4 Fast) identifies key ideas and relationships
+3. **Concepts → Graph** → Gemini maps connections and hierarchy
+4. **Graph → Materials** → Generate overviews, audio scripts, study guides
+5. **Script → Audio** → ElevenLabs converts to speech for audio study guides
+
+Result: Interactive concept map you can explore + AI-generated study materials
+
+## Setup
+
+**Backend:**
+
+```bash
+cd backend
+pip install -r requirements.txt
+cp secrets/env.yaml .env  # Add your API keys
+python main.py
+```
+
+**Frontend:**
+
+```bash
+cd frontend
+npm install
+echo "NEXT_PUBLIC_API_URL=http://localhost:8000/api" > .env.local
+npm run dev
+```
+
+Go to `localhost:3000`, drop a PDF, watch it work.
+
+## API Keys
+
+```bash
+# backend/.env
+GEMINI_API_KEY=your_key          # Concept relationships
+OPENROUTER_API_KEY=your_key      # Text processing
+ELEVENLABS_API_KEY=your_key      # Audio generation
+FIREBASE_SERVICE_ACCOUNT_PATH=secrets/firebase_private.json
+```
+
+## Stack
+
+**Backend:** FastAPI + PyPDF2 + OpenRouter + Gemini + ElevenLabs + Firebase  
+**Frontend:** Next.js + React Flow + TailwindCSS + TypeScript
+
+## Deploy
+
+Backend: `vercel --prod`  
+Frontend: Connect repo to Vercel
+
+---
+
+_Your brain thinks in networks. Your textbook should too._

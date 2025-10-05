@@ -70,7 +70,7 @@ export default function Logo({
         <h1
           className={`font-bold tracking-tight text-cyan-400 text-glow-cyan font-mono ${textSizes[size]}`}
         >
-          BRAINLATTICE
+          BrainLattice
         </h1>
       )}
     </div>
