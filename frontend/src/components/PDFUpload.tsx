@@ -128,7 +128,7 @@ export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
         setCurrentTipIndex(0);
       }
     },
-    [onComplete]
+    [onComplete, tips]
   );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {

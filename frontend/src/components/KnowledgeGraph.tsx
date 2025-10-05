@@ -3,6 +3,7 @@
 import { useMemo, useRef, useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Card } from "@/components/ui/card";
+import ConceptInsightsPanel from "./ConceptInsightsPanel";
 
 // Dynamically import ForceGraph2D to avoid SSR issues
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
@@ -45,6 +46,10 @@ export default function KnowledgeGraph({ graphData }: KnowledgeGraphProps) {
   const [highlightLinks, setHighlightLinks] = useState(new Set<string>());
   const [prerequisiteNodes, setPrerequisiteNodes] = useState(new Set<string>());
   const [dependentNodes, setDependentNodes] = useState(new Set<string>());
+
+  // Concept insights panel state
+  const [insightsPanelOpen, setInsightsPanelOpen] = useState(false);
+  const [selectedConcept, setSelectedConcept] = useState<string>("");
 
   // Customize link distance after mount
   useEffect(() => {
@@ -114,6 +119,22 @@ export default function KnowledgeGraph({ graphData }: KnowledgeGraphProps) {
 
     return { nodes, links };
   }, [graphData]);
+
+  // Handle node click - check for cmd+shift+click to show insights
+  const handleNodeClick = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (node: any, event: any) => {
+      // Check for cmd+shift+click (Mac) or ctrl+shift+click (Windows/Linux)
+      const isCmdOrCtrl = event.metaKey || event.ctrlKey;
+      const isShift = event.shiftKey;
+
+      if (isCmdOrCtrl && isShift && node) {
+        setSelectedConcept(node.name);
+        setInsightsPanelOpen(true);
+      }
+    },
+    []
+  );
 
   // Handle node hover - highlight connected nodes and links
   const handleNodeHover = useCallback(
@@ -331,6 +352,7 @@ export default function KnowledgeGraph({ graphData }: KnowledgeGraphProps) {
           nodeLabel="name"
           nodeColor={nodeColor}
           onNodeHover={handleNodeHover}
+          onNodeClick={handleNodeClick}
           nodeCanvasObjectMode="before"
           nodeCanvasObject={nodeCanvasObject}
           linkDirectionalArrowLength={3}
@@ -353,7 +375,9 @@ export default function KnowledgeGraph({ graphData }: KnowledgeGraphProps) {
           <span className="text-cyan-400">→</span>{" "}
           <strong className="text-foreground">TIP:</strong> Hover over nodes to
           see connections • Drag nodes to rearrange • Scroll to zoom • Click and
-          drag background to pan
+          drag background to pan •{" "}
+          <span className="text-cyan-400">Cmd+Shift+Click</span> nodes for AI
+          insights
         </p>
         {hoveredNode && (
           <div className="text-sm text-foreground mt-4 pt-4 border-t border-cyan-500/20">
@@ -384,6 +408,22 @@ export default function KnowledgeGraph({ graphData }: KnowledgeGraphProps) {
           </div>
         )}
       </div>
+
+      {/* Concept Insights Panel */}
+      <ConceptInsightsPanel
+        isOpen={insightsPanelOpen}
+        onClose={() => setInsightsPanelOpen(false)}
+        conceptName={selectedConcept}
+        graphMetadata={graphData.graph_metadata}
+        relatedConcepts={[
+          ...new Set([
+            ...(graphData.nodes.find((n) => n.name === selectedConcept)?.ins ||
+              []),
+            ...(graphData.nodes.find((n) => n.name === selectedConcept)?.outs ||
+              []),
+          ]),
+        ]}
+      />
     </div>
   );
 }
