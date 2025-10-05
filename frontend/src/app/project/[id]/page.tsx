@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import Logo from "@/components/Logo";
 import {
   IconArrowLeft,
   IconGraph,
@@ -212,30 +214,36 @@ export default function ProjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="min-h-screen bg-grid-pattern">
+      {/* Header */}
+      <header className="flex justify-between items-center p-6 border-b border-cyan-500/30 backdrop-blur-sm bg-background/80">
+        <Logo size="md" showText={true} />
+        <ThemeToggle />
+      </header>
+
+      <div className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Back Button */}
         <Button
           onClick={() => router.push("/")}
           variant="outline"
-          className="mb-6"
+          className="mb-8 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300 font-mono"
         >
           <IconArrowLeft className="h-4 w-4 mr-2" />
-          Back to Projects
+          BACK TO PROJECTS
         </Button>
 
         {/* Project Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+        <div className="mb-10">
+          <h1 className="text-5xl font-bold text-foreground mb-4 tracking-tight">
             {project.title}
           </h1>
-          <div className="flex flex-wrap gap-4 text-gray-600 dark:text-gray-300">
+          <div className="flex flex-wrap gap-6 text-muted-foreground font-mono">
             <div className="flex items-center">
-              <IconBook className="h-5 w-5 mr-2" />
+              <IconBook className="h-5 w-5 mr-2 text-cyan-400/70" />
               <span className="text-lg">{project.subject}</span>
             </div>
             <div className="flex items-center">
-              <IconCalendar className="h-5 w-5 mr-2" />
+              <IconCalendar className="h-5 w-5 mr-2 text-cyan-400/70" />
               <span className="text-lg">
                 {new Date(project.created_at).toLocaleDateString("en-US", {
                   year: "numeric",
@@ -248,65 +256,65 @@ export default function ProjectPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+          <Card className="p-6 border-cyan-500/30 bg-card/50 backdrop-blur-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  Total Concepts
+                <p className="text-sm text-muted-foreground mb-1 font-mono">
+                  TOTAL CONCEPTS
                 </p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                <p className="text-3xl font-bold text-foreground">
                   {project.total_concepts}
                 </p>
               </div>
-              <IconBrain className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+              <IconBrain className="h-12 w-12 text-cyan-400" />
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 border-cyan-500/30 bg-card/50 backdrop-blur-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  Depth Levels
+                <p className="text-sm text-muted-foreground mb-1 font-mono">
+                  DEPTH LEVELS
                 </p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                <p className="text-3xl font-bold text-foreground">
                   {project.depth_levels}
                 </p>
               </div>
-              <IconLayersLinked className="h-12 w-12 text-purple-600 dark:text-purple-400" />
+              <IconLayersLinked className="h-12 w-12 text-cyan-400" />
             </div>
           </Card>
         </div>
 
         {/* Action Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           {/* View Graph Button */}
-          <Card className="p-8 text-center">
-            <IconGraph className="h-16 w-16 mx-auto mb-4 text-blue-600 dark:text-blue-400" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Knowledge Graph
+          <Card className="p-8 text-center border-cyan-500/30 bg-card/50 backdrop-blur-sm">
+            <IconGraph className="h-16 w-16 mx-auto mb-4 text-cyan-400" />
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              KNOWLEDGE GRAPH
             </h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
+            <p className="text-muted-foreground mb-6 font-light">
               Explore the interactive visualization of concepts and their
               relationships
             </p>
             <Button
               onClick={handleViewGraph}
               size="lg"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg"
+              className="bg-cyan-500 hover:bg-cyan-600 text-black font-semibold px-8 py-6 text-lg font-mono tracking-wide"
             >
               <IconGraph className="h-6 w-6 mr-2" />
-              View Interactive Graph
+              VIEW GRAPH
             </Button>
           </Card>
 
           {/* Study Guide */}
-          <Card className="p-8 text-center">
-            <IconBook className="h-16 w-16 mx-auto mb-4 text-purple-600 dark:text-purple-400" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Study Guide
+          <Card className="p-8 text-center border-cyan-500/30 bg-card/50 backdrop-blur-sm">
+            <IconBook className="h-16 w-16 mx-auto mb-4 text-cyan-400" />
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              STUDY GUIDE
             </h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
+            <p className="text-muted-foreground mb-6 font-light">
               Generate a comprehensive markdown cheatsheet for download
             </p>
             <div className="flex gap-3 justify-center">
@@ -315,17 +323,17 @@ export default function ProjectPage() {
                 disabled={generatingOverview}
                 size="lg"
                 variant="outline"
-                className="px-8 py-6 text-lg"
+                className="px-8 py-6 text-lg border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300 font-mono"
               >
                 {generatingOverview ? (
                   <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600 mr-2"></div>
-                    Generating...
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-cyan-400 mr-2"></div>
+                    GENERATING...
                   </>
                 ) : (
                   <>
                     <IconRefresh className="h-6 w-6 mr-2" />
-                    {overview ? "Regenerate" : "Generate"}
+                    {overview ? "REGENERATE" : "GENERATE"}
                   </>
                 )}
               </Button>
@@ -333,10 +341,10 @@ export default function ProjectPage() {
                 <Button
                   onClick={downloadOverview}
                   size="lg"
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 text-lg"
+                  className="bg-cyan-500 hover:bg-cyan-600 text-black font-semibold px-8 py-6 text-lg font-mono tracking-wide"
                 >
                   <IconDownload className="h-6 w-6 mr-2" />
-                  Download
+                  DOWNLOAD
                 </Button>
               )}
             </div>

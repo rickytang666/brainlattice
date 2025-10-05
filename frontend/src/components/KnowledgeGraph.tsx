@@ -295,27 +295,34 @@ export default function KnowledgeGraph({ graphData }: KnowledgeGraphProps) {
 
   return (
     <div className="w-full">
-      <Card className="p-4 mb-4">
+      <Card className="p-6 mb-6 border-cyan-500/30 bg-card/50 backdrop-blur-sm">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-2xl font-bold text-foreground mb-1">
               {graphData.graph_metadata.title}
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+            <p className="text-sm text-muted-foreground font-mono">
               {graphData.graph_metadata.subject} •{" "}
-              {graphData.graph_metadata.total_concepts} concepts
+              <span className="text-cyan-400">
+                {graphData.graph_metadata.total_concepts}
+              </span>{" "}
+              concepts
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Depth: {graphData.graph_metadata.depth_levels} levels
+            <p className="text-sm text-muted-foreground font-mono">
+              Depth:{" "}
+              <span className="text-cyan-400">
+                {graphData.graph_metadata.depth_levels}
+              </span>{" "}
+              levels
             </p>
           </div>
         </div>
       </Card>
 
       <div
-        className="border rounded-lg overflow-hidden bg-white dark:bg-gray-900"
+        className="border border-cyan-500/30 rounded-sm overflow-hidden bg-card/30 backdrop-blur-sm"
         style={{ height: "calc(100vh - 200px)" }}
       >
         <ForceGraph2D
@@ -341,33 +348,36 @@ export default function KnowledgeGraph({ graphData }: KnowledgeGraphProps) {
         />
       </div>
 
-      <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-        <p className="text-sm text-gray-600 dark:text-gray-300">
-          💡 <strong>Tip:</strong> Hover over nodes to see connections • Drag
-          nodes to rearrange • Scroll to zoom • Click and drag background to pan
+      <div className="mt-6 p-6 bg-card/50 backdrop-blur-sm rounded-sm border border-cyan-500/30">
+        <p className="text-sm text-muted-foreground font-mono">
+          <span className="text-cyan-400">→</span>{" "}
+          <strong className="text-foreground">TIP:</strong> Hover over nodes to
+          see connections • Drag nodes to rearrange • Scroll to zoom • Click and
+          drag background to pan
         </p>
         {hoveredNode && (
-          <div className="text-sm text-gray-900 dark:text-white mt-2">
-            <p className="mb-1">
-              <strong>Hovering:</strong> {hoveredNode.name}
+          <div className="text-sm text-foreground mt-4 pt-4 border-t border-cyan-500/20">
+            <p className="mb-2 font-mono">
+              <strong className="text-cyan-400">HOVERING:</strong>{" "}
+              {hoveredNode.name}
             </p>
-            <div className="flex gap-4 flex-wrap">
-              <span className="flex items-center gap-1">
+            <div className="flex gap-6 flex-wrap font-mono text-xs">
+              <span className="flex items-center gap-2">
                 <span
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: "#3b82f6" }}
                 ></span>
-                <span className="text-blue-500">
-                  {prerequisiteNodes.size} prerequisites (ins)
+                <span className="text-blue-400">
+                  {prerequisiteNodes.size} PREREQUISITES
                 </span>
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-2">
                 <span
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: "#10b981" }}
                 ></span>
-                <span className="text-emerald-500">
-                  {dependentNodes.size} dependents (outs)
+                <span className="text-emerald-400">
+                  {dependentNodes.size} DEPENDENTS
                 </span>
               </span>
             </div>

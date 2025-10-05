@@ -2,24 +2,20 @@
 
 import { useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { IconBrain, IconPlus } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import PDFUpload from "@/components/PDFUpload";
 import ProjectList from "@/components/ProjectList";
+import Logo from "@/components/Logo";
 
 export default function Home() {
   const [showUpload, setShowUpload] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-grid-pattern">
       {/* Header */}
-      <header className="flex justify-between items-center p-6 border-b dark:border-gray-800">
-        <div className="flex items-center space-x-2">
-          <IconBrain className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            BrainLattice
-          </h1>
-        </div>
+      <header className="flex justify-between items-center p-6 border-b border-cyan-500/30 backdrop-blur-sm bg-background/80">
+        <Logo size="md" showText={true} />
         <ThemeToggle />
       </header>
 
@@ -27,11 +23,11 @@ export default function Home() {
       <main className="flex-1 px-6 py-8">
         {!showUpload ? (
           <div className="max-w-7xl mx-auto">
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Your Projects
+            <div className="mb-10">
+              <h2 className="text-4xl font-bold text-foreground mb-3 tracking-tight">
+                YOUR <span className="text-cyan-400 font-mono">PROJECTS</span>
               </h2>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-muted-foreground text-lg font-light">
                 Browse and manage your knowledge graphs
               </p>
             </div>
@@ -40,14 +36,16 @@ export default function Home() {
             <ProjectList />
 
             {/* Upload Button */}
-            <div className="mt-8 flex justify-center">
+            <div className="mt-12 flex justify-center">
               <Button
                 onClick={() => setShowUpload(true)}
                 size="lg"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg shadow-lg"
+                className="relative bg-cyan-500 hover:bg-cyan-600 text-black font-semibold px-10 py-7 text-lg border-glow-cyan transition-all duration-300 hover:scale-105"
               >
                 <IconPlus className="mr-2 h-6 w-6" />
-                Upload New Project
+                <span className="font-mono tracking-wide">
+                  UPLOAD NEW PROJECT
+                </span>
               </Button>
             </div>
           </div>
@@ -57,16 +55,17 @@ export default function Home() {
             <Button
               onClick={() => setShowUpload(false)}
               variant="outline"
-              className="mb-6"
+              className="mb-8 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300 font-mono"
             >
-              ← Back to Projects
+              ← BACK TO PROJECTS
             </Button>
 
-            <div className="text-center mb-8">
-              <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                Upload New Project
+            <div className="text-center mb-10">
+              <h2 className="text-5xl font-bold text-foreground mb-4 tracking-tight">
+                UPLOAD NEW{" "}
+                <span className="text-cyan-400 font-mono">PROJECT</span>
               </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-300">
+              <p className="text-xl text-muted-foreground font-light">
                 Transform your PDF into an interactive knowledge graph
               </p>
             </div>

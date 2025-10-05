@@ -153,12 +153,12 @@ export default function ProjectList() {
 
   if (projects.length === 0) {
     return (
-      <Card className="p-12 text-center">
-        <IconBrain className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-          No projects yet
+      <Card className="p-16 text-center border-cyan-500/30 bg-card/50 backdrop-blur-sm">
+        <IconBrain className="h-20 w-20 mx-auto mb-6 text-cyan-400/50" />
+        <h3 className="text-2xl font-bold text-foreground mb-3 font-mono tracking-wide">
+          NO PROJECTS YET
         </h3>
-        <p className="text-gray-600 dark:text-gray-300">
+        <p className="text-muted-foreground text-lg font-light">
           Upload your first PDF to get started!
         </p>
       </Card>
@@ -170,10 +170,10 @@ export default function ProjectList() {
       {projects.map((project) => (
         <Card
           key={project.id}
-          className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
+          className="p-6 hover:border-cyan-500/50 transition-all duration-300 cursor-pointer border-cyan-500/20 bg-card/50 backdrop-blur-sm hover:shadow-cyan-500/20 hover:shadow-lg group flex flex-col h-full"
           onClick={() => handleViewProject(project.id)}
         >
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start justify-between mb-4 flex-1">
             <div className="flex-1">
               {editingId === project.id ? (
                 <div className="flex items-center gap-2 mb-2">
@@ -208,7 +208,7 @@ export default function ProjectList() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2 flex-1">
+                  <h3 className="text-lg font-bold text-foreground line-clamp-2 flex-1 group-hover:text-cyan-400 transition-colors">
                     {project.title}
                   </h3>
                   <Button
@@ -218,37 +218,37 @@ export default function ProjectList() {
                       e.stopPropagation();
                       handleStartEdit(project.id, project.title);
                     }}
-                    className="shrink-0 h-8 w-8"
+                    className="shrink-0 h-8 w-8 hover:text-cyan-400 hover:bg-cyan-500/10"
                   >
                     <IconEdit className="h-4 w-4" />
                   </Button>
                 </div>
               )}
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-1">
-                <IconBook className="h-4 w-4 mr-1" />
+              <div className="flex items-center text-sm text-muted-foreground mb-1 font-mono">
+                <IconBook className="h-4 w-4 mr-2 text-cyan-400/70" />
                 {project.subject}
               </div>
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-1">
-                <IconBrain className="h-4 w-4 mr-1" />
+              <div className="flex items-center text-sm text-muted-foreground mb-1 font-mono">
+                <IconBrain className="h-4 w-4 mr-2 text-cyan-400/70" />
                 {project.total_concepts} concepts
               </div>
-              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                <IconCalendar className="h-4 w-4 mr-1" />
+              <div className="flex items-center text-sm text-muted-foreground/70 font-mono">
+                <IconCalendar className="h-4 w-4 mr-2 text-cyan-400/50" />
                 {new Date(project.created_at).toLocaleDateString()}
               </div>
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 mt-auto">
             <Button
               onClick={(e) => {
                 e.stopPropagation();
                 handleViewProject(project.id);
               }}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-black font-semibold font-mono tracking-wide"
             >
               <IconGraph className="h-4 w-4 mr-2" />
-              View Project
+              VIEW
             </Button>
             <Button
               onClick={(e) => {
@@ -257,7 +257,7 @@ export default function ProjectList() {
               }}
               variant="destructive"
               size="icon"
-              className="shrink-0"
+              className="shrink-0 hover:bg-red-600"
             >
               <IconTrash className="h-4 w-4" />
             </Button>
