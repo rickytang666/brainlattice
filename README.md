@@ -22,6 +22,7 @@ BrainLattice flips this. Upload a textbook, get the entire landscape first. See 
 
 - **Drag & drop PDFs** - Works with any textbook, lecture notes, research papers
 - **Interactive knowledge graphs** - Click nodes, explore connections, zoom in/out
+- **Deep concept exploration** - Cmd+Shift+click any node for detailed insights: overview, important formulas, theorems, related concepts
 - **AI-generated study guides** - Overviews, summaries, key concepts
 - **Audio study materials** - Listen to your content while commuting/gym
 - **Smart concept mapping** - AI finds relationships you'd miss reading linearly
@@ -29,7 +30,7 @@ BrainLattice flips this. Upload a textbook, get the entire landscape first. See 
 
 ## How It Works
 
-1. **PDF → Text** → PyPDF2 extracts raw content
+1. **PDF → Text** → PyPDF extracts raw content
 2. **Text → Concepts** → OpenRouter (Grok 4 Fast) identifies key ideas and relationships
 3. **Concepts → Graph** → Gemini maps connections and hierarchy
 4. **Graph → Materials** → Generate overviews, audio scripts, study guides
@@ -39,47 +40,78 @@ Result: Interactive concept map you can explore + AI-generated study materials
 
 ## Setup
 
+**Prerequisites:**
+
+- Python 3.8+
+- Node.js 18+
+- API keys (see below)
+
 **Backend:**
 
 ```bash
 cd backend
 pip install -r requirements.txt
-cp secrets/env.yaml .env  # Add your API keys
 python main.py
 ```
+
+Server runs on `http://localhost:8000`
 
 **Frontend:**
 
 ```bash
 cd frontend
 npm install
-echo "NEXT_PUBLIC_API_URL=http://localhost:8000/api" > .env.local
 npm run dev
 ```
 
-Go to `localhost:3000`, drop a PDF, watch it work.
+App runs on `http://localhost:3000`
+
+**Test it:**
+
+1. Go to `localhost:3000`
+2. Drop a PDF (textbook, lecture notes, etc.)
+3. Watch it process and generate your knowledge graph
 
 ## API Keys
 
 ```bash
 # backend/.env
-GEMINI_API_KEY=your_key          # Concept relationships
-OPENROUTER_API_KEY=your_key      # Text processing
-ELEVENLABS_API_KEY=your_key      # Audio generation
+GEMINI_API_KEY=your_key          # Deep concept analysis & relationships
+OPENROUTER_API_KEY=your_key      # AI digest, cheatsheets, audio scripts
+ELEVENLABS_API_KEY=your_key      # Text-to-speech audio generation
 FIREBASE_SERVICE_ACCOUNT_PATH=secrets/firebase_private.json
 ```
 
-## Stack
+## Tech Stack
 
-**Backend:** FastAPI + PyPDF2 + OpenRouter + Gemini + ElevenLabs + Firebase  
-**Frontend:** Next.js + React Flow + TailwindCSS + TypeScript
+**Backend:**
 
-## Deploy
+- **FastAPI** - Python web framework
+- **PyPDF** - PDF text extraction
+- **OpenRouter (Grok 4 Fast)** - AI digest, cheatsheets, audio scripts
+- **Google Gemini 2.5 Flash Lite** - Deep concept analysis, relationship mapping
+- **Google Gemini 2.0 Flash Lite** - Overview of concepts when the user cmd + shift + clicks on a node
+- **ElevenLabs** - Text-to-speech audio generation
+- **Firebase Firestore** - NoSQL database
+- **Docker** - Containerization
 
-Backend: `vercel --prod`  
-Frontend: Connect repo to Vercel
+**Frontend:**
+
+- **Next.js 14** - React framework with App Router
+- **React Force Graph** - Interactive 3D graph visualization
+- **TailwindCSS** - CSS framework with dark/light themes
+- **Shadcn UI** - Component library
+- **TypeScript** - Type-safe development
+- **Vercel** - Frontend hosting
+
+**Cloud & Deployment:**
+
+- **Google Cloud Platform** - Backend hosting
+- **Firebase** - Authentication, database, cloud functions
+- **Vercel** - Frontend deployment
 
 ---
 
 _Your brain thinks in networks. Your textbook should too._
+
 _Studying with BrainLattice is navigating the earth on the atmosphere._
