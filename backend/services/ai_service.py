@@ -695,6 +695,20 @@ async def generate_audio(script_text: str) -> str:
     except Exception as e:
         raise Exception(f"Failed to generate audio: {str(e)}")
 
+def fix_latex_json_escapes(text: str) -> str:
+    """
+    Fix LaTeX escape sequences that break JSON parsing
+    """
+    # Replace single backslashes that aren't already escaped
+    # This is a more conservative approach
+    import re
+    
+    # Fix unescaped backslashes in LaTeX commands (but not already escaped ones)
+    # Pattern: \ followed by letters, but not \\ (already escaped)
+    text = re.sub(r'(?<!\\)\\([a-zA-Z]+)', r'\\\\\1', text)
+    
+    return text
+
 async def generate_concept_insights(concept_name: str, context_data: Optional[dict] = None) -> dict:
     """
     Use Gemini 2.0 Flash Lite to generate concise insights about a concept
@@ -730,6 +744,7 @@ async def generate_concept_insights(concept_name: str, context_data: Optional[di
         - For math concepts, include the actual formulas using LaTeX notation
         - Use $inline math$ for inline formulas and $$display math$$ for centered equations
         - For non-math concepts, focus on key principles and relationships
+        - IMPORTANT: Double-escape all backslashes in LaTeX (e.g., \\frac not \\frac)
         
         Return ONLY valid JSON in this exact format:
         {{
@@ -759,8 +774,18 @@ async def generate_concept_insights(concept_name: str, context_data: Optional[di
             response_text = response_text[:-3]
         response_text = response_text.strip()
 
-        # Parse JSON response
-        insights = json.loads(response_text)
+        # Fix LaTeX escape sequences for JSON
+        response_text = fix_latex_json_escapes(response_text)
+
+        # Parse JSON response with better error handling
+        try:
+            insights = json.loads(response_text)
+        except json.JSONDecodeError as e:
+            print(f"JSON decode error: {e}")
+            print(f"Response text: {response_text}")
+            # Try to fix common JSON issues
+            response_text = fix_json_response(response_text)
+            insights = json.loads(response_text)
         
         return {
             "concept_name": concept_name,
