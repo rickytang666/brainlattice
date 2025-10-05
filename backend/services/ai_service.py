@@ -669,8 +669,18 @@ async def generate_audio(script_text: str) -> str:
     Use ElevenLabs to generate audio from script and return as base64 data URL
     """
     try:
+        # Validate inputs and environment
+        if not script_text or not script_text.strip():
+            raise Exception("script_text is empty; cannot generate audio")
+
+        api_key = os.getenv("ELEVENLABS_API_KEY")
+        if not api_key:
+            raise Exception(
+                "ELEVENLABS_API_KEY is not set. Set it locally and in Cloud Run env vars."
+            )
+
         # Initialize ElevenLabs client with API key
-        client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+        client = ElevenLabs(api_key=api_key)
 
         # Generate audio using ElevenLabs text-to-speech
         audio_generator = client.text_to_speech.convert(
@@ -693,7 +703,8 @@ async def generate_audio(script_text: str) -> str:
         return f"data:audio/mpeg;base64,{audio_base64}"
 
     except Exception as e:
-        raise Exception(f"Failed to generate audio: {str(e)}")
+        # Surface upstream error details to help diagnose (e.g., quota, auth)
+        raise Exception(f"Failed to generate audio: {e}")
 
 def fix_latex_json_escapes(text: str) -> str:
     """
