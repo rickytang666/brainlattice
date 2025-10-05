@@ -32,6 +32,8 @@ Your brain thinks in networks, not lines. When you truly understand something, y
 
 BrainLattice flips this. Upload a textbook, get the entire landscape first. See connections, identify core concepts, dive deep into what matters. Perfect for course catchup, exam prep, or understanding complex subjects.
 
+**Moral**: conceptual networks > "Unit 1, Unit 2, Lesson 3..." notes. Linear note-taking hides relationships; networks surface them so you learn faster and remember longer.
+
 ## Features
 
 - **Drag & drop PDFs** - Works with any textbook, lecture notes, research papers
@@ -124,8 +126,12 @@ FIREBASE_SERVICE_ACCOUNT_PATH=secrets/firebase_private.json
 - **Firebase** - Authentication, database, cloud functions
 - **Vercel** - Frontend deployment
 
+## View more about BrainLattice 👇
+
+[Devpost](https://devpost.com/software/brainlattice)
+
 ---
 
 _Your brain thinks in networks. Your textbook should too._
 
-_Studying with BrainLattice is just likenavigating the earth on the atmosphere._
+_Studying with BrainLattice is just like navigating the earth on the atmosphere._
