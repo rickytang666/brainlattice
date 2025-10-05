@@ -10,6 +10,10 @@ import {
   IconFileText,
   IconX,
   IconCheck,
+  IconBrain,
+  IconBolt,
+  IconSparkles,
+  IconLoader,
 } from "@tabler/icons-react";
 import {
   extractPDFText,
@@ -32,6 +36,18 @@ export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
   const [graphData, setGraphData] = useState<Record<string, unknown> | null>(
     null
   );
+  const [processingTips, setProcessingTips] = useState<string[]>([]);
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
+
+  // Fun tips to show during processing
+  const tips = [
+    "💡 AI is reading your PDF like a speed reader on caffeine",
+    "🧠 Your brain map is being constructed node by node",
+    "⚡ Knowledge connections are being forged in real-time",
+    "🔥 Turning your boring textbook into comeback material",
+    "✨ Almost ready to make your study game strong",
+    "🚀 Your knowledge graph is about to go live",
+  ];
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -49,6 +65,13 @@ export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
       setError("");
       setUploadProgress(0);
       setUploadStage("Processing PDF...");
+      setProcessingTips(tips);
+      setCurrentTipIndex(0);
+
+      // Rotate tips every 3 seconds during processing
+      const tipInterval = setInterval(() => {
+        setCurrentTipIndex((prev) => (prev + 1) % tips.length);
+      }, 3000);
 
       try {
         // Step 1: Extract text from PDF
@@ -86,6 +109,7 @@ export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
 
         setUploadProgress(100);
         setUploadStage("Complete!");
+        clearInterval(tipInterval);
 
         // Stop the spinner
         setIsUploading(false);
@@ -98,10 +122,13 @@ export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
           setTimeout(() => onComplete(), 2000); // Give user time to see success message
         }
       } catch (err) {
+        clearInterval(tipInterval);
         setError(err instanceof Error ? err.message : "Upload failed");
         setIsUploading(false);
         setUploadProgress(0);
         setUploadStage("");
+        setProcessingTips([]);
+        setCurrentTipIndex(0);
       }
     },
     [onComplete]
@@ -173,6 +200,21 @@ export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
                   {uploadProgress}% COMPLETE
                 </p>
               </div>
+
+              {/* Rotating tips */}
+              {processingTips.length > 0 && (
+                <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 backdrop-blur-sm">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <IconSparkles className="h-4 w-4 text-cyan-400 animate-pulse" />
+                    <span className="text-xs text-cyan-400 font-mono uppercase tracking-wide">
+                      Fun Fact
+                    </span>
+                  </div>
+                  <p className="text-sm text-foreground font-mono animate-fade-in">
+                    {processingTips[currentTipIndex]}
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
