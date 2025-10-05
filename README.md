@@ -98,6 +98,12 @@ ELEVENLABS_API_KEY=your_key      # Text-to-speech audio generation
 FIREBASE_SERVICE_ACCOUNT_PATH=secrets/firebase_private.json
 ```
 
+> [!WARNING] **⚠️ ElevenLabs Production Note:**  
+> ElevenLabs Free Tier works for **localhost development only**. Cloud deployments (GCP, AWS, etc.) are blocked due to shared IP abuse prevention. For production audio generation, either:
+>
+> - Upgrade to [ElevenLabs Paid Plan](https://elevenlabs.io/pricing) ($5/month)
+> - Switch to other TTS services
+
 ## Tech Stack
 
 **Backend:**
