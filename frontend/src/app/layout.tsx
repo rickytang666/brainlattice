@@ -21,8 +21,6 @@ export const metadata: Metadata = {
     "Upload massive course PDFs → get interactive knowledge graphs + AI study materials",
   icons: {
     icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
   },
 };
 
