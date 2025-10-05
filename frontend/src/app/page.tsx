@@ -13,6 +13,7 @@ export default function Home() {
   const router = useRouter();
   const [showUpload, setShowUpload] = useState(false);
   const [hasSeenIntro, setHasSeenIntro] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     // Check if user has seen intro
@@ -21,6 +22,8 @@ export default function Home() {
       router.push("/intro");
     } else {
       setHasSeenIntro(true);
+      // Trigger fade-in animation after a short delay
+      setTimeout(() => setIsVisible(true), 100);
     }
   }, [router]);
 
@@ -36,7 +39,11 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-grid-pattern">
+    <div
+      className={`min-h-screen flex flex-col bg-grid-pattern transition-all duration-700 ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+      }`}
+    >
       {/* Header */}
       <header className="flex justify-between items-center p-6 border-b border-cyan-500/30 backdrop-blur-sm bg-background/80">
         <Logo size="md" showText={true} />

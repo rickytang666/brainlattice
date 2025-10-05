@@ -15,6 +15,7 @@ export default function IntroPage() {
   const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
   const [showElements, setShowElements] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     // Trigger animations on mount
@@ -28,12 +29,23 @@ export default function IntroPage() {
   }, []);
 
   const handleGetStarted = () => {
+    setIsTransitioning(true);
     localStorage.setItem("hasSeenIntro", "true");
-    router.push("/");
+
+    // Wait for animation to complete before navigating
+    setTimeout(() => {
+      router.push("/");
+    }, 800);
   };
 
   return (
-    <div className="min-h-screen bg-grid-pattern flex flex-col items-center justify-center relative overflow-hidden">
+    <div
+      className={`min-h-screen bg-grid-pattern flex flex-col items-center justify-center relative overflow-hidden transition-all duration-800 ${
+        isTransitioning
+          ? "opacity-0 scale-95 blur-sm"
+          : "opacity-100 scale-100 blur-0"
+      }`}
+    >
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Floating brain icons */}
@@ -135,7 +147,7 @@ export default function IntroPage() {
             size="lg"
             className="bg-cyan-500 hover:bg-cyan-600 text-black font-bold px-12 py-6 text-xl rounded-sm border-glow-cyan transition-all duration-300 hover:scale-105 font-mono tracking-wide"
           >
-            LET'S GET <span className="italic font-serif">COOKING</span>
+            LET&apos;S GET <span className="italic font-serif">COOKING</span>
             <IconArrowRight className="ml-2 h-6 w-6" />
           </Button>
         </div>
@@ -155,6 +167,23 @@ export default function IntroPage() {
           </p>
         </div>
       </div>
+
+      {/* Transition Loading Overlay */}
+      {isTransitioning && (
+        <div className="absolute inset-0 bg-background/90 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="relative mb-6">
+              <div className="w-16 h-16 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin mx-auto"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 bg-cyan-400 rounded-full animate-pulse"></div>
+              </div>
+            </div>
+            <p className="text-cyan-400 font-mono text-lg animate-pulse">
+              Loading your comeback...
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
