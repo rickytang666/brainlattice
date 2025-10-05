@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Card } from "@/components/ui/card";
 
@@ -30,9 +30,21 @@ interface KnowledgeGraphProps {
   };
 }
 
+interface GraphNode {
+  id: string;
+  name: string;
+  val: number;
+  [key: string]: unknown;
+}
+
 export default function KnowledgeGraph({ graphData }: KnowledgeGraphProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fgRef = useRef<any>(undefined);
+  const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
+  const [highlightNodes, setHighlightNodes] = useState(new Set<string>());
+  const [highlightLinks, setHighlightLinks] = useState(new Set<string>());
+  const [prerequisiteNodes, setPrerequisiteNodes] = useState(new Set<string>());
+  const [dependentNodes, setDependentNodes] = useState(new Set<string>());
 
   // Customize link distance after mount
   useEffect(() => {
@@ -103,6 +115,184 @@ export default function KnowledgeGraph({ graphData }: KnowledgeGraphProps) {
     return { nodes, links };
   }, [graphData]);
 
+  // Handle node hover - highlight connected nodes and links
+  const handleNodeHover = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (node: any) => {
+      setHoveredNode(node);
+
+      // Pause/resume graph physics when hovering
+      if (fgRef.current) {
+        if (node) {
+          // Pause the simulation when hovering
+          fgRef.current.pauseAnimation();
+        } else {
+          // Resume the simulation when not hovering
+          fgRef.current.resumeAnimation();
+        }
+      }
+
+      if (!node) {
+        setHighlightNodes(new Set());
+        setHighlightLinks(new Set());
+        setPrerequisiteNodes(new Set());
+        setDependentNodes(new Set());
+        return;
+      }
+
+      const connectedNodes = new Set<string>();
+      const connectedLinks = new Set<string>();
+      const prerequisites = new Set<string>();
+      const dependents = new Set<string>();
+
+      // Add the hovered node itself
+      connectedNodes.add(node.id);
+
+      // Find all links connected to this node
+      graphForceData.links.forEach((link) => {
+        const sourceId =
+          typeof link.source === "object" && link.source !== null
+            ? (link.source as { id: string }).id
+            : String(link.source);
+        const targetId =
+          typeof link.target === "object" && link.target !== null
+            ? (link.target as { id: string }).id
+            : String(link.target);
+
+        if (sourceId === node.id || targetId === node.id) {
+          // Add the link
+          connectedLinks.add(`${sourceId}-${targetId}`);
+
+          // Differentiate between prerequisites (ins) and dependents (outs)
+          if (sourceId === node.id) {
+            // This node points to targetId, so targetId is a dependent (out)
+            connectedNodes.add(targetId);
+            dependents.add(targetId);
+          } else {
+            // sourceId points to this node, so sourceId is a prerequisite (in)
+            connectedNodes.add(sourceId);
+            prerequisites.add(sourceId);
+          }
+        }
+      });
+
+      setHighlightNodes(connectedNodes);
+      setHighlightLinks(connectedLinks);
+      setPrerequisiteNodes(prerequisites);
+      setDependentNodes(dependents);
+    },
+    [graphForceData.links]
+  );
+
+  // Generate consistent color from string (hash-based)
+  const getNodeDefaultColor = useCallback((nodeId: string): string => {
+    let hash = 0;
+    for (let i = 0; i < nodeId.length; i++) {
+      hash = nodeId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash % 360);
+    return `hsl(${hue}, 70%, 60%)`;
+  }, []);
+
+  // Custom node color based on hover state
+  const nodeColor = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (node: any): string => {
+      if (!hoveredNode) {
+        // Default: colorful nodes based on ID
+        return getNodeDefaultColor(node.id);
+      }
+
+      if (node.id === hoveredNode.id) {
+        // Hovered node - bright highlight
+        return "#ef4444"; // red-500
+      }
+
+      if (prerequisiteNodes.has(node.id)) {
+        // Prerequisites (ins) - blue
+        return "#3b82f6"; // blue-500
+      }
+
+      if (dependentNodes.has(node.id)) {
+        // Dependents (outs) - green
+        return "#10b981"; // emerald-500
+      }
+
+      // Dimmed nodes
+      return "#d1d5db"; // gray-300
+    },
+    [hoveredNode, prerequisiteNodes, dependentNodes, getNodeDefaultColor]
+  );
+
+  // Custom link color based on hover state
+  const linkColor = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (link: any) => {
+      if (!hoveredNode) {
+        return "#94a3b8"; // slate-400 - default
+      }
+
+      const sourceId =
+        typeof link.source === "object" && link.source !== null
+          ? (link.source as { id: string }).id
+          : String(link.source);
+      const targetId =
+        typeof link.target === "object" && link.target !== null
+          ? (link.target as { id: string }).id
+          : String(link.target);
+      const linkId = `${sourceId}-${targetId}`;
+
+      if (highlightLinks.has(linkId)) {
+        return "#ef4444"; // red-500 - highlighted
+      }
+
+      return "#e5e7eb"; // gray-200 - dimmed
+    },
+    [hoveredNode, highlightLinks]
+  );
+
+  // Custom link width based on hover state
+  const linkWidth = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (link: any) => {
+      if (!hoveredNode) {
+        return 1;
+      }
+
+      const sourceId =
+        typeof link.source === "object" && link.source !== null
+          ? (link.source as { id: string }).id
+          : String(link.source);
+      const targetId =
+        typeof link.target === "object" && link.target !== null
+          ? (link.target as { id: string }).id
+          : String(link.target);
+      const linkId = `${sourceId}-${targetId}`;
+
+      return highlightLinks.has(linkId) ? 3 : 0.5;
+    },
+    [hoveredNode, highlightLinks]
+  );
+
+  // Custom node opacity based on hover state
+  const nodeCanvasObject = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (node: any, ctx: CanvasRenderingContext2D) => {
+      if (!hoveredNode) {
+        // Default rendering
+        return;
+      }
+
+      // Set opacity for dimmed nodes
+      if (node.id !== hoveredNode.id && !highlightNodes.has(node.id)) {
+        ctx.globalAlpha = 0.2;
+      } else {
+        ctx.globalAlpha = 1;
+      }
+    },
+    [hoveredNode, highlightNodes]
+  );
+
   return (
     <div className="w-full">
       <Card className="p-4 mb-4">
@@ -132,11 +322,14 @@ export default function KnowledgeGraph({ graphData }: KnowledgeGraphProps) {
           ref={fgRef}
           graphData={graphForceData}
           nodeLabel="name"
-          nodeAutoColorBy="id"
+          nodeColor={nodeColor}
+          onNodeHover={handleNodeHover}
+          nodeCanvasObjectMode="before"
+          nodeCanvasObject={nodeCanvasObject}
           linkDirectionalArrowLength={3}
           linkDirectionalArrowRelPos={1}
-          linkColor={() => "#94a3b8"}
-          linkWidth={1}
+          linkColor={linkColor}
+          linkWidth={linkWidth}
           nodeRelSize={3}
           enableNodeDrag={true}
           enableZoomInteraction={true}
@@ -150,9 +343,36 @@ export default function KnowledgeGraph({ graphData }: KnowledgeGraphProps) {
 
       <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          💡 <strong>Tip:</strong> Drag nodes to rearrange • Scroll to zoom •
-          Click and drag background to pan
+          💡 <strong>Tip:</strong> Hover over nodes to see connections • Drag
+          nodes to rearrange • Scroll to zoom • Click and drag background to pan
         </p>
+        {hoveredNode && (
+          <div className="text-sm text-gray-900 dark:text-white mt-2">
+            <p className="mb-1">
+              <strong>Hovering:</strong> {hoveredNode.name}
+            </p>
+            <div className="flex gap-4 flex-wrap">
+              <span className="flex items-center gap-1">
+                <span
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: "#3b82f6" }}
+                ></span>
+                <span className="text-blue-500">
+                  {prerequisiteNodes.size} prerequisites (ins)
+                </span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: "#10b981" }}
+                ></span>
+                <span className="text-emerald-500">
+                  {dependentNodes.size} dependents (outs)
+                </span>
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
