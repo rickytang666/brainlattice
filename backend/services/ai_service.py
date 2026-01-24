@@ -4,7 +4,7 @@ import json
 import re
 from google import genai
 import requests
-from fish_audio_sdk import Session, TTSRequest, TTSMessage
+from fish_audio_sdk import Session, TTSRequest
 from io import BytesIO
 
 from typing import Dict, Any, Optional
@@ -689,7 +689,7 @@ async def generate_audio(script_text: str) -> str:
         # Assuming we want a high quality English output
         
         audio_bytes = b""
-        async for chunk in session.tts(TTSRequest(
+        for chunk in session.tts(TTSRequest(
             reference_id="4f5c00a6-96d5-4137-a166-51d08e82d3b2", # Standard male voice
             text=script_text,
             format="mp3"
