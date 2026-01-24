@@ -3,6 +3,8 @@ venv=".venv"
 green='\033[0;32m'
 nc='\033[0m'
 
+cd "$(dirname "$0")"
+
 # ensure venv exists
 [ ! -d "$venv" ] && python3 -m venv $venv
 

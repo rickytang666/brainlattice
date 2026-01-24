@@ -114,10 +114,10 @@ export default function ConceptInsightsPanel({
 
   // Auto-fetch insights when panel opens
   useEffect(() => {
-    if (isOpen && !loading) {
+    if (isOpen && !loading && !insights && !error) {
       fetchInsights();
     }
-  }, [isOpen, fetchInsights]);
+  }, [isOpen, loading, insights, error, fetchInsights]);
 
   if (!isOpen) return null;
 

@@ -23,6 +23,15 @@ interface PDFUploadProps {
   onComplete?: () => void;
 }
 
+const TIPS = [
+  "💡 AI is reading your PDF like a speed reader on caffeine",
+  "🧠 Your brain map is being constructed node by node",
+  "⚡ Knowledge connections are being forged in real-time",
+  "🔥 Turning your boring textbook into comeback material",
+  "✨ Almost ready to make your study game strong",
+  "🚀 Your knowledge graph is about to go live",
+];
+
 export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
   const router = useRouter();
   const [isDragOver, setIsDragOver] = useState(false);
@@ -35,16 +44,6 @@ export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
   );
   const [processingTips, setProcessingTips] = useState<string[]>([]);
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
-
-  // Fun tips to show during processing
-  const tips = [
-    "💡 AI is reading your PDF like a speed reader on caffeine",
-    "🧠 Your brain map is being constructed node by node",
-    "⚡ Knowledge connections are being forged in real-time",
-    "🔥 Turning your boring textbook into comeback material",
-    "✨ Almost ready to make your study game strong",
-    "🚀 Your knowledge graph is about to go live",
-  ];
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -62,12 +61,12 @@ export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
       setError("");
       setUploadProgress(0);
       setUploadStage("Processing PDF...");
-      setProcessingTips(tips);
+        setProcessingTips(TIPS);
       setCurrentTipIndex(0);
 
       // Rotate tips every 3 seconds during processing
       const tipInterval = setInterval(() => {
-        setCurrentTipIndex((prev) => (prev + 1) % tips.length);
+        setCurrentTipIndex((prev) => (prev + 1) % TIPS.length);
       }, 3000);
 
       try {
@@ -128,7 +127,7 @@ export default function PDFUpload({ onComplete }: PDFUploadProps = {}) {
         setCurrentTipIndex(0);
       }
     },
-    [onComplete, tips]
+    [onComplete]
   );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
