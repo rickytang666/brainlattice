@@ -22,31 +22,23 @@ _Textbook becomes mind map, **before** you even finish reading._
 
 ## Overview
 
-Traditional learning forces linear consumption of non-linear information. **BrainLattice** flips this paradigm by transforming static PDF textbooks into interactive, explorable knowledge graphs. It uses advanced LLMs to extract core concepts, identify relationships, and generate high-fidelity study materials, allowing users to understand the "system" of a subject before memorizing the details.
+Traditional learning forces linear consumption of non-linear information. **BrainLattice** flips this paradigm by transforming static PDF textbooks into interactive, explorable knowledge graphs. It uses LLMs to extract core concepts, identify relationships, and generate high-fidelity study materials, allowing users to understand the "system" of a subject before memorizing the details.
 
 ## Key Features
 
-- **Interactive Knowledge Graphs**: Visualize concepts in 3D space. Zoom, pan, and explore connections dynamically.
-- **Deep Concept Analysis**: Click any node to retrieve AI-generated insights, including key formulas, theorems, and prerequisites.
-- **Automated content generation**: Instantly create study guides, cheatsheets, and summaries from raw PDF text.
-- **High-Fidelity Audio**: Listen to customized audio study guides generated via **Fish Audio** (replacing legacy ElevenLabs implementation).
-- **Flexible Ingestion**: Drag-and-drop support for textbooks, research papers, and lecture notes.
+- **Obsidian-like Knowledge Graph** - Spatially explore concepts. `Cmd + Shift + Click` to drill down into formulas, theorems, and prerequisites.
+- **Contextual Synthesis** - Auto-generates study guides and entity summaries from raw text.
+- **Audio Briefs** - Converts synthesized notes into podcast-style audio via Fish Audio.
+- **Universal Input** - Works with any text-heavy PDF: textbooks, research papers, lecture notes.
 
 ## Tech Stack
 
-### AI & Core Services
-
-- **Google Gemini 2.5 Flash Lite**: Deep concept extraction and relationship mapping.
-- **OpenRouter (Grok 4 Fast)**: Speed-optimized text summarization and study material generation.
-- **Fish Audio**: Cost-effective, high-quality text-to-speech engine.
-- **PyPDF**: Raw text extraction from documents.
-
-### Architecture
-
-- **Frontend**: Next.js, React Force Graph, TailwindCSS, Shadcn UI.
-- **Backend**: FastAPI (Python).
-- **Database**: Firebase Firestore.
-- **Infrastructure**: Docker, Google Cloud Run, Vercel.
+- **FastAPI + Next.js**
+- **Google Gemini 2.5 Flash** - Concept extraction & graph topology.
+- **Grok 4 (OpenRouter)** - Summarization & synthesis.
+- **Fish Audio** - Low-latency and cost-effective TTS.
+- **React Force Graph** - WebGL-powered visualization.
+- **Firebase** - Real-time data & auth.
 
 ## Getting Started
 
