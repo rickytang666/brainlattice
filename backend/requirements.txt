@@ -5,6 +5,6 @@ python-multipart==0.0.6
 pypdf
 google-genai
 requests==2.31.0
-elevenlabs
+fish-audio-sdk
 firebase-admin==6.2.0
 python-dotenv==1.0.0

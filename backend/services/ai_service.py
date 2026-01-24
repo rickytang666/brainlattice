@@ -4,7 +4,9 @@ import json
 import re
 from google import genai
 import requests
-from elevenlabs.client import ElevenLabs
+from fish_audio_sdk import Session, TTSRequest, TTSMessage
+from io import BytesIO
+
 from typing import Dict, Any, Optional
 
 # Load environment variables
@@ -666,33 +668,32 @@ async def generate_audio_script(digest_data: Dict[str, Any], graph_data: Optiona
 
 async def generate_audio(script_text: str) -> str:
     """
-    Use ElevenLabs to generate audio from script and return as base64 data URL
+    Use Fish Audio to generate audio from script and return as base64 data URL
     """
     try:
         # Validate inputs and environment
         if not script_text or not script_text.strip():
             raise Exception("script_text is empty; cannot generate audio")
 
-        api_key = os.getenv("ELEVENLABS_API_KEY")
+        api_key = os.getenv("FISH_AUDIO_API_KEY")
         if not api_key:
             raise Exception(
-                "ELEVENLABS_API_KEY is not set. Set it locally and in Cloud Run env vars."
+                "FISH_AUDIO_API_KEY is not set. Set it locally and in Cloud Run env vars."
             )
 
-        # Initialize ElevenLabs client with API key
-        client = ElevenLabs(api_key=api_key)
+        # Initialize Fish Audio session with API key
+        session = Session(api_key)
 
-        # Generate audio using ElevenLabs text-to-speech
-        audio_generator = client.text_to_speech.convert(
-            voice_id="pNInz6obpgDQGcFmaJgB",  # Adam - Deep, confident, casual buddy vibe
-            text=script_text,
-            model_id="eleven_multilingual_v2",
-            output_format="mp3_44100_128"
-        )
-
-        # Collect audio bytes from generator
+        # Generate audio using Fish Audio TTS
+        # Using a standard male voice ID as reference (can be customized)
+        # Assuming we want a high quality English output
+        
         audio_bytes = b""
-        for chunk in audio_generator:
+        async for chunk in session.tts(TTSRequest(
+            reference_id="4f5c00a6-96d5-4137-a166-51d08e82d3b2", # Standard male voice
+            text=script_text,
+            format="mp3"
+        )):
             audio_bytes += chunk
         
         # Convert to base64 for transmission
