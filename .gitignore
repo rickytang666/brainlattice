@@ -115,8 +115,9 @@ audio-output/
 *.fls
 *.synctex.gz
 
-# Context folder
+# misc
 context/
+plan/
 
 # Secrets
 secrets/
