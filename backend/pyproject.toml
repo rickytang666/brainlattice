@@ -5,10 +5,13 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "boto3>=1.42.52",
     "fastapi>=0.104.1",
-    "firebase-admin>=6.2.0",
     "fish-audio-sdk>=1.2.0",
     "google-genai>=1.63.0",
+    "openai>=2.21.0",
+    "pgvector>=0.4.2",
+    "psycopg2-binary>=2.9.11",
     "pydantic>=2.5.0",
     "pydantic-settings>=2.0.0",
     "pymupdf4llm>=0.3.4",
@@ -16,6 +19,7 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "python-multipart>=0.0.22",
     "requests>=2.31.0",
+    "sqlalchemy>=2.0.46",
     "uvicorn[standard]>=0.24.0",
 ]
 
