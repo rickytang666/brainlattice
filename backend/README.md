@@ -5,8 +5,11 @@ api server.
 ## setup
 
 ```bash
-pip install -r requirements.txt
-uvicorn main:app --reload
+# install dependencies
+uv sync
+
+# run server
+uv run uvicorn main:app
 ```
 
 ## env

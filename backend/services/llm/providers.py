@@ -10,8 +10,7 @@ def init_ai_services():
     """init ai service clients"""
     global gemini_client
     settings = get_settings()
-    # init gemini with sdk
-    print(f"debug: gemini key len: {len(settings.GEMINI_API_KEY) if settings.GEMINI_API_KEY else 0}")
+    # init gemini client
     gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 async def call_openrouter(model: str, prompt: str, max_tokens: int = 1500) -> str:

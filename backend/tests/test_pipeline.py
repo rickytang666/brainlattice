@@ -5,9 +5,8 @@ from datetime import datetime
 
 # config
 BASE_URL = "http://localhost:8000"
-# relative to project root or set from env
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
-PDF_PATH = os.path.join(CUR_DIR, "..", "test", "math.pdf")
+PDF_PATH = os.path.join(CUR_DIR, "..", "data", "math.pdf")
 OUTPUT_DIR = os.path.join(CUR_DIR, "..", "output")
 
 @pytest.fixture(scope="session", autouse=True)

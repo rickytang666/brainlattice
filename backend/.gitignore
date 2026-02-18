@@ -12,3 +12,7 @@ output/
 secrets/
 data/
 *.pdf
+
+# uv
+uv.lock
+.python-version
