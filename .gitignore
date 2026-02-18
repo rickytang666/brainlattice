@@ -127,3 +127,4 @@ test/
 output/backend/env.yaml
 backend/.env.yaml
 frontend/.env.local
+*.txt
