@@ -1,36 +1,34 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import extract, digest, relationships, overview, audio_script, audio, project, concept_insights
-from dotenv import load_dotenv
-import os
+from core.config import get_settings
+from services.llm.providers import init_ai_services
 
-# Load environment variables
-load_dotenv()
+# init settings
+settings = get_settings()
 
-# Initialize AI services (will fail gracefully if keys not set)
-from services.ai_service import init_ai_services
+# init ai services
 try:
     init_ai_services()
 except Exception as e:
-    print(f"Warning: AI services initialization failed: {e}")
-    print("App will start but AI features may not work until environment variables are set")
+    print(f"warning: ai services failed: {e}")
 
 app = FastAPI(
     title="BrainLattice API",
-    description="AI-powered PDF to Knowledge Graph conversion",
+    description="pdf to knowledge graph api",
     version="1.0.0"
 )
 
-# CORS middleware for frontend communication
+# cors
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins (tighten after frontend deployment)
-    allow_credentials=False,  # Must be False when allow_origins is "*"
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers
+# routers
 app.include_router(extract.router, prefix="/api", tags=["extract"])
 app.include_router(digest.router, prefix="/api", tags=["digest"])
 app.include_router(relationships.router, prefix="/api", tags=["relationships"])
@@ -42,7 +40,7 @@ app.include_router(concept_insights.router, prefix="/api", tags=["concept-insigh
 
 @app.get("/")
 async def root():
-    return {"message": "BrainLattice API is running!"}
+    return {"message": "api running"}
 
 @app.get("/health")
 async def health_check():

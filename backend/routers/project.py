@@ -11,90 +11,61 @@ class UpdateTitleRequest(BaseModel):
 
 @router.post("/project/save", response_model=ProjectSaveResponse)
 async def save_project(request: ProjectSaveRequest):
-    """
-    Save project data (digest + graph) to Firebase
-    """
+    """save project (digest + graph) to firebase"""
     try:
-        # Generate project ID
         project_id = str(uuid.uuid4())
-        
-        # Save to Firebase
         success = save_project_data(
             project_id=project_id,
             reference_data=request.digest_data,
             graph_data=request.graph_data
         )
-        
         if success:
-            return ProjectSaveResponse(
-                project_id=project_id,
-                success=True
-            )
-        else:
-            raise Exception("Failed to save to Firebase")
-    
+            return ProjectSaveResponse(project_id=project_id, success=True)
+        raise Exception("save failed")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error saving project: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"save error: {str(e)}")
 
 @router.get("/projects/list")
 async def list_all_projects():
-    """
-    List all projects from Firebase
-    """
+    """list all projects"""
     try:
-        projects = list_projects()
-        return projects
-    
+        return list_projects()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error listing projects: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"list error: {str(e)}")
 
 @router.get("/project/{project_id}", response_model=ProjectGetResponse)
 async def get_project(project_id: str):
-    """
-    Retrieve project data from Firebase
-    """
+    """get project data"""
     try:
-        project_data = get_project_data(project_id)
-        
-        if project_data:
-            return ProjectGetResponse(
-                project_data=project_data,
-                success=True
-            )
-        else:
-            raise HTTPException(status_code=404, detail="Project not found")
-    
+        data = get_project_data(project_id)
+        if data:
+            return ProjectGetResponse(project_data=data, success=True)
+        raise HTTPException(status_code=404, detail="not found")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving project: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"get error: {str(e)}")
 
 @router.patch("/project/{project_id}/title")
 async def update_title(project_id: str, request: UpdateTitleRequest):
-    """
-    Update project title in Firebase
-    """
+    """update project title"""
     try:
-        success = update_project_title(project_id, request.title)
-        
-        if success:
-            return {"success": True, "message": "Title updated successfully"}
-        else:
-            raise HTTPException(status_code=404, detail="Project not found")
-    
+        if update_project_title(project_id, request.title):
+            return {"success": True, "message": "updated"}
+        raise HTTPException(status_code=404, detail="not found")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error updating title: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"update error: {str(e)}")
 
 @router.delete("/project/{project_id}")
 async def delete_project(project_id: str):
-    """
-    Delete project from Firebase
-    """
+    """delete project"""
     try:
-        success = delete_project_data(project_id)
-        
-        if success:
-            return {"success": True, "message": "Project deleted successfully"}
-        else:
-            raise HTTPException(status_code=404, detail="Project not found")
-    
+        if delete_project_data(project_id):
+            return {"success": True, "message": "deleted"}
+        raise HTTPException(status_code=404, detail="not found")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deleting project: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"delete error: {str(e)}")
