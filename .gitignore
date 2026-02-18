@@ -128,3 +128,10 @@ output/backend/env.yaml
 backend/.env.yaml
 frontend/.env.local
 *.txt
+
+# neon
+.neon
+.neonrc
+
+# cloudflare
+.wrangler/

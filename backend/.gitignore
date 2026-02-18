@@ -16,3 +16,6 @@ data/
 # uv
 uv.lock
 .python-version
+
+# cloudflare
+.wrangler/
