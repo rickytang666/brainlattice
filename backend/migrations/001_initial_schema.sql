@@ -30,7 +30,7 @@ create table if not exists chunks (
     file_id uuid references files(id) on delete cascade,
     content text not null,
     embedding vector(1536), -- sized for openai text-embedding-3-small
-    metadata jsonb default '{}'::jsonb,
+    chunk_metadata jsonb default '{}'::jsonb,
     created_at timestamp with time zone default now()
 );
 
