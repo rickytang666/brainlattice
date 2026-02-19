@@ -34,7 +34,7 @@ class IngestionOrchestrator:
             s3_key = f"uploads/{file_id}{ext}"
             
             # upload to r2
-            logger.info(f"Uploading {filename} to {s3_key}...")
+            logger.info(f"uploading {filename} to {s3_key}...")
             self.storage.upload_file(content, s3_key)
             
             # create job record
@@ -75,7 +75,7 @@ class IngestionOrchestrator:
             }
 
         except Exception as e:
-            logger.exception("Failed to initialize ingestion")
+            logger.exception("failed to initialize ingestion")
             raise e
 
     async def retry_ingestion(self, job_id: str, background_tasks: Optional[Any] = None) -> Dict[str, Any]:

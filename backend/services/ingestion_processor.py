@@ -45,7 +45,7 @@ class IngestionProcessor:
             self.jobs.update_progress(self.job_id, "processing", 10)
             
             # download file from storage
-            logger.info(f"Downloading {self.file_key}...")
+            logger.info(f"downloading {self.file_key}...")
             file_bytes = self.storage.download_file(self.file_key)
             self.jobs.update_progress(self.job_id, "processing", 20)
             
@@ -69,7 +69,7 @@ class IngestionProcessor:
             db.flush()
 
             # parse pdf to markdown
-            logger.info("Parsing PDF...")
+            logger.info("parsing pdf...")
             with open(temp_path, "wb") as f:
                 f.write(file_bytes)
             
@@ -79,7 +79,7 @@ class IngestionProcessor:
             self.jobs.update_progress(self.job_id, "processing", 40)
 
             # chunk text and generate embeddings
-            logger.info("Chunking and embedding...")
+            logger.info("chunking and embedding...")
             chunks = self.splitter.split_text(markdown_content)
             chunk_texts = [c.page_content for c in chunks]
             vectors = self.embedder.get_embeddings(chunk_texts)
@@ -97,7 +97,7 @@ class IngestionProcessor:
             self.jobs.update_progress(self.job_id, "processing", 60)
 
             # extract conceptual graph (stateful windowing)
-            logger.info("Extracting conceptual graph...")
+            logger.info("extracting conceptual graph...")
             
             # check for cached results first (checkpointing phase)
             cached_extraction = self.jobs.get_extraction_cache(self.job_id)
@@ -114,18 +114,18 @@ class IngestionProcessor:
             self.jobs.update_progress(self.job_id, "processing", 80)
             
             # resolve and merge concepts
-            logger.info("Resolving concepts...")
+            logger.info("resolving concepts...")
             resolved_graph = self.builder.build(graph_data)
             
             # connectivity phase
             # ensure the graph is a single connected component (or mostly connected)
-            logger.info("Connecting orphan components...")
+            logger.info("connecting orphan components...")
             connected_graph = self.connector.connect_orphans(resolved_graph)
             
             graph_dump = connected_graph.model_dump()
             
             # persist graph to db
-            logger.info("Persisting graph to database...")
+            logger.info("persisting graph to database...")
             persistence = GraphPersistenceService(db)
             persistence.save_graph(str(project_id), connected_graph)
 
@@ -150,7 +150,7 @@ class IngestionProcessor:
             }
 
         except Exception as e:
-            logger.exception(f"Pipeline failed: {e}")
+            logger.exception(f"pipeline failed: {e}")
             self.jobs.update_progress(self.job_id, "failed", details={"error": str(e)})
             
             # update project status to failed
@@ -160,7 +160,7 @@ class IngestionProcessor:
                     project.status = "failed"
                     db.commit()
             except Exception as db_err:
-                logger.exception(f"Failed to update project status: {db_err}")
+                logger.exception(f"failed to update project status: {db_err}")
                 
             raise e
         finally:

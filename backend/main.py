@@ -2,7 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import project, ingest
 from core.config import get_settings
+from core.logger import setup_logger
 from services.llm.providers import init_ai_services
+import logging
+
+# initialize custom ansi lowercase logging
+setup_logger()
+logger = logging.getLogger(__name__)
 
 # initialize settings
 settings = get_settings()
@@ -11,7 +17,7 @@ settings = get_settings()
 try:
     init_ai_services()
 except Exception as e:
-    print(f"warning: ai services failed: {e}")
+    logger.warning(f"ai services failed: {e}")
 
 app = FastAPI(
     title="BrainLattice API",
