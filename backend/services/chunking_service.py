@@ -7,6 +7,11 @@ class Chunk:
     text: str
     metadata: Dict[str, Any]
 
+    @property
+    def page_content(self) -> str:
+        """LangChain-compatible alias for text"""
+        return self.text
+
 class RecursiveMarkdownSplitter:
     """recursive markdown splitter respecting headers and structure"""
     

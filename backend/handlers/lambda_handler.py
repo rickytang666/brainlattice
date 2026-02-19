@@ -65,7 +65,7 @@ def worker_handler(event, context):
             
             # if no project, create one (demo mode)
             if not project_id:
-                new_proj = models.Project(title=f"upload_{job_id[:8]}", status="ready")
+                new_proj = models.Project(title=f"upload_{job_id[:8]}", status="processing")
                 db.add(new_proj)
                 db.flush() 
                 project_id = new_proj.id
@@ -93,7 +93,7 @@ def worker_handler(event, context):
             
             # 4. chunking
             print("[WORKER] chunking...")
-            chunks = splitter.split_text(markdown_content, {})
+            chunks = splitter.split_text(markdown_content)
             jobs.update_progress(job_id, "processing", 70)
             
             # 5. embedding & saving chunks

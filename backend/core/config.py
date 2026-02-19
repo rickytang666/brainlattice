@@ -23,6 +23,16 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str
     FISH_AUDIO_API_KEY: str
 
+    # upstash redis (job status)
+    UPSTASH_REDIS_REST_URL: str
+    UPSTASH_REDIS_REST_TOKEN: str
+
+    # qstash (async worker)
+    QSTASH_URL: str = "https://qstash.upstash.io"
+    QSTASH_TOKEN: str
+    QSTASH_CURRENT_SIGNING_KEY: str = ""
+    QSTASH_NEXT_SIGNING_KEY: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,

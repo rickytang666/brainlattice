@@ -34,7 +34,7 @@ class JobService:
         
         # use hash for field-level updates
         key = f"jobs:{job_id}"
-        self.redis.hset(key, job_data)
+        self.redis.hset(key, values=job_data)
         self.redis.expire(key, self.ttl)
         
         return job_data
@@ -55,7 +55,7 @@ class JobService:
             if status in ["completed", "failed"]:
                 updates["result"] = json.dumps(details)
         
-        self.redis.hset(key, updates)
+        self.redis.hset(key, values=updates)
 
     def get_job(self, job_id: str) -> Optional[Dict[str, Any]]:
         """get job details"""

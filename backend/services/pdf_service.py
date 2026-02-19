@@ -37,3 +37,12 @@ def extract_text_from_pdf(pdf_content: bytes) -> str:
         return cleaned_text
     except Exception as e:
         raise Exception(f"pdf extraction failed: {str(e)}")
+
+
+class PDFService:
+    """service wrapper for pdf extraction (file path interface for lambda worker)"""
+
+    def extract_content(self, file_path: str) -> str:
+        """extract markdown from pdf file at path"""
+        with open(file_path, "rb") as f:
+            return extract_text_from_pdf(f.read())
