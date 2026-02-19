@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -10,12 +10,21 @@ interface NoteSidebarProps {
   projectId: string;
   conceptId: string | null;
   onClose: () => void;
+  onNodeSelect?: (id: string) => void;
 }
 
-export default function NoteSidebar({ projectId, conceptId, onClose }: NoteSidebarProps) {
+export default function NoteSidebar({ projectId, conceptId, onClose, onNodeSelect }: NoteSidebarProps) {
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // process content to handle [[obsidian-links]]
+  const processedContent = useMemo(() => {
+    if (!content) return null;
+    // replace [[concept]] with [concept](concept) to make it clickable via markdown components
+    // we use a special prefix or just use the link component override
+    return content.replace(/\[\[(.*?)\]\]/g, '[$1]($1)');
+  }, [content]);
 
   // sync state with props during render to avoid cascading effect renders
   const [prevProps, setPrevProps] = useState({ projectId, conceptId });
@@ -29,6 +38,7 @@ export default function NoteSidebar({ projectId, conceptId, onClose }: NoteSideb
   useEffect(() => {
     if (!conceptId || !projectId) return;
 
+    console.log(`[Interaction] fetch_note: ${conceptId}`);
     let ignore = false;
 
     fetch(`${API_BASE}/project/${projectId}/node/${conceptId}/note`)
@@ -38,13 +48,14 @@ export default function NoteSidebar({ projectId, conceptId, onClose }: NoteSideb
       })
       .then(data => {
         if (!ignore) {
+          console.log(`[Interaction] fetch_note_success: ${conceptId}`);
           setContent(data.content);
           setLoading(false);
         }
       })
       .catch(err => {
         if (!ignore) {
-          console.error(err);
+          console.error(`[Interaction] fetch_note_failed: ${conceptId}`, err);
           setError('failed to generate note.');
           setLoading(false);
         }
@@ -98,10 +109,22 @@ export default function NoteSidebar({ projectId, conceptId, onClose }: NoteSideb
                     <code className="bg-neutral-800 px-1 py-0.5 rounded text-emerald-400 text-xs">
                       {children}
                     </code>
+                  ),
+                  a: ({ href, children }) => (
+                    <button 
+                      onClick={(e) => {
+                          const isQuickFocus = e.metaKey || e.ctrlKey;
+                          console.log(`[Interaction] backlink_click: target=${href}, quickFocus=${isQuickFocus}`);
+                          onNodeSelect?.(href || '');
+                      }}
+                      className="text-emerald-400 hover:text-emerald-300 font-bold border-b border-emerald-500/30 hover:border-emerald-500 transition-all px-0.5"
+                    >
+                      {children}
+                    </button>
                   )
                 }}
               >
-                {content}
+                {processedContent || ''}
               </ReactMarkdown>
             </div>
             

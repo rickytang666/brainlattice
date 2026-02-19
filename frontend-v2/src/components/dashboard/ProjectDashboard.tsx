@@ -265,8 +265,8 @@ export default function ProjectDashboard() {
 
       {/* Main Area: Full Screen Graph View */}
       {selectedProjectId && (
-        <div className="flex-1 relative flex flex-col bg-[#0a0a0a]">
-          {/* Header */}
+        <div className="flex-1 relative flex flex-row bg-[#0a0a0a]">
+          {/* Header (Absolute Overlay) */}
           <div className="absolute top-6 left-6 z-10 flex items-center gap-4">
             <button
               onClick={() => {
@@ -325,7 +325,8 @@ export default function ProjectDashboard() {
             </div>
           </div>
 
-          <div className="flex-1 border-l border-neutral-800">
+          {/* Graph Section */}
+          <div className="flex-1 relative">
             {graphLoading ? (
               <div className="w-full h-full flex items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-emerald-500/50" />
@@ -342,12 +343,15 @@ export default function ProjectDashboard() {
             )}
           </div>
 
-          {/* Right Sidebar: Node Notes */}
-          <NoteSidebar 
-            projectId={selectedProjectId} 
-            conceptId={selectedNodeId} 
-            onClose={() => setSelectedNodeId(null)} 
-          />
+          {/* Right Sidebar: Node Notes (Sliding In) */}
+          <div className={`transition-all duration-300 overflow-hidden ${selectedNodeId ? "w-80" : "w-0"}`}>
+            <NoteSidebar 
+              projectId={selectedProjectId} 
+              conceptId={selectedNodeId} 
+              onClose={() => setSelectedNodeId(null)} 
+              onNodeSelect={setSelectedNodeId}
+            />
+          </div>
         </div>
       )}
     </div>

@@ -28,6 +28,7 @@ class NodeNoteService:
         """
         # 1. retrieve context via RAG
         context_chunks = self._get_context(db, project_id, concept_id)
+        logger.info(f"retrieved {len(context_chunks.split('\n\n')) if context_chunks else 0} chunks for {concept_id}")
         
         # 2. prepare prompt using jinja
         links_str = ", ".join([f"[[{link}]]" for link in (outbound_links or [])])
@@ -49,6 +50,7 @@ class NodeNoteService:
             )
             
             note_content = response.text.strip().lower()
+            logger.info(f"successfully generated {len(note_content)} chars for {concept_id}")
             return note_content
             
         except Exception as e:
