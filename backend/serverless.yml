@@ -13,6 +13,7 @@ provider:
       appimage:
         path: ./
         file: Dockerfile
+        platform: linux/arm64
   environment:
     # pass env vars to lambda
     DATABASE_URL: ${env:DATABASE_URL}
