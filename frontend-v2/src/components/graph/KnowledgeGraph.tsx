@@ -6,11 +6,27 @@ interface KnowledgeGraphProps {
   data: GraphData;
 }
 
+// Helper: Linear Interpolation for Hex Colors
+const lerpColor = (a: string, b: string, t: number) => {
+  const ah = parseInt(a.replace(/#/g, ''), 16),
+        ar = ah >> 16, ag = ah >> 8 & 0xff, ab = ah & 0xff,
+        bh = parseInt(b.replace(/#/g, ''), 16),
+        br = bh >> 16, bg = bh >> 8 & 0xff, bb = bh & 0xff,
+        rr = ar + t * (br - ar),
+        rg = ag + t * (bg - ag),
+        rb = ab + t * (bb - ab);
+  return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
+};
+
 export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
   const [highlightNodes, setHighlightNodes] = useState(new Set<string>());
   const [highlightLinks, setHighlightLinks] = useState(new Set<string>());
   const [hoverNode, setHoverNode] = useState<string | null>(null);
+  
+  // Transition State (0 = Normal, 1 = Full Hover Effect)
+  const [transitionLevel, setTransitionLevel] = useState(0); 
+  const animationRef = useRef<number>(0);
 
   const graphData = useMemo(() => {
     const nodes: ForceGraphNode[] = data.nodes.map(n => ({ ...n }));
@@ -41,7 +57,32 @@ export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
     setHighlightLinks(highlightLinks);
   };
 
+  // Animation Loop for Smooth Transitions
+  useEffect(() => {
+    const targetLevel = hoverNode ? 1 : 0;
+    
+    const animate = () => {
+      setTransitionLevel(prev => {
+        const delta = targetLevel - prev;
+        const speed = 0.1; // Adjust for 0.5s feel (depends on frame rate, approx 60fps * 0.1 step)
+        
+        if (Math.abs(delta) < 0.01) {
+            return targetLevel;
+        }
+        return prev + delta * speed;
+      });
+      
+      if (Math.abs(targetLevel - transitionLevel) > 0.01) {
+          animationRef.current = requestAnimationFrame(animate);
+      }
+    };
+    
+    animationRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationRef.current!);
+  }, [hoverNode, transitionLevel]); // Dependency on transitionLevel ensures loop continues
+
   const handleNodeHover = (node: any | null) => {
+    // Instant update, animation handles the fade
     highlightNodes.clear();
     highlightLinks.clear();
 
@@ -50,11 +91,6 @@ export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
       node.neighbors = node.neighbors || [];
       node.links = node.links || [];
       
-      // Calculate neighbors on the fly if needed, but react-force-graph usually adds them. 
-      // Let's manually traverse based on our links for safety since we just have IDs in the props
-      // Actually, react-force-graph parses the links into objects.
-      
-      // We need to find links connected to this node
       graphData.links.forEach((link: any) => {
         if (link.source.id === node.id || link.target.id === node.id) {
             highlightLinks.add(link);
@@ -63,7 +99,7 @@ export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
         }
       });
       
-      setHoverNode(node ? node.id : null);
+      setHoverNode(node.id);
     } else {
       setHoverNode(null);
     }
@@ -71,6 +107,13 @@ export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
   };
 
   const NODE_R = 4; // Slightly smaller radius
+  
+  // Colors
+  const COL_DEFAULT = '#9ca3af'; // zinc-400
+  const COL_HIGHLIGHT = '#60a5fa'; // blue-400
+  const COL_DIM = '#262626'; // zinc-800
+  const COL_LINK_DEFAULT = '#3f3f46';
+  const COL_LINK_DIM = '#171717';
 
   // Physics tweaks
   useEffect(() => {
@@ -87,18 +130,24 @@ export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
         graphData={graphData}
         nodeLabel={() => ''}
         nodeColor={(node: any) => {
-             const isHovered = node.id === hoverNode;
-             const isNeighbor = highlightNodes.has(node.id);
+             // Target Logic
+             let targetColor = COL_DEFAULT;
+             if (hoverNode) {
+                 if (node.id === hoverNode) targetColor = COL_HIGHLIGHT;
+                 else if (highlightNodes.has(node.id)) targetColor = COL_DEFAULT; // Neighbors stay grey
+                 else targetColor = COL_DIM; // Others dim
+             }
              
-             if (isHovered) return '#60a5fa'; // Blue
-             if (isNeighbor && hoverNode) return '#9ca3af'; // Normal Grey (Keep visible)
-             if (hoverNode) return '#262626'; // Dimmed
-             return '#9ca3af'; // Default
+             // Interpolate: Base (Default) -> Target (Focus State)
+             return lerpColor(COL_DEFAULT, targetColor, transitionLevel);
         }}
         linkColor={(link: any) => {
-            if (hoverNode && !highlightLinks.has(link)) return '#171717'; // Dimmed
-            if (hoverNode && highlightLinks.has(link)) return 'rgba(96, 165, 250, 0.5)'; // Semi-Blue
-            return '#3f3f46'; // Default
+            let targetColor = COL_LINK_DEFAULT;
+            if (hoverNode) {
+                 if (highlightLinks.has(link)) targetColor = COL_HIGHLIGHT;
+                 else targetColor = COL_LINK_DIM;
+            }
+            return lerpColor(COL_LINK_DEFAULT, targetColor, transitionLevel);
         }}
         backgroundColor="#0a0a0a"
         linkDirectionalArrowLength={3.5}
@@ -111,27 +160,29 @@ export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
           ctx.beginPath();
           ctx.arc(node.x, node.y, NODE_R, 0, 2 * Math.PI, false);
           
-          const isHovered = node.id === hoverNode;
-          const isNeighbor = highlightNodes.has(node.id);
-          
-          if (isHovered) ctx.fillStyle = '#60a5fa';
-          else if (isNeighbor && hoverNode) ctx.fillStyle = '#9ca3af';
-          else if (hoverNode) ctx.fillStyle = '#262626';
-          else ctx.fillStyle = '#9ca3af';
+          // Use the interpolated color logic
+          let targetColor = COL_DEFAULT;
+          if (hoverNode) {
+             if (node.id === hoverNode) targetColor = COL_HIGHLIGHT;
+             else if (highlightNodes.has(node.id)) targetColor = COL_DEFAULT;
+             else targetColor = COL_DIM;
+          }
+          ctx.fillStyle = lerpColor(COL_DEFAULT, targetColor, transitionLevel);
           
           ctx.fill();
 
           // 2. Draw Label
-          // Show if hovered, OR if it's a neighbor of hovered, OR zoomed in
-          const showLabel = (node.id === hoverNode) || (hoverNode && isNeighbor) || (globalScale >= 2.0 && !hoverNode); 
+          const isNeighbor = highlightNodes.has(node.id);
+          const showLabel = (node.id === hoverNode) || (hoverNode && isNeighbor && globalScale >= 1.5) || (globalScale >= 2.0 && !hoverNode); 
 
           if (showLabel) {
             ctx.font = `${fontSize}px Sans-Serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
-            // Text Color
-            ctx.fillStyle = (node.id === hoverNode || isNeighbor) ? '#ffffff' : 'rgba(255, 255, 255, 0.6)';
+            // Fade text opacity
+            const opacity = node.id === hoverNode || isNeighbor ? transitionLevel : 0.6;
+            ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
             
             // Draw on top
             ctx.fillText(label, node.x, node.y + NODE_R + (fontSize * 0.8));
