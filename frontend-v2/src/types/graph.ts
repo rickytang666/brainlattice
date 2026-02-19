@@ -4,7 +4,7 @@ export interface Node {
   outbound_links: string[];
   inbound_links: string[];
   description?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface GraphData {

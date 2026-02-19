@@ -46,6 +46,7 @@ export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
     return { nodes, links };
   }, [data]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleNodeClick = useCallback((node: any) => {
     // Focus camera on node
     fgRef.current?.centerAt(node.x, node.y, 1000);
@@ -81,6 +82,7 @@ export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
     return () => cancelAnimationFrame(animationRef.current!);
   }, [hoverNode, transitionLevel]); // Dependency on transitionLevel ensures loop continues
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleNodeHover = (node: any | null) => {
     // Instant update, animation handles the fade
     highlightNodes.clear();
@@ -91,11 +93,15 @@ export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
       node.neighbors = node.neighbors || [];
       node.links = node.links || [];
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       graphData.links.forEach((link: any) => {
-        if (link.source.id === node.id || link.target.id === node.id) {
+        const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+        const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+        
+        if (sourceId === node.id || targetId === node.id) {
             highlightLinks.add(link);
-            highlightNodes.add(link.source.id);
-            highlightNodes.add(link.target.id);
+            highlightNodes.add(sourceId);
+            highlightNodes.add(targetId);
         }
       });
       
@@ -129,6 +135,7 @@ export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
         ref={fgRef}
         graphData={graphData}
         nodeLabel={() => ''}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         nodeColor={(node: any) => {
              // Target Logic
              let targetColor = COL_DEFAULT;
@@ -141,6 +148,7 @@ export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
              // Interpolate: Base (Default) -> Target (Focus State)
              return lerpColor(COL_DEFAULT, targetColor, transitionLevel);
         }}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         linkColor={(link: any) => {
             let targetColor = COL_LINK_DEFAULT;
             if (hoverNode) {
@@ -152,7 +160,8 @@ export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
         backgroundColor="#0a0a0a"
         linkDirectionalArrowLength={3.5}
         linkDirectionalArrowRelPos={1}
-        nodeCanvasObject={(node: any, ctx, globalScale) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
           const label = node.id;
           const fontSize = 10 / globalScale; // Smaller font
           
@@ -184,7 +193,6 @@ export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
             const opacity = node.id === hoverNode || isNeighbor ? transitionLevel : 0.6;
             ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
             
-            // Draw on top
             ctx.fillText(label, node.x, node.y + NODE_R + (fontSize * 0.8));
           }
         }}

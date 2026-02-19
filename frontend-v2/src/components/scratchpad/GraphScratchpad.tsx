@@ -24,8 +24,9 @@ export default function GraphScratchpad() {
         }
         setGraphData(parsed);
         setError(null);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        setError(message);
         setGraphData(null);
       }
     };
@@ -43,8 +44,9 @@ export default function GraphScratchpad() {
       
       setGraphData(parsed);
       setError(null);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      setError(message);
       setGraphData(null);
     }
   }, [jsonInput]);
