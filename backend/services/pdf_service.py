@@ -1,3 +1,4 @@
+import pymupdf.layout
 import pymupdf4llm
 import fitz
 import io
@@ -23,24 +24,14 @@ def clean_markdown(text: str) -> str:
     return text.strip()
 
 def extract_text_from_pdf(pdf_content: bytes) -> str:
-    """extract and clean markdown from pdf bytes"""
-    try:
-        pdf_file = io.BytesIO(pdf_content)
-        doc = fitz.open(stream=pdf_file, filetype="pdf")
-        
-        # convert to markdown
-        md_text = pymupdf4llm.to_markdown(doc)
-        
-        # post-process
-        cleaned_text = clean_markdown(md_text)
-        
-        return cleaned_text
-    except Exception as e:
-        raise Exception(f"pdf extraction failed: {str(e)}")
-
+    """extract and clean markdown from pdf bytes using layout analysis"""
+    pdf_file = io.BytesIO(pdf_content)
+    doc = fitz.open(stream=pdf_file, filetype="pdf")
+    md_text = pymupdf4llm.to_markdown(doc)
+    return clean_markdown(md_text)
 
 class PDFService:
-    """service wrapper for pdf extraction (file path interface for lambda worker)"""
+    """service wrapper for pdf extraction"""
 
     def extract_content(self, file_path: str) -> str:
         """extract markdown from pdf file at path"""

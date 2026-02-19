@@ -63,7 +63,7 @@ def worker_handler(event, context):
             job_info = jobs.get_job(job_id)
             project_id = job_info.get("metadata", {}).get("project_id")
             
-            # if no project, create one (demo mode)
+            # if no project, create one
             if not project_id:
                 new_proj = models.Project(title=f"upload_{job_id[:8]}", status="processing")
                 db.add(new_proj)
@@ -119,8 +119,6 @@ def worker_handler(event, context):
             
              # 6. graph extraction (stateful & sequential)
             print("[WORKER] starting graph extraction...")
-            # lazy import to avoid cold start overhead if not needed
-            # though usually lambda loads everything at top
             from services.llm.graph_extractor import GraphExtractor
             from services.graph_service import GraphService
             
@@ -152,10 +150,6 @@ def worker_handler(event, context):
             # sequential processing
             accumulated_nodes = [] # keeps track of what we found to guide next prompt
             extracted_graphs = []
-            
-            # we need to run async storage/llm calls in sync lambda handler
-            # mangum handles api, but worker_handler is sync function
-            # we use asyncio.run or loop
             
             async def process_windows():
                 for i, window_text in enumerate(windows):
