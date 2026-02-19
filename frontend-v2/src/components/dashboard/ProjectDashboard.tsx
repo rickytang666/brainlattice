@@ -3,13 +3,14 @@ import KnowledgeGraph from "../graph/KnowledgeGraph";
 import type { GraphData } from "../../types/graph";
 import { Database, Loader2, ArrowLeft, Upload, RefreshCw, Edit2, Check, X, Trash2 } from "lucide-react";
 
+import { API_BASE } from "../../config";
+
 interface Project {
   id: string;
   title: string;
   status: string;
   created_at: string;
 }
-const API_BASE = "http://localhost:8000/api";
 
 export default function ProjectDashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
