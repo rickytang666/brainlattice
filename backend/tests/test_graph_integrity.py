@@ -1,6 +1,7 @@
 import json
 import os
 import pytest
+import networkx as nx
 from pathlib import Path
 
 def get_graph_files():
@@ -41,8 +42,27 @@ def test_graph_integrity(graph_path):
             if link not in node_ids:
                 errors.append(f"Dangling link: {node_id} -> {link} (Node '{link}' does not exist)")
             
-            if link == node_id:
+        if link == node_id:
                 errors.append(f"Self-loop: {node_id} points to itself")
+
+    # 3. check connectivity (orphans)
+    if node_ids:
+        G = nx.Graph()
+        G.add_nodes_from(node_ids)
+        for node in nodes:
+            for target in node.get("outbound_links", []):
+                if target in node_ids:
+                    G.add_edge(node["id"], target)
+        
+        components = list(nx.connected_components(G))
+        if len(components) > 1:
+            errors.append(f"graph is fragmented into {len(components)} disconnected parts.")
+            components.sort(key=len, reverse=True)
+            for i, comp in enumerate(components[1:], start=2):
+                if len(comp) < 5:
+                    errors.append(f"  part {i}: {list(comp)}")
+                else:
+                    errors.append(f"  part {i}: {len(comp)} nodes")
 
     # final report
     if errors:
