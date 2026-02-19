@@ -2,9 +2,20 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from db.session import get_db
 from db import models
-from models.graph import ProjectSaveRequest, ProjectSaveResponse, ProjectGetResponse
 from pydantic import BaseModel
 import uuid
+
+# minimal internal schemas for the project router
+class ProjectSaveRequest(BaseModel):
+    title: str
+
+class ProjectSaveResponse(BaseModel):
+    project_id: str
+    success: bool
+
+class ProjectGetResponse(BaseModel):
+    project_data: dict
+    success: bool
 
 router = APIRouter()
 
@@ -15,10 +26,8 @@ class UpdateTitleRequest(BaseModel):
 async def save_project(request: ProjectSaveRequest, db: Session = Depends(get_db)):
     """save project metadata to postgres"""
     try:
-        # for now, we just save the project record
-        # in phase 2/3 we'll save files and chunks
         project = models.Project(
-            title=request.graph_data.get('graph_metadata', {}).get('title', 'untitled project'),
+            title=request.title,
             status="complete"
         )
         db.add(project)
