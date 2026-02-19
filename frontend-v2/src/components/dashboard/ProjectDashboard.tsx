@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import KnowledgeGraph from "../graph/KnowledgeGraph";
 import type { GraphData } from "../../types/graph";
-import { Database, Loader2, ArrowLeft, Upload, RefreshCw, Edit2, Check, X } from "lucide-react";
+import { Database, Loader2, ArrowLeft, Upload, RefreshCw, Edit2, Check, X, Trash2 } from "lucide-react";
 
 interface Project {
   id: string;
@@ -20,6 +20,7 @@ export default function ProjectDashboard() {
   const [uploading, setUploading] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [newTitle, setNewTitle] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -115,6 +116,25 @@ export default function ProjectDashboard() {
     }
   };
 
+  const handleDeleteProject = async (id: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/project/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setProjects(projects.filter(p => p.id !== id));
+        if (selectedProjectId === id) {
+          setSelectedProjectId(null);
+          setProjectGraph(null);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
 
   return (
     <div className="flex h-full w-full bg-[#0a0a0a] overflow-hidden text-neutral-200 font-sans">
@@ -154,25 +174,58 @@ export default function ProjectDashboard() {
             </div>
           ) : (
             projects.map((p) => (
-              <button
+              <div
                 key={p.id}
-                onClick={() => selectProject(p.id)}
-                className={`w-full text-left p-4 rounded-lg border transition-all ${selectedProjectId === p.id ? "bg-emerald-500/10 border-emerald-500/30" : "bg-[#141414] border-neutral-800 hover:border-neutral-600 hover:bg-neutral-900"}`}
+                className="group relative"
               >
-                <div className="font-medium text-sm text-neutral-300 mb-1 truncate">
-                  {p.title}
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span
-                    className={`px-2 py-0.5 rounded-full ${p.status === "complete" ? "bg-emerald-500/10 text-emerald-400" : p.status === "failed" ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"}`}
+                <button
+                  onClick={() => selectProject(p.id)}
+                  className={`w-full text-left p-4 rounded-lg border transition-all ${selectedProjectId === p.id ? "bg-emerald-500/10 border-emerald-500/30" : "bg-[#141414] border-neutral-800 hover:border-neutral-600 hover:bg-neutral-900"}`}
+                >
+                  <div className="font-medium text-sm text-neutral-300 mb-1 truncate pr-8">
+                    {p.title}
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span
+                      className={`px-2 py-0.5 rounded-full ${p.status === "complete" ? "bg-emerald-500/10 text-emerald-400" : p.status === "failed" ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"}`}
+                    >
+                      {p.status}
+                    </span>
+                    <span className="text-neutral-600">
+                      {new Date(p.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                </button>
+                
+                {deletingId === p.id ? (
+                  <div className="absolute inset-0 bg-neutral-900/90 backdrop-blur-sm rounded-lg flex items-center justify-center gap-2 z-10 border border-red-500/50">
+                    <span className="text-[10px] font-bold text-red-400 uppercase tracking-tighter">Delete?</span>
+                    <button 
+                      onClick={() => handleDeleteProject(p.id)}
+                      className="p-1 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded"
+                    >
+                      <Check className="w-3 h-3" />
+                    </button>
+                    <button 
+                      onClick={() => setDeletingId(null)}
+                      className="p-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 rounded"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeletingId(p.id);
+                    }}
+                    className="absolute top-4 right-3 opacity-0 group-hover:opacity-100 p-1.5 text-neutral-600 hover:text-red-400 hover:bg-red-500/10 rounded transition-all z-10"
+                    title="Delete Project"
                   >
-                    {p.status}
-                  </span>
-                  <span className="text-neutral-600">
-                    {new Date(p.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-              </button>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             ))
           )}
         </div>
