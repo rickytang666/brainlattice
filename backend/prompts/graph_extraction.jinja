@@ -1,0 +1,21 @@
+analyze the following text and identify key concepts (nodes) and their directed relationships (outbound links)
+
+{% if existing_concepts -%}
+Existing Concept IDs (REUSE THESE IF APPLICABLE): {{ existing_concepts | join(', ') }}
+{%- endif %}
+
+strict output rules:
+1. return only a valid json object with key "nodes"
+2. nodes format: 
+   {
+     "id": "concept name lowercase", 
+     "aliases": ["synonym1", "acronym"],
+     "outbound_links": ["target concept id 1", "target concept id 2"]
+   }
+3. ids: must be lowercase, singular, and use spaces instead of underscores (e.g. "deep learning", not "deep_learning")
+4. outbound_links: concepts this node points to or relies on based on the text
+5. validate: ensure every id in "outbound_links" is either in current "nodes" list or in "existing concept ids" list
+6. reuse ids: if a concept matches an id in "existing concept ids" (or is a synonym), use that existing id
+
+text to analyze:
+{{ text_window }}
