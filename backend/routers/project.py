@@ -104,10 +104,49 @@ async def get_project_graph(project_id: str, db: Session = Depends(get_db)):
                 "aliases": n.aliases or [],
                 "outbound_links": n.outbound_links or [],
                 "inbound_links": n.inbound_links or [],
-                "description": n.description,
+                "content": n.content,
                 "metadata": n.node_metadata or {}
             })
             
         return {"nodes": formatted_nodes}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"graph get error: {str(e)}")
+
+@router.get("/project/{project_id}/node/{concept_id}/note")
+async def get_node_note(project_id: str, concept_id: str, db: Session = Depends(get_db)):
+    """get or generate note for a specific node"""
+    try:
+        # 1. check if note already exists
+        node = db.query(models.GraphNode).filter(
+            models.GraphNode.project_id == project_id,
+            models.GraphNode.concept_id == concept_id
+        ).first()
+        
+        if not node:
+            raise HTTPException(status_code=404, detail="node not found")
+            
+        if node.content:
+            return {"concept_id": concept_id, "content": node.content, "cached": True}
+            
+        # 2. generate new note via NodeNoteService
+        from services.llm.note_service import NodeNoteService
+        note_service = NodeNoteService()
+        
+        note_content = await note_service.generate_note(
+            db, 
+            project_id, 
+            concept_id, 
+            outbound_links=node.outbound_links
+        )
+        
+        # 3. persist the generated note
+        node.content = note_content
+        db.commit()
+        
+        return {"concept_id": concept_id, "content": note_content, "cached": False}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"note generation error: {str(e)}")

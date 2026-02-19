@@ -44,7 +44,7 @@ class GraphNode(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
     concept_id = Column(String, nullable=False)
-    description = Column(Text, nullable=True)
+    content = Column(Text, nullable=True)
     aliases = Column(ARRAY(String), server_default="{}")
     outbound_links = Column(ARRAY(String), server_default="{}")
     inbound_links = Column(ARRAY(String), server_default="{}")
