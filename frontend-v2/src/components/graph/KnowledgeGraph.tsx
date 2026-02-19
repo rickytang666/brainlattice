@@ -4,6 +4,7 @@ import type { GraphData, ForceGraphNode, ForceGraphLink } from '../../types/grap
 
 interface KnowledgeGraphProps {
   data: GraphData;
+  onNodeSelect?: (nodeId: string | null) => void;
 }
 
 // Helper: Linear Interpolation for Hex Colors
@@ -18,7 +19,7 @@ const lerpColor = (a: string, b: string, t: number) => {
   return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
 };
 
-export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
+export default function KnowledgeGraph({ data, onNodeSelect }: KnowledgeGraphProps) {
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
   const [highlightNodes, setHighlightNodes] = useState(new Set<string>());
   const [highlightLinks, setHighlightLinks] = useState(new Set<string>());
@@ -51,7 +52,12 @@ export default function KnowledgeGraph({ data }: KnowledgeGraphProps) {
     // Focus camera on node
     fgRef.current?.centerAt(node.x, node.y, 1000);
     fgRef.current?.zoom(2, 1000);
-  }, []);
+    
+    // notify parent of selection
+    if (onNodeSelect) {
+        onNodeSelect(node.id);
+    }
+  }, [onNodeSelect]);
 
   const updateHighlight = () => {
     setHighlightNodes(highlightNodes);

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import KnowledgeGraph from "../graph/KnowledgeGraph";
+import NoteSidebar from "./NoteSidebar";
 import type { GraphData } from "../../types/graph";
 import { Database, Loader2, ArrowLeft, Upload, RefreshCw, Edit2, Check, X, Trash2 } from "lucide-react";
 
@@ -22,6 +23,7 @@ export default function ProjectDashboard() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -65,6 +67,7 @@ export default function ProjectDashboard() {
         console.error(err);
         setGraphLoading(false);
       });
+    setSelectedNodeId(null); // reset sidebar on project change
   };
 
   const currentProject = projects.find((p) => p.id === selectedProjectId);
@@ -324,13 +327,23 @@ export default function ProjectDashboard() {
                 <Loader2 className="w-8 h-8 animate-spin text-emerald-500/50" />
               </div>
             ) : projectGraph ? (
-              <KnowledgeGraph data={projectGraph} />
+              <KnowledgeGraph 
+                data={projectGraph} 
+                onNodeSelect={setSelectedNodeId}
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-neutral-600">
                 Failed to load graph.
               </div>
             )}
           </div>
+
+          {/* Right Sidebar: Node Notes */}
+          <NoteSidebar 
+            projectId={selectedProjectId} 
+            conceptId={selectedNodeId} 
+            onClose={() => setSelectedNodeId(null)} 
+          />
         </div>
       )}
     </div>
