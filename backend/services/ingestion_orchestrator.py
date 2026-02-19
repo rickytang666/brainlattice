@@ -22,7 +22,7 @@ class IngestionOrchestrator:
         self.jobs = JobService()
         self.queue = QStashService()
 
-    async def init_ingestion(self, filename: str, content: bytes, project_id: Optional[str] = None) -> Dict[str, Any]:
+    async def init_ingestion(self, filename: str, content: bytes, project_id: Optional[str] = None, background_tasks: Optional[Any] = None) -> Dict[str, Any]:
         """
         initializes ingestion process for a new file
         returns job details
@@ -55,8 +55,12 @@ class IngestionOrchestrator:
             # publish task to worker
             worker_url = os.getenv("WORKER_PUBLIC_URL")
             if not worker_url:
-                logger.warning("WORKER_PUBLIC_URL not set. Skipping QStash publish.")
+                logger.warning("WORKER_PUBLIC_URL not set. running locally via background task.")
                 msg_id = "local_only"
+                if background_tasks:
+                    from services.ingestion_processor import IngestionProcessor
+                    processor = IngestionProcessor(job_id=job_id, file_key=s3_key)
+                    background_tasks.add_task(processor.process)
             else:
                 msg_id = self.queue.publish_task(
                     destination_url=worker_url,
@@ -74,7 +78,7 @@ class IngestionOrchestrator:
             logger.exception("Failed to initialize ingestion")
             raise e
 
-    async def retry_ingestion(self, job_id: str) -> Dict[str, Any]:
+    async def retry_ingestion(self, job_id: str, background_tasks: Optional[Any] = None) -> Dict[str, Any]:
         """
         re-triggers ingestion for an existing job ID
         looks up details from Redis and re-publishes to QStash
@@ -97,8 +101,12 @@ class IngestionOrchestrator:
             # re-publish to worker
             worker_url = os.getenv("WORKER_PUBLIC_URL")
             if not worker_url:
-                logger.warning("WORKER_PUBLIC_URL not set. skipping qstash publish.")
+                logger.warning("WORKER_PUBLIC_URL not set. skipping qstash publish, running locally instead.")
                 msg_id = "local_only"
+                if background_tasks:
+                    from services.ingestion_processor import IngestionProcessor
+                    processor = IngestionProcessor(job_id=job_id, file_key=s3_key)
+                    background_tasks.add_task(processor.process)
             else:
                 msg_id = self.queue.publish_task(
                     destination_url=worker_url,

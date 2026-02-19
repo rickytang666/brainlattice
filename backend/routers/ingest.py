@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
 from services.storage_service import S3StorageService
 from services.job_service import JobService
 from services.queue_service import QStashService
@@ -11,17 +11,18 @@ settings = get_settings()
 
 @router.post("/ingest/upload")
 async def upload_file(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
 ):
     """
-    uploads file to r2, creates job in redis, triggers async worker via qstash
+    uploads file to r2, creates job in redis, triggers async worker via qstash or locally
     """
     try:
         from services.ingestion_orchestrator import IngestionOrchestrator
         orchestrator = IngestionOrchestrator()
         
         content = await file.read()
-        result = await orchestrator.init_ingestion(file.filename, content)
+        result = await orchestrator.init_ingestion(file.filename, content, background_tasks=background_tasks)
         
         return result
         
@@ -38,12 +39,12 @@ async def get_status(job_id: str):
     return job
 
 @router.post("/ingest/retry/{job_id}")
-async def retry_ingest(job_id: str):
+async def retry_ingest(job_id: str, background_tasks: BackgroundTasks):
     """manually retry a failed ingestion job using its ID"""
     try:
         from services.ingestion_orchestrator import IngestionOrchestrator
         orchestrator = IngestionOrchestrator()
-        result = await orchestrator.retry_ingestion(job_id)
+        result = await orchestrator.retry_ingestion(job_id, background_tasks=background_tasks)
         return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

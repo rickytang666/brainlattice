@@ -90,3 +90,24 @@ async def delete_project(project_id: str, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"delete error: {str(e)}")
+
+@router.get("/project/{project_id}/graph")
+async def get_project_graph(project_id: str, db: Session = Depends(get_db)):
+    """get project graph data"""
+    try:
+        nodes = db.query(models.GraphNode).filter(models.GraphNode.project_id == project_id).all()
+        
+        formatted_nodes = []
+        for n in nodes:
+            formatted_nodes.append({
+                "id": str(n.concept_id),
+                "aliases": n.aliases or [],
+                "outbound_links": n.outbound_links or [],
+                "inbound_links": n.inbound_links or [],
+                "description": n.description,
+                "metadata": n.node_metadata or {}
+            })
+            
+        return {"nodes": formatted_nodes}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"graph get error: {str(e)}")

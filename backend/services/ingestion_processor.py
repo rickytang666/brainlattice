@@ -136,6 +136,12 @@ class IngestionProcessor:
                 "graph_preview": graph_dump
             })
             
+            # update project status to complete
+            project = db.query(models.Project).filter(models.Project.id == project_id).first()
+            if project:
+                project.status = "complete"
+                db.commit()
+            
             return {
                 "project_id": str(project_id),
                 "file_id": str(db_file.id),
@@ -146,6 +152,16 @@ class IngestionProcessor:
         except Exception as e:
             logger.exception(f"Pipeline failed: {e}")
             self.jobs.update_progress(self.job_id, "failed", details={"error": str(e)})
+            
+            # update project status to failed
+            try:
+                project = db.query(models.Project).filter(models.Project.id == project_id).first()
+                if project:
+                    project.status = "failed"
+                    db.commit()
+            except Exception as db_err:
+                logger.exception(f"Failed to update project status: {db_err}")
+                
             raise e
         finally:
             db.close()
