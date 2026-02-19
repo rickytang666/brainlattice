@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import extract, digest, relationships, overview, audio_script, audio, project, concept_insights
+from routers import extract, digest, relationships, overview, audio_script, audio, project, concept_insights, ingest
 from core.config import get_settings
 from services.llm.providers import init_ai_services
 
@@ -36,6 +36,7 @@ app.include_router(overview.router, prefix="/api", tags=["overview"])
 app.include_router(audio_script.router, prefix="/api", tags=["audio-script"])
 app.include_router(audio.router, prefix="/api", tags=["audio"])
 app.include_router(project.router, prefix="/api", tags=["project"])
+app.include_router(ingest.router, prefix="/api", tags=["ingest"])
 app.include_router(concept_insights.router, prefix="/api", tags=["concept-insights"])
 
 @app.get("/")
