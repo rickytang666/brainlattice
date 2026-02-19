@@ -51,22 +51,41 @@ class IngestionProcessor:
             
             # create project/file records
             job_info = self.jobs.get_job(self.job_id)
-            project_id = job_info.get("metadata", {}).get("project_id")
+            metadata = job_info.get("metadata", {})
+            project_id = metadata.get("project_id")
+            filename = metadata.get("filename", "unknown.pdf")
             
             if not project_id:
-                new_proj = models.Project(title=f"upload_{self.job_id[:8]}", status="processing")
-                db.add(new_proj)
-                db.flush()
-                project_id = new_proj.id
+                # check if we already have a project for this job id (failsafe)
+                existing_proj = db.query(models.Project).filter(models.Project.title == f"upload_{self.job_id[:8]}").first()
+                if existing_proj:
+                    project_id = existing_proj.id
+                else:
+                    new_proj = models.Project(title=f"upload_{self.job_id[:8]}", status="processing")
+                    db.add(new_proj)
+                    db.flush()
+                    project_id = new_proj.id
+                
+                # persist project_id back to job metadata for future retries
+                self.jobs.update_metadata(self.job_id, {"project_id": str(project_id)})
             
-            db_file = models.File(
-                project_id=project_id,
-                filename=job_info.get("metadata", {}).get("filename", "unknown.pdf"),
-                s3_path=self.file_key,
-                content=""
-            )
-            db.add(db_file)
-            db.flush()
+            # check if file already exists in this project to avoid duplicates on retry
+            db_file = db.query(models.File).filter(
+                models.File.project_id == project_id,
+                models.File.s3_path == self.file_key
+            ).first()
+            
+            if not db_file:
+                db_file = models.File(
+                    project_id=project_id,
+                    filename=filename,
+                    s3_path=self.file_key,
+                    content=""
+                )
+                db.add(db_file)
+                db.flush()
+            else:
+                logger.info(f"file {filename} already exists in project {project_id}, skipping duplicate creation.")
 
             # parse pdf to markdown
             logger.info("parsing pdf...")

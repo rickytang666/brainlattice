@@ -39,6 +39,19 @@ class JobService:
         
         return job_data
 
+    def update_metadata(self, job_id: str, updates: Dict[str, Any]):
+        """update or merge job metadata"""
+        key = f"jobs:{job_id}"
+        current_job = self.get_job(job_id)
+        if not current_job:
+            return
+            
+        metadata = current_job.get("metadata", {})
+        metadata.update(updates)
+        
+        self.redis.hset(key, "metadata", json.dumps(metadata))
+        self.redis.hset(key, "updated_at", int(time.time()))
+
     def update_progress(self, job_id: str, status: str, progress: int = None, details: Dict[str, Any] = None):
         """update job progress and status"""
         key = f"jobs:{job_id}"
