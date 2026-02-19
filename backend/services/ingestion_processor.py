@@ -11,6 +11,7 @@ from services.embedding_service import EmbeddingService
 from services.job_service import JobService
 from services.llm.graph_extractor import GraphExtractor
 from services.graph.builder import GraphBuilder
+from services.graph.persistence_service import GraphPersistenceService
 from db.session import SessionLocal
 from db import models
 
@@ -102,6 +103,11 @@ class IngestionProcessor:
             logger.info("Resolving concepts...")
             resolved_graph = self.builder.build(graph_data)
             graph_dump = resolved_graph.model_dump()
+            
+            # persist graph to db
+            logger.info("Persisting graph to database...")
+            persistence = GraphPersistenceService(db)
+            persistence.save_graph(str(project_id), resolved_graph)
 
             # finalize job
             self.jobs.update_progress(self.job_id, "completed", 100, {
