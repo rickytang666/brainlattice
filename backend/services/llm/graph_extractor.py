@@ -50,7 +50,8 @@ class GraphExtractor:
                 model=self.model_id,
                 contents=prompt,
                 config={
-                    "response_mime_type": "application/json"
+                    "response_mime_type": "application/json",
+                    "temperature": 0.0
                 }
             )
             
