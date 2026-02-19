@@ -17,14 +17,19 @@ export default function NoteSidebar({ projectId, conceptId, onClose }: NoteSideb
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!conceptId || !projectId) {
-      setContent(null);
-      return;
-    }
-
-    setLoading(true);
+  // sync state with props during render to avoid cascading effect renders
+  const [prevProps, setPrevProps] = useState({ projectId, conceptId });
+  if (prevProps.conceptId !== conceptId || prevProps.projectId !== projectId) {
+    setPrevProps({ projectId, conceptId });
+    setContent(null);
     setError(null);
+    setLoading(!!conceptId && !!projectId);
+  }
+
+  useEffect(() => {
+    if (!conceptId || !projectId) return;
+
+    let ignore = false;
 
     fetch(`${API_BASE}/project/${projectId}/node/${conceptId}/note`)
       .then(res => {
@@ -32,14 +37,20 @@ export default function NoteSidebar({ projectId, conceptId, onClose }: NoteSideb
         return res.json();
       })
       .then(data => {
-        setContent(data.content);
-        setLoading(false);
+        if (!ignore) {
+          setContent(data.content);
+          setLoading(false);
+        }
       })
       .catch(err => {
-        console.error(err);
-        setError('failed to generate note.');
-        setLoading(false);
+        if (!ignore) {
+          console.error(err);
+          setError('failed to generate note.');
+          setLoading(false);
+        }
       });
+    
+    return () => { ignore = true; };
   }, [conceptId, projectId]);
 
   if (!conceptId) return null;
