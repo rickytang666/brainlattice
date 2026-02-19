@@ -6,7 +6,7 @@ settings = get_settings()
 
 class QStashService:
     """
-    publishes tasks to qstash for async processing.
+    publishes tasks to qstash for async processing
     """
     
     def __init__(self):
@@ -14,8 +14,8 @@ class QStashService:
 
     def publish_task(self, destination_url: str, payload: Dict[str, Any]) -> str:
         """
-        publish json payload to worker url.
-        returns: message id
+        publish json payload to worker url
+        returns message id
         """
         try:
             result = self.client.message.publish_json(

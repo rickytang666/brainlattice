@@ -8,14 +8,14 @@ provider:
   stage: dev
   architecture: arm64
   ecr:
-    # builds docker image from backend/Dockerfile
+    # build docker image from backend/Dockerfile
     images:
       appimage:
         path: ./
         file: Dockerfile
         platform: linux/arm64
   environment:
-    # pass env vars to lambda
+    # pass env vars to lambda functions
     DATABASE_URL: ${env:DATABASE_URL}
     R2_BUCKET: ${env:R2_BUCKET}
     R2_ACCOUNT_ID: ${env:R2_ACCOUNT_ID}
@@ -41,7 +41,7 @@ functions:
       command:
         - handlers.lambda_handler.api_handler
     events:
-      - httpApi: "*" # api gateway v2
+      - httpApi: "*"  # api gateway v2
     timeout: 30
 
   worker:
@@ -49,8 +49,8 @@ functions:
       name: appimage
       command:
         - handlers.lambda_handler.worker_handler
-    timeout: 900 # 15 mins max
-    memorySize: 2048 # 2gb ram
+    timeout: 900  # 15 mins max
+    memorySize: 2048  # 2gb ram
     events:
       - httpApi:
           path: /worker

@@ -7,10 +7,10 @@ from core.config import get_settings
 gemini_client = None
 
 def init_ai_services():
-    """init ai service clients"""
+    """initialize ai service clients"""
     global gemini_client
     settings = get_settings()
-    # init gemini client
+    # initialize gemini client
     gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 async def call_openrouter(model: str, prompt: str, max_tokens: int = 1500) -> str:

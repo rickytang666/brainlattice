@@ -9,12 +9,12 @@ class EmbeddingService:
     
     def __init__(self):
         self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        self.model = "text-embedding-3-small" # 1536 dimensions
+        self.model = "text-embedding-3-small"  # 1536 dimensions
 
     def get_embedding(self, text: str) -> List[float]:
         """get single vector for text"""
         try:
-            # clean text to avoid token issues (common with extracts)
+            # clean text to avoid token issues
             text = text.replace("\n", " ")
             response = self.client.embeddings.create(
                 input=[text],

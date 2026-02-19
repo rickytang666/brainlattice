@@ -2,25 +2,11 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from db.session import get_db
 from db import models
-from pydantic import BaseModel
+from schemas.project import ProjectSaveRequest, ProjectSaveResponse, ProjectGetResponse, UpdateTitleRequest
 import uuid
-
-# minimal internal schemas for the project router
-class ProjectSaveRequest(BaseModel):
-    title: str
-
-class ProjectSaveResponse(BaseModel):
-    project_id: str
-    success: bool
-
-class ProjectGetResponse(BaseModel):
-    project_data: dict
-    success: bool
 
 router = APIRouter()
 
-class UpdateTitleRequest(BaseModel):
-    title: str
 
 @router.post("/project/save", response_model=ProjectSaveResponse)
 async def save_project(request: ProjectSaveRequest, db: Session = Depends(get_db)):
@@ -53,11 +39,11 @@ async def list_all_projects(db: Session = Depends(get_db)):
 
 @router.get("/project/{project_id}", response_model=ProjectGetResponse)
 async def get_project(project_id: str, db: Session = Depends(get_db)):
-    """get project data (currently minimal as we move storage to r2/neon)"""
+    """get project data"""
     try:
         project = db.query(models.Project).filter(models.Project.id == project_id).first()
         if project:
-            # return formatted data
+            # format response
             return ProjectGetResponse(
                 project_data={
                     "id": str(project.id),

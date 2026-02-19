@@ -8,8 +8,8 @@ settings = get_settings()
 
 class JobService:
     """
-    manages async job state in upstash redis.
-    keys are stored as 'jobs:{job_id}'.
+    manages async job state in upstash redis
+    keys stored as 'jobs:{job_id}'
     """
     
     def __init__(self):
@@ -17,7 +17,7 @@ class JobService:
             url=settings.UPSTASH_REDIS_REST_URL,
             token=settings.UPSTASH_REDIS_REST_TOKEN
         )
-        self.ttl = 86400 # 24 hours retention
+        self.ttl = 86400  # 24 hours retention
 
     def create_job(self, job_id: str, job_type: str, metadata: Dict[str, Any] = None) -> Dict[str, Any]:
         """initialize a new job"""
@@ -32,7 +32,7 @@ class JobService:
             "metadata": json.dumps(metadata or {})
         }
         
-        # use hash for field-level updates
+        # use hash for efficient field-level updates
         key = f"jobs:{job_id}"
         self.redis.hset(key, values=job_data)
         self.redis.expire(key, self.ttl)
@@ -65,7 +65,7 @@ class JobService:
         if not data:
             return None
             
-        # parse json fields back
+        # parse json fields
         if "metadata" in data and isinstance(data["metadata"], str):
             try:
                 data["metadata"] = json.loads(data["metadata"])

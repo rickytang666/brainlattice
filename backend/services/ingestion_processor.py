@@ -1,0 +1,157 @@
+import os
+import json
+import asyncio
+import logging
+from typing import Dict, Any, List
+
+from services.storage_service import S3StorageService
+from services.pdf_service import PDFService
+from services.chunking_service import RecursiveMarkdownSplitter
+from services.embedding_service import EmbeddingService
+from services.job_service import JobService
+from services.llm.graph_extractor import GraphExtractor
+from services.graph.builder import GraphBuilder
+from db.session import SessionLocal
+from db import models
+
+logger = logging.getLogger(__name__)
+
+class IngestionProcessor:
+    """
+    orchestrates multi-step ingestion pipeline:
+    download -> parse -> chunk -> embed -> extract graph -> resolve concepts
+    """
+
+    def __init__(self, job_id: str, file_key: str):
+        self.job_id = job_id
+        self.file_key = file_key
+        self.storage = S3StorageService()
+        self.pdf_service = PDFService()
+        self.splitter = RecursiveMarkdownSplitter()
+        self.embedder = EmbeddingService()
+        self.jobs = JobService()
+        self.extractor = GraphExtractor()
+        self.builder = GraphBuilder()
+        
+    async def process(self) -> Dict[str, Any]:
+        """runs the full pipeline asynchronously"""
+        db = SessionLocal()
+        temp_path = f"/tmp/{self.job_id}.pdf"
+        
+        try:
+            self.jobs.update_progress(self.job_id, "processing", 10)
+            
+            # download file from storage
+            logger.info(f"Downloading {self.file_key}...")
+            file_bytes = self.storage.download_file(self.file_key)
+            self.jobs.update_progress(self.job_id, "processing", 20)
+            
+            # create project/file records
+            job_info = self.jobs.get_job(self.job_id)
+            project_id = job_info.get("metadata", {}).get("project_id")
+            
+            if not project_id:
+                new_proj = models.Project(title=f"upload_{self.job_id[:8]}", status="processing")
+                db.add(new_proj)
+                db.flush()
+                project_id = new_proj.id
+            
+            db_file = models.File(
+                project_id=project_id,
+                filename=job_info.get("metadata", {}).get("filename", "unknown.pdf"),
+                s3_path=self.file_key,
+                content=""
+            )
+            db.add(db_file)
+            db.flush()
+
+            # parse pdf to markdown
+            logger.info("Parsing PDF...")
+            with open(temp_path, "wb") as f:
+                f.write(file_bytes)
+            
+            markdown_content = self.pdf_service.extract_content(temp_path)
+            db_file.content = markdown_content
+            db.commit()
+            self.jobs.update_progress(self.job_id, "processing", 40)
+
+            # chunk text and generate embeddings
+            logger.info("Chunking and embedding...")
+            chunks = self.splitter.split_text(markdown_content)
+            chunk_texts = [c.page_content for c in chunks]
+            vectors = self.embedder.get_embeddings(chunk_texts)
+            
+            db_chunks = [
+                models.Chunk(
+                    file_id=db_file.id,
+                    content=chunk.page_content,
+                    embedding=vectors[i],
+                    chunk_metadata=chunk.metadata
+                ) for i, chunk in enumerate(chunks)
+            ]
+            db.add_all(db_chunks)
+            db.commit()
+            self.jobs.update_progress(self.job_id, "processing", 60)
+
+            # extract conceptual graph (stateful windowing)
+            logger.info("Extracting conceptual graph...")
+            graph_data = await self._run_graph_extraction(markdown_content)
+            self.jobs.update_progress(self.job_id, "processing", 80)
+            
+            # resolve and merge concepts
+            logger.info("Resolving concepts...")
+            resolved_graph = self.builder.build(graph_data)
+            graph_dump = resolved_graph.model_dump()
+
+            # finalize job
+            self.jobs.update_progress(self.job_id, "completed", 100, {
+                "chunks_count": len(chunks),
+                "graph_nodes": len(resolved_graph.nodes),
+                "graph_preview": graph_dump
+            })
+            
+            return {
+                "project_id": str(project_id),
+                "file_id": str(db_file.id),
+                "chunks": len(chunks),
+                "graph": graph_dump
+            }
+
+        except Exception as e:
+            logger.exception(f"Pipeline failed: {e}")
+            self.jobs.update_progress(self.job_id, "failed", details={"error": str(e)})
+            raise e
+        finally:
+            db.close()
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
+    async def _run_graph_extraction(self, text: str) -> List[Any]:
+        """runs stateful windowing extraction logic"""
+        window_size = 50000
+        overlap = 5000
+        text_len = len(text)
+        windows = []
+        
+        if text_len <= window_size:
+            windows.append(text)
+        else:
+            start = 0
+            while start < text_len:
+                end = min(start + window_size, text_len)
+                windows.append(text[start:end])
+                if end == text_len:
+                    break
+                start += (window_size - overlap)
+                
+        accumulated_nodes = []
+        extracted_graphs = []
+        
+        for i, window_text in enumerate(windows):
+            logger.info(f"Extracting window {i+1}/{len(windows)}...")
+            concept_ids = [n.id for n in accumulated_nodes]
+            graph_data = await self.extractor.extract_from_window(window_text, existing_concepts=concept_ids)
+            extracted_graphs.append(graph_data)
+            accumulated_nodes.extend(graph_data.nodes)
+            
+        return extracted_graphs

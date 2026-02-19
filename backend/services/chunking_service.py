@@ -9,7 +9,7 @@ class Chunk:
 
     @property
     def page_content(self) -> str:
-        """LangChain-compatible alias for text"""
+        """langchain-compatible alias for text"""
         return self.text
 
 class RecursiveMarkdownSplitter:
@@ -21,19 +21,19 @@ class RecursiveMarkdownSplitter:
 
     def split_text(self, text: str) -> List[Chunk]:
         """split text into chunks preserving hierarchy"""
-        # 1. logical split by headers
+        # split by headers first
         sections = self._split_by_headers(text)
         
         final_chunks = []
         for section in sections:
-            # 2. keep small sections valid
+            # keep small sections as-is
             if len(section['text']) <= self.chunk_size:
                 final_chunks.append(Chunk(
                     text=section['text'], 
                     metadata=section['metadata']
                 ))
             else:
-                # 3. recursive split for large sections
+                # recursively split large sections
                 sub_chunks = self._recursive_split(
                     section['text'], 
                     section['metadata']
@@ -53,7 +53,7 @@ class RecursiveMarkdownSplitter:
             header_match = re.match(r'^(#{1,6})\s+(.+)$', line)
             
             if header_match:
-                # flush buffer with previous context
+                # flush previous section
                 if current_buffer:
                     content = '\n'.join(current_buffer).strip()
                     if content:
@@ -63,11 +63,11 @@ class RecursiveMarkdownSplitter:
                         })
                     current_buffer = []
                 
-                # update header context
+                # update header hierarchy
                 level = len(header_match.group(1))
                 title = header_match.group(2).strip()
                 
-                # maintain hierarchy: truncate deeper levels
+                # truncate deeper levels to maintain hierarchy
                 if len(current_headers) >= level:
                     current_headers = current_headers[:level-1]
                 
@@ -76,7 +76,7 @@ class RecursiveMarkdownSplitter:
             else:
                 current_buffer.append(line)
         
-        # flush remaining
+        # flush final section
         if current_buffer:
             content = '\n'.join(current_buffer).strip()
             if content:
@@ -98,9 +98,9 @@ class RecursiveMarkdownSplitter:
         for para in paragraphs:
             para_len = len(para)
             
-            # handle massive paragraphs
+            # handle oversized paragraphs
             if para_len > self.chunk_size:
-                # flush existing
+                # flush current chunk
                 if current_chunk:
                     chunks.append(Chunk(
                         text='\n\n'.join(current_chunk),
@@ -109,7 +109,7 @@ class RecursiveMarkdownSplitter:
                     current_chunk = []
                     current_len = 0
                 
-                # split by sentence
+                # split by sentences
                 sentences = re.split(r'(?<=[.!?])\s+', para)
                 sent_buffer = []
                 sent_len = 0
@@ -133,7 +133,7 @@ class RecursiveMarkdownSplitter:
                         metadata=metadata
                     ))
             
-            # aggregate normal paragraphs
+            # aggregate normal-sized paragraphs
             elif current_len + para_len + 2 > self.chunk_size:
                 chunks.append(Chunk(
                     text='\n\n'.join(current_chunk),
@@ -145,7 +145,7 @@ class RecursiveMarkdownSplitter:
                 current_chunk.append(para)
                 current_len += para_len + 2
         
-        # final flush
+        # flush final chunk
         if current_chunk:
             chunks.append(Chunk(
                 text='\n\n'.join(current_chunk),

@@ -30,7 +30,7 @@ class Chunk(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     file_id = Column(UUID(as_uuid=True), ForeignKey("files.id", ondelete="CASCADE"), index=True)
     content = Column(Text, nullable=False)
-    embedding = Column(Vector(1536)) # openai text-embedding-3-small
+    embedding = Column(Vector(1536))  # openai text-embedding-3-small (1536 dims)
     chunk_metadata = Column(JSONB, server_default="{}")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

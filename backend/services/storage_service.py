@@ -6,7 +6,7 @@ import io
 settings = get_settings()
 
 class S3StorageService:
-    """storage service for cloudflare r2 (s3 compatible)"""
+    """s3-compatible storage service for cloudflare r2"""
     
     def __init__(self):
         self.s3_client = boto3.client(
@@ -15,7 +15,7 @@ class S3StorageService:
             aws_access_key_id=settings.R2_ACCESS_KEY_ID,
             aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
             config=Config(signature_version='s3v4'),
-            region_name='auto' # r2 uses auto or specific region
+            region_name='auto'  # r2 uses 'auto' or specific region
         )
         self.bucket = settings.R2_BUCKET
 

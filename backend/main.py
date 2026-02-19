@@ -4,10 +4,10 @@ from routers import project, ingest
 from core.config import get_settings
 from services.llm.providers import init_ai_services
 
-# init settings
+# initialize settings
 settings = get_settings()
 
-# init ai services
+# initialize ai services
 try:
     init_ai_services()
 except Exception as e:
@@ -19,7 +19,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# cors
+# cors middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,7 +28,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# routers
+# register routers
 app.include_router(project.router, prefix="/api", tags=["project"])
 app.include_router(ingest.router, prefix="/api", tags=["ingest"])
 
