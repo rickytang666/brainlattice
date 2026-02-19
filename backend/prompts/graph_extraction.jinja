@@ -1,21 +1,26 @@
 analyze the following text and identify key concepts (nodes) and their directed relationships (outbound links)
 
+try your best to identifying concepts (try not miss anything) and build connections if possible.
+
 {% if existing_concepts -%}
 Existing Concept IDs (REUSE THESE IF APPLICABLE): {{ existing_concepts | join(', ') }}
 {%- endif %}
 
 strict output rules:
 1. return only a valid json object with key "nodes"
-2. nodes format: 
-   {
-     "id": "concept name lowercase", 
-     "aliases": ["synonym1", "acronym"],
-     "outbound_links": ["target concept id 1", "target concept id 2"]
-   }
+2. nodes format:
+{
+"id": "concept name lowercase",
+"aliases": ["synonym1", "acronym"],
+"outbound_links": ["child concept 1", "dependency 2"],
+"inbound_links": ["parent concept", "broader category"]
+}
 3. ids: must be lowercase, singular, and use spaces instead of underscores (e.g. "deep learning", not "deep_learning")
-4. outbound_links: concepts this node points to or relies on based on the text
-5. validate: ensure every id in "outbound_links" is either in current "nodes" list or in "existing concept ids" list
-6. reuse ids: if a concept matches an id in "existing concept ids" (or is a synonym), use that existing id
+4. outbound_links: concepts this node points to, relies on, or contains (children)
+5. inbound_links: concepts that contain this node or are broader categories (parents). *CRITICAL*: even if the parent
+concept is not explicitly in the text, infer it if obvious (e.g. "level curve" -> "multivariate calculus").
+6. validate: ensure every id in "outbound_links" or "inbound_links" is valid concept format
+7. reuse ids: if a concept matches an id in "existing concept ids" (or is a synonym), use that existing id
 
 text to analyze:
 {{ text_window }}

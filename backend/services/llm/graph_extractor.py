@@ -20,6 +20,16 @@ class GraphExtractor:
         self.logger = logging.getLogger(__name__)
         self.prompts = get_prompt_service()
 
+    async def extract_from_skeleton(self, skeleton_text: str) -> GraphData:
+        """
+        extracts high-level root concepts from a document skeleton string
+        """
+        prompt = self.prompts.render(
+            "skeleton_extraction.jinja",
+            skeleton_text=skeleton_text
+        )
+        return await self._call_llm(prompt)
+
     async def extract_from_window(self, text_window: str, existing_concepts: List[str] = None) -> GraphData:
         """
         extracts concepts and directed outbound links from a text window
@@ -29,7 +39,12 @@ class GraphExtractor:
             existing_concepts=existing_concepts[:500] if existing_concepts else None,
             text_window=text_window
         )
-        
+        return await self._call_llm(prompt)
+
+    async def _call_llm(self, prompt: str) -> GraphData:
+        """
+        Internal method to call the LLM and parse the response.
+        """
         try:
             response = self.client.models.generate_content(
                 model=self.model_id,

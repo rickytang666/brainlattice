@@ -1,0 +1,19 @@
+analyze the following document skeleton (table of contents/headers) and identify the Core Root Concepts.
+
+Skeleton:
+{{ skeleton_text }}
+
+Rules:
+1. Return a valid JSON object with key "nodes".
+2. nodes format:
+{
+"id": "concept name lowercase",
+"aliases": ["synonym1", "acronym"],
+"outbound_links": ["child concept 1", "dependency 2"],
+"inbound_links": ["parent concept", "broader category"]
+}
+3. Identify only the HIGH-LEVEL PARENT CONCEPTS (e.g. "multivariate calculus", "linear algebra", "integration")
+represented by the
+headers.
+4. Do NOT extract every single sub-header, only the major organizing topics that other concepts will loop back to.
+5. IDs must be lowercase, singular.

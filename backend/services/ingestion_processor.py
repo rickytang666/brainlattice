@@ -11,6 +11,7 @@ from services.embedding_service import EmbeddingService
 from services.job_service import JobService
 from services.llm.graph_extractor import GraphExtractor
 from services.graph.builder import GraphBuilder
+from services.graph.connector import GraphConnector
 from services.graph.persistence_service import GraphPersistenceService
 from db.session import SessionLocal
 from db import models
@@ -33,6 +34,7 @@ class IngestionProcessor:
         self.jobs = JobService()
         self.extractor = GraphExtractor()
         self.builder = GraphBuilder()
+        self.connector = GraphConnector()
         
     async def process(self) -> Dict[str, Any]:
         """runs the full pipeline asynchronously"""
@@ -114,12 +116,18 @@ class IngestionProcessor:
             # resolve and merge concepts
             logger.info("Resolving concepts...")
             resolved_graph = self.builder.build(graph_data)
-            graph_dump = resolved_graph.model_dump()
+            
+            # connectivity phase
+            # ensure the graph is a single connected component (or mostly connected)
+            logger.info("Connecting orphan components...")
+            connected_graph = self.connector.connect_orphans(resolved_graph)
+            
+            graph_dump = connected_graph.model_dump()
             
             # persist graph to db
             logger.info("Persisting graph to database...")
             persistence = GraphPersistenceService(db)
-            persistence.save_graph(str(project_id), resolved_graph)
+            persistence.save_graph(str(project_id), connected_graph)
 
             # finalize job
             self.jobs.update_progress(self.job_id, "completed", 100, {
@@ -162,14 +170,42 @@ class IngestionProcessor:
                     break
                 start += (window_size - overlap)
                 
-        accumulated_nodes = []
-        extracted_graphs = []
+        # pass 1: extract core concepts from skeleton (h1/h2)
+        skeleton = self._extract_skeleton(text)
+        logger.info(f"extracted skeleton context: {len(skeleton)} chars")
         
+        extracted_graphs = []
+        accumulated_nodes = []
+        
+        if skeleton:
+            logger.info("identifying core concepts from skeleton...")
+            skeleton_graph = await self.extractor.extract_from_skeleton(skeleton)
+            accumulated_nodes.extend(skeleton_graph.nodes)
+            extracted_graphs.append(skeleton_graph)
+            logger.info(f"seeded {len(skeleton_graph.nodes)} core concepts.")
+
+        # pass 2: extract from text windows (using seeded concepts)
         for i, window_text in enumerate(windows):
-            logger.info(f"Extracting window {i+1}/{len(windows)}...")
+            logger.info(f"extracting window {i+1}/{len(windows)}...")
             concept_ids = [n.id for n in accumulated_nodes]
-            graph_data = await self.extractor.extract_from_window(window_text, existing_concepts=concept_ids)
+            
+            graph_data = await self.extractor.extract_from_window(
+                window_text, 
+                existing_concepts=concept_ids
+            )
+            
             extracted_graphs.append(graph_data)
             accumulated_nodes.extend(graph_data.nodes)
             
         return extracted_graphs
+
+    def _extract_skeleton(self, text: str) -> str:
+        """extracts h1 and h2 headers to form a document skeleton"""
+        import re
+        headers = []
+        for line in text.split('\n'):
+            # match # header or ## header
+            if re.match(r'^#{1,2}\s+', line):
+                headers.append(line.strip())
+        
+        return "\n".join(headers)

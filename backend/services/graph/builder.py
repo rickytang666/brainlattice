@@ -23,18 +23,19 @@ class GraphBuilder:
         # consolidate nodes
         final_nodes: Dict[str, GraphNode] = {}
         
-        for n in raw_nodes:
-            canonical = id_map.get(n.id, n.id)
-            
-            if canonical not in final_nodes:
-                final_nodes[canonical] = GraphNode(
-                    id=canonical,
+        def get_or_create(node_id: str) -> GraphNode:
+            if node_id not in final_nodes:
+                final_nodes[node_id] = GraphNode(
+                    id=node_id,
                     aliases=[],
                     outbound_links=[],
                     inbound_links=[]
                 )
-            
-            target = final_nodes[canonical]
+            return final_nodes[node_id]
+        
+        for n in raw_nodes:
+            canonical = id_map.get(n.id, n.id)
+            target = get_or_create(canonical)
             
             # merge aliases
             all_aliases = set(target.aliases)
@@ -43,13 +44,27 @@ class GraphBuilder:
                 all_aliases.add(n.id)
             target.aliases = list(all_aliases)
             
-            # merge outbound links (remap targets)
+            # 1. handle outbound links (dependencies/children: me -> them)
             for raw_link in n.outbound_links:
                 remapped_link = id_map.get(raw_link, raw_link)
+                # ensure target exists (implicitly created if missing)
+                get_or_create(remapped_link)
+                
                 if remapped_link != canonical and remapped_link not in target.outbound_links:
                     target.outbound_links.append(remapped_link)
+
+            # 2. handle inbound links (parents/context: them -> me)
+            for raw_parent in n.inbound_links:
+                remapped_parent = id_map.get(raw_parent, raw_parent)
+                parent_node = get_or_create(remapped_parent)
+                
+                if canonical != remapped_parent and canonical not in parent_node.outbound_links:
+                    parent_node.outbound_links.append(canonical)
         
-        # compute inbound links
+        # 3. re-compute symmetrical inbound_links for ALL nodes
+        for node in final_nodes.values():
+            node.inbound_links = [] # reset to rebuild from global state
+
         for node_id, node in final_nodes.items():
             for target_id in node.outbound_links:
                 if target_id in final_nodes:

@@ -42,7 +42,7 @@ def test_graph_integrity(graph_path):
             if link not in node_ids:
                 errors.append(f"Dangling link: {node_id} -> {link} (Node '{link}' does not exist)")
             
-        if link == node_id:
+            if link == node_id:
                 errors.append(f"Self-loop: {node_id} points to itself")
 
     # 3. check connectivity (orphans)
