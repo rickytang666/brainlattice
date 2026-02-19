@@ -6,6 +6,7 @@ provider:
   name: aws
   region: us-east-1
   stage: dev
+  architecture: arm64
   ecr:
     # builds docker image from backend/Dockerfile
     images:

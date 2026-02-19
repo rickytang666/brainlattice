@@ -19,3 +19,6 @@ uv.lock
 
 # cloudflare
 .wrangler/
+
+# serverless
+.serverless/
