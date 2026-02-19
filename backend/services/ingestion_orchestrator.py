@@ -73,3 +73,45 @@ class IngestionOrchestrator:
         except Exception as e:
             logger.exception("Failed to initialize ingestion")
             raise e
+
+    async def retry_ingestion(self, job_id: str) -> Dict[str, Any]:
+        """
+        re-triggers ingestion for an existing job ID
+        looks up details from Redis and re-publishes to QStash
+        """
+        try:
+            job = self.jobs.get_job(job_id)
+            if not job:
+                raise ValueError(f"job {job_id} not found")
+            
+            metadata = job.get("metadata", {})
+            s3_key = metadata.get("s3_key")
+            filename = metadata.get("filename", "unknown.pdf")
+            
+            if not s3_key:
+                raise ValueError(f"missing s3_key in job {job_id} metadata")
+
+            # update job status to reset it
+            self.jobs.update_progress(job_id, "pending", 0)
+            
+            # re-publish to worker
+            worker_url = os.getenv("WORKER_PUBLIC_URL")
+            if not worker_url:
+                logger.warning("WORKER_PUBLIC_URL not set. skipping qstash publish.")
+                msg_id = "local_only"
+            else:
+                msg_id = self.queue.publish_task(
+                    destination_url=worker_url,
+                    payload={"job_id": job_id, "file_key": s3_key, "action": "ingest"}
+                )
+            
+            return {
+                "status": "re-queued",
+                "job_id": job_id,
+                "msg_id": msg_id,
+                "filename": filename
+            }
+
+        except Exception as e:
+            logger.exception(f"failed to retry ingestion for job {job_id}")
+            raise e

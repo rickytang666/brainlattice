@@ -36,3 +36,16 @@ async def get_status(job_id: str):
     if not job:
         raise HTTPException(status_code=404, detail="job not found")
     return job
+
+@router.post("/ingest/retry/{job_id}")
+async def retry_ingest(job_id: str):
+    """manually retry a failed ingestion job using its ID"""
+    try:
+        from services.ingestion_orchestrator import IngestionOrchestrator
+        orchestrator = IngestionOrchestrator()
+        result = await orchestrator.retry_ingestion(job_id)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"retry failed: {str(e)}")

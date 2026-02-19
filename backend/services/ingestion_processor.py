@@ -96,7 +96,19 @@ class IngestionProcessor:
 
             # extract conceptual graph (stateful windowing)
             logger.info("Extracting conceptual graph...")
-            graph_data = await self._run_graph_extraction(markdown_content)
+            
+            # check for cached results first (checkpointing phase)
+            cached_extraction = self.jobs.get_extraction_cache(self.job_id)
+            if cached_extraction:
+                logger.info(f"using cached extraction results for job {self.job_id}")
+                # reconstruct pydantic objects from cached dicts
+                from schemas.graph import GraphData
+                graph_data = [GraphData(**g) for g in cached_extraction]
+            else:
+                graph_data = await self._run_graph_extraction(markdown_content)
+                # cache the results for potential retries
+                self.jobs.set_extraction_cache(self.job_id, [g.model_dump() for g in graph_data])
+                
             self.jobs.update_progress(self.job_id, "processing", 80)
             
             # resolve and merge concepts

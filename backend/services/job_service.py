@@ -57,6 +57,21 @@ class JobService:
         
         self.redis.hset(key, values=updates)
 
+    def set_extraction_cache(self, job_id: str, data: Any):
+        """cache raw extraction results (expensive part)"""
+        key = f"jobs:{job_id}:cache"
+        self.redis.set(key, json.dumps(data), ex=self.ttl)
+        print(f"[JOB_SERVICE] cached extraction results for job {job_id}")
+
+    def get_extraction_cache(self, job_id: str) -> Optional[Any]:
+        """retrieve cached extraction results if available"""
+        key = f"jobs:{job_id}:cache"
+        cached = self.redis.get(key)
+        if cached:
+            print(f"[JOB_SERVICE] found cached extraction results for job {job_id}")
+            return json.loads(cached)
+        return None
+
     def get_job(self, job_id: str) -> Optional[Dict[str, Any]]:
         """get job details"""
         key = f"jobs:{job_id}"
