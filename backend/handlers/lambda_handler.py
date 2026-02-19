@@ -25,8 +25,7 @@ def worker_handler(event, context):
     print(f"[WORKER] received event: {json.dumps(event)}")
     
     try:
-        # qstash sends body as string in 'body' field for lambda function urls
-        # or as raw event if using sqs/sns. assuming http trigger here.
+        # qstash sends body as string in 'body' field
         body = event.get("body")
         if isinstance(body, str):
             payload = json.loads(body)
@@ -61,6 +60,7 @@ def worker_handler(event, context):
             jobs.update_progress(job_id, "processing", 20)
             
             # 2. save file record to db
+            job_info = jobs.get_job(job_id)
             project_id = job_info.get("metadata", {}).get("project_id")
             
             # if no project, create one (demo mode)
@@ -115,12 +115,91 @@ def worker_handler(event, context):
             
             db.add_all(db_chunks)
             db.commit()
+            jobs.update_progress(job_id, "processing", 80)
             
-            # complete
-            jobs.update_progress(job_id, "completed", 100, {"chunks_count": len(chunks)})
+             # 6. graph extraction (stateful & sequential)
+            print("[WORKER] starting graph extraction...")
+            # lazy import to avoid cold start overhead if not needed
+            # though usually lambda loads everything at top
+            from services.llm.graph_extractor import GraphExtractor
+            from services.graph_service import GraphService
+            
+            extractor = GraphExtractor()
+            graph_service = GraphService()
+            
+            # create simple windows (striding)
+            # 50k chars per window, overlap 5k
+            window_size = 50000
+            overlap = 5000
+            
+            # naive splitting of markdown_content
+            text_len = len(markdown_content)
+            windows = []
+            
+            if text_len <= window_size:
+                windows.append(markdown_content)
+            else:
+                start = 0
+                while start < text_len:
+                    end = min(start + window_size, text_len)
+                    windows.append(markdown_content[start:end])
+                    if end == text_len:
+                        break
+                    start += (window_size - overlap)
+            
+            print(f"[WORKER] created {len(windows)} windows for extraction")
+            
+            # sequential processing
+            accumulated_nodes = [] # keeps track of what we found to guide next prompt
+            extracted_graphs = []
+            
+            # we need to run async storage/llm calls in sync lambda handler
+            # mangum handles api, but worker_handler is sync function
+            # we use asyncio.run or loop
+            
+            async def process_windows():
+                for i, window_text in enumerate(windows):
+                    print(f"[WORKER] extracting window {i+1}/{len(windows)}...")
+                    # pass existing concept IDs to guide LLM
+                    concept_ids = [n.id for n in accumulated_nodes]
+                    
+                    # calling gemini with state
+                    graph_data = await extractor.extract_from_window(window_text, existing_concepts=concept_ids)
+                    
+                    extracted_graphs.append(graph_data)
+                    
+                    # accumulate new nodes for next iteration context
+                    accumulated_nodes.extend(graph_data.nodes)
+                    
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+            loop.run_until_complete(process_windows())
+                
+            # 7. graph resolution & merge
+            print("[WORKER] resolving entities...")
+            resolved_graph = graph_service.build_graph(extracted_graphs)
+            print(f"[WORKER] resolved to {len(resolved_graph.nodes)} nodes")
+            
+            graph_dump = resolved_graph.model_dump()
+            
+            # 8. save result
+            jobs.update_progress(job_id, "completed", 100, {
+                "chunks_count": len(chunks),
+                "graph_nodes": len(resolved_graph.nodes),
+                "graph_links": sum(len(n.links) for n in resolved_graph.nodes),
+                "graph_preview": graph_dump
+            })
             print(f"[WORKER] job {job_id} complete")
             
-            return {"statusCode": 200, "body": json.dumps({"status": "completed", "chunks": len(chunks)})}
+            return {"statusCode": 200, "body": json.dumps({
+                "status": "completed", 
+                "chunks": len(chunks),
+                "graph": graph_dump
+            })}
 
         except Exception as e:
             print(f"[WORKER] processing failed: {e}")
