@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS graph_nodes (
     aliases TEXT[] DEFAULT '{}',
     outbound_links TEXT[] DEFAULT '{}',
     inbound_links TEXT[] DEFAULT '{}',
-    metadata JSONB DEFAULT '{}',
+    node_metadata JSONB DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

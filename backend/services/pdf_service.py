@@ -1,8 +1,10 @@
-import pymupdf.layout
 import pymupdf4llm
 import fitz
 import io
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 def clean_markdown(text: str) -> str:
     """post-process markdown to fix common extraction issues"""
