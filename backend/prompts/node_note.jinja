@@ -1,0 +1,17 @@
+# node note generation template
+# target: gemini-2.0-flash
+
+summarize the concept '{{ concept_id }}' based on the provided context chunks.
+
+strict requirements:
+1. use obsidian markdown syntax.
+2. mention all related concepts using double brackets: {{ links_str }}
+3. use latex for any mathematical formulas or technical symbols (e.g. $e = mc^2$).
+4. strictly lowercase output.
+5. short and concise research notes. max 5 sentences.
+6. if the context is insufficient, use your general knowledge to write a high-quality academic note.
+
+context chunks:
+{{ context_chunks }}
+
+note:
