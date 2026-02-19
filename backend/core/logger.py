@@ -1,5 +1,6 @@
 import logging
 import sys
+import os
 
 # custom success level (between info and warning)
 SUCCESS_LEVEL_NUM = 25
@@ -14,6 +15,7 @@ logging.Logger.success = success
 class LowercaseColorFormatter(logging.Formatter):
     """
     custom formatter providing ansi colors in a clean, lowercase, emoji-free format.
+    automatically detects aws lambda and strips colors to keep cloudwatch clean.
     """
     
     # ansi escape codes
@@ -27,21 +29,36 @@ class LowercaseColorFormatter(logging.Formatter):
 
     format_str = "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s"
 
-    FORMATS = {
-        logging.DEBUG: GREY + format_str + RESET,
-        logging.INFO: BLUE + format_str + RESET,
-        SUCCESS_LEVEL_NUM: GREEN + format_str + RESET,
-        logging.WARNING: YELLOW + format_str + RESET,
-        logging.ERROR: RED + format_str + RESET,
-        logging.CRITICAL: BOLD_RED + format_str + RESET
-    }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # detect lambda environment
+        self.is_lambda = os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None
+
+    def get_formats(self):
+        # if in lambda, return plain formats (no ansi)
+        if self.is_lambda:
+            return {level: self.format_str for level in [
+                logging.DEBUG, logging.INFO, SUCCESS_LEVEL_NUM, 
+                logging.WARNING, logging.ERROR, logging.CRITICAL
+            ]}
+            
+        return {
+            logging.DEBUG: self.GREY + self.format_str + self.RESET,
+            logging.INFO: self.BLUE + self.format_str + self.RESET,
+            SUCCESS_LEVEL_NUM: self.GREEN + self.format_str + self.RESET,
+            logging.WARNING: self.YELLOW + self.format_str + self.RESET,
+            logging.ERROR: self.RED + self.format_str + self.RESET,
+            logging.CRITICAL: self.BOLD_RED + self.format_str + self.RESET
+        }
 
     def format(self, record):
         # convert level name to lowercase for output
         record.levelname = record.levelname.lower()
         
         # apply color based on original levelno
-        log_fmt = self.FORMATS.get(record.levelno, self.FORMATS[logging.DEBUG])
+        formats = self.get_formats()
+        log_fmt = formats.get(record.levelno, self.format_str)
+        
         formatter = logging.Formatter(log_fmt, datefmt="%H:%M:%S")
         
         # force result string to be lowercase
