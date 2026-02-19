@@ -16,11 +16,16 @@ strict output rules:
 "inbound_links": ["parent concept", "broader category"]
 }
 3. ids: must be lowercase, singular, and use spaces instead of underscores (e.g. "deep learning", not "deep_learning")
-4. outbound_links: concepts this node points to, relies on, or contains (children)
-5. inbound_links: concepts that contain this node or are broader categories (parents). *CRITICAL*: even if the parent
+4. **encyclopedic standard**: every id must be a valid potential wikipedia page title.
+- bad: "discussion of integrals", "understanding limits", "chapter 1", "solving equations"
+- good: "integral", "limit", "linear equation"
+5. **negative constraints**: do not include meta-discourse phrases like "discussion of", "overview of", "types of",
+"introduction to". extract the core concept only.
+6. outbound_links: concepts this node points to, relies on, or contains (children)
+7. inbound_links: concepts that contain this node or are broader categories (parents). *critical*: even if the parent
 concept is not explicitly in the text, infer it if obvious (e.g. "level curve" -> "multivariate calculus").
-6. validate: ensure every id in "outbound_links" or "inbound_links" is valid concept format
-7. reuse ids: if a concept matches an id in "existing concept ids" (or is a synonym), use that existing id
+8. validate: ensure every id in "outbound_links" or "inbound_links" is valid concept format
+9. reuse ids: if a concept matches an id in "existing concept ids" (or is a synonym), use that existing id
 
 text to analyze:
 {{ text_window }}
