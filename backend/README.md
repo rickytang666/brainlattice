@@ -1,21 +1,46 @@
 # brainlattice-backend
 
-api server.
+pdf-to-graph extraction engine.
 
 ## setup
 
 ```bash
-# install dependencies
 uv sync
-
-# run server
-uv run uvicorn main:app
+cp .env.example .env  # fill keys
 ```
 
-## env
+## dev
 
-copy `.env.example` to `.env`.
+```bash
+# api docs at /docs
+uv run uvicorn main:app --reload
+```
 
-fill out all the required api keys
+## test
 
-requires `secrets/firebase_private.json`.
+```bash
+uv run pytest
+```
+
+## build & run
+
+```bash
+docker build -t brainlattice-api .
+docker run -p 8000:8000 --env-file .env brainlattice-api
+```
+
+## deploy
+
+install `serverless` first.
+
+```bash
+BUILDX_NO_DEFAULT_ATTESTATIONS=1 sls deploy
+```
+
+## infra
+
+- **api**: fastapi + mangum
+- **worker**: lambda (15m timeout, 2gb ram)
+- **storage**: s3 (r2)
+- **database**: postgres (neon)
+- **async**: qstash + redis (upstash)
