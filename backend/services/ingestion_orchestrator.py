@@ -36,6 +36,7 @@ class IngestionOrchestrator:
             # upload to r2
             logger.info(f"uploading {filename} to {s3_key}...")
             self.storage.upload_file(content, s3_key)
+            logger.success(f"upload complete: {s3_key}")
             
             # create job record
             job_id = str(uuid.uuid4())

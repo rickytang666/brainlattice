@@ -142,6 +142,8 @@ class IngestionProcessor:
                 project.status = "complete"
                 db.commit()
             
+            logger.success(f"pipeline complete: project {project_id} is now live")
+            
             return {
                 "project_id": str(project_id),
                 "file_id": str(db_file.id),

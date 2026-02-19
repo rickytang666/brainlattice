@@ -1,6 +1,16 @@
 import logging
 import sys
 
+# custom success level (between info and warning)
+SUCCESS_LEVEL_NUM = 25
+logging.addLevelName(SUCCESS_LEVEL_NUM, "SUCCESS")
+
+def success(self, message, *args, **kws):
+    if self.isEnabledFor(SUCCESS_LEVEL_NUM):
+        self._log(SUCCESS_LEVEL_NUM, message, args, **kws)
+
+logging.Logger.success = success
+
 class LowercaseColorFormatter(logging.Formatter):
     """
     custom formatter providing ansi colors in a clean, lowercase, emoji-free format.
@@ -20,6 +30,7 @@ class LowercaseColorFormatter(logging.Formatter):
     FORMATS = {
         logging.DEBUG: GREY + format_str + RESET,
         logging.INFO: BLUE + format_str + RESET,
+        SUCCESS_LEVEL_NUM: GREEN + format_str + RESET,
         logging.WARNING: YELLOW + format_str + RESET,
         logging.ERROR: RED + format_str + RESET,
         logging.CRITICAL: BOLD_RED + format_str + RESET
