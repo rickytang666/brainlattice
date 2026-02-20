@@ -227,97 +227,21 @@ export default function ProjectDashboard() {
 
   return (
     <div className="flex h-full w-full bg-[#0a0a0a] overflow-hidden text-neutral-200 font-sans">
-      {/* Sidebar: Project List (Hidden when project selected) */}
+      {/* Homepage: Project List */}
       {!selectedProjectId && (
-        <div className="flex flex-col w-full max-w-md mx-auto my-12 rounded-xl border border-neutral-800 shadow-2xl h-[calc(100vh-6rem)] bg-[#0f0f0f] transition-all duration-300">
-          <div className="p-6 border-b border-neutral-800 bg-[#141414] flex justify-between items-start">
-            <div>
-              <div className="flex items-center gap-3 text-emerald-500 mb-2">
-                <Database className="w-6 h-6" />
-                <h2 className="font-bold uppercase tracking-widest text-lg text-emerald-400">
-                  Knowledge Core
-                </h2>
-              </div>
-              <p className="text-xs text-neutral-500 uppercase tracking-wider">
-                Live Ingestion Dashboard
-              </p>
-            </div>
-            <button
-              onClick={fetchProjects}
-              className="p-1.5 text-neutral-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded transition-colors"
-              title="Refresh List"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
+        <div className="flex flex-col w-full max-w-4xl mx-auto px-6 py-16">
+          {/* Hero Section */}
+          <div className="text-center mb-16">
+            <h1 className="text-4xl font-bold text-neutral-100 mb-3 tracking-tight">
+              Your Knowledge Graph
+            </h1>
+            <p className="text-neutral-400 text-lg max-w-xl mx-auto">
+              Transform PDFs into interactive study notes. Upload a document to get started.
+            </p>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
-            {loading ? (
-              <div className="flex justify-center p-8">
-                <Loader2 className="w-6 h-6 animate-spin text-neutral-600" />
-              </div>
-            ) : projects.length === 0 ? (
-              <div className="text-center p-8 text-neutral-600 text-sm">
-                No projects found in database.
-              </div>
-            ) : (
-              projects.map((p) => (
-                <div key={p.id} className="group relative">
-                  <button
-                    onClick={() => selectProject(p.id)}
-                    className="w-full text-left p-4 rounded-lg border bg-[#141414] border-neutral-800 hover:border-neutral-600 hover:bg-neutral-900 transition-all"
-                  >
-                    <div className="font-medium text-sm text-neutral-300 mb-1 truncate pr-8">
-                      {p.title}
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span
-                        className={`px-2 py-0.5 rounded-full ${p.status === "complete" ? "bg-emerald-500/10 text-emerald-400" : p.status === "failed" ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"}`}
-                      >
-                        {p.status}
-                      </span>
-                      <span className="text-neutral-600">
-                        {new Date(p.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </button>
-
-                  {deletingId === p.id ? (
-                    <div className="absolute inset-0 bg-neutral-900/90 backdrop-blur-sm rounded-lg flex items-center justify-center gap-2 z-10 border border-red-500/50">
-                      <span className="text-[10px] font-bold text-red-400 uppercase tracking-tighter">
-                        Delete?
-                      </span>
-                      <button
-                        onClick={() => handleDeleteProject(p.id)}
-                        className="p-1 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded"
-                      >
-                        <Check className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={() => setDeletingId(null)}
-                        className="p-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 rounded"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeletingId(p.id);
-                      }}
-                      className="absolute top-4 right-3 opacity-0 group-hover:opacity-100 p-1.5 text-neutral-600 hover:text-red-400 hover:bg-red-500/10 rounded transition-all z-10"
-                      title="Delete Project"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-
-          <div className="p-4 border-t border-neutral-800 bg-[#141414]">
+          {/* Upload Section */}
+          <div className="mb-12">
             <input
               type="file"
               ref={fileInputRef}
@@ -328,16 +252,120 @@ export default function ProjectDashboard() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-neutral-800 disabled:text-neutral-500 text-white font-bold py-2.5 rounded-lg transition-colors text-sm uppercase tracking-wider"
+              className="w-full max-w-md mx-auto flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-neutral-800 disabled:text-neutral-500 text-white font-semibold py-4 px-6 rounded-xl transition-all text-base shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 disabled:shadow-none"
             >
               {uploading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Processing...</span>
+                </>
               ) : (
-                <Upload className="w-4 h-4" />
+                <>
+                  <Upload className="w-5 h-5" />
+                  <span>Upload PDF Document</span>
+                </>
               )}
-              {uploading ? "Uploading..." : "Upload Document"}
             </button>
           </div>
+
+          {/* Projects List */}
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-neutral-600" />
+            </div>
+          ) : projects.length === 0 ? (
+            <div className="text-center py-20">
+              <Database className="w-12 h-12 text-neutral-700 mx-auto mb-4" />
+              <p className="text-neutral-500 text-lg mb-1">No projects yet</p>
+              <p className="text-neutral-600 text-sm">Upload your first PDF to create a knowledge graph</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-neutral-200">
+                  Recent Projects
+                </h2>
+                <button
+                  onClick={fetchProjects}
+                  className="p-2 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800 rounded-lg transition-colors"
+                  title="Refresh"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {projects.map((p) => (
+                  <div
+                    key={p.id}
+                    className="group relative bg-neutral-900/50 border border-neutral-800 rounded-xl p-5 hover:border-neutral-700 hover:bg-neutral-900 transition-all cursor-pointer"
+                    onClick={() => selectProject(p.id)}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="font-semibold text-neutral-100 text-base pr-8 line-clamp-2">
+                        {p.title}
+                      </h3>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeletingId(p.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 text-neutral-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all shrink-0"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span
+                        className={`px-2.5 py-1 rounded-md text-xs font-medium ${
+                          p.status === "complete"
+                            ? "bg-emerald-500/10 text-emerald-400"
+                            : p.status === "failed"
+                            ? "bg-red-500/10 text-red-400"
+                            : "bg-amber-500/10 text-amber-400"
+                        }`}
+                      >
+                        {p.status}
+                      </span>
+                      <span className="text-neutral-500 text-xs">
+                        {new Date(p.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </div>
+
+                    {deletingId === p.id && (
+                      <div className="absolute inset-0 bg-neutral-950/95 backdrop-blur-sm rounded-xl flex items-center justify-center gap-3 z-10 border border-red-500/30">
+                        <span className="text-sm font-medium text-red-400">
+                          Delete this project?
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteProject(p.id);
+                          }}
+                          className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          Delete
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingId(null);
+                          }}
+                          className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
