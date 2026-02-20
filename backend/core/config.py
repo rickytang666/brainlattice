@@ -21,7 +21,6 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str
     OPENAI_API_KEY: str
     OPENROUTER_API_KEY: str
-    FISH_AUDIO_API_KEY: str
 
     # upstash redis (job status tracking)
     UPSTASH_REDIS_REST_URL: str

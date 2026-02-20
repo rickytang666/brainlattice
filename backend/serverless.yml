@@ -25,14 +25,13 @@ provider:
     OPENAI_API_KEY: ${env:OPENAI_API_KEY}
     GEMINI_API_KEY: ${env:GEMINI_API_KEY}
     OPENROUTER_API_KEY: ${env:OPENROUTER_API_KEY}
-    FISH_AUDIO_API_KEY: ${env:FISH_AUDIO_API_KEY}
     UPSTASH_REDIS_REST_URL: ${env:UPSTASH_REDIS_REST_URL}
     UPSTASH_REDIS_REST_TOKEN: ${env:UPSTASH_REDIS_REST_TOKEN}
     QSTASH_URL: ${env:QSTASH_URL}
     QSTASH_TOKEN: ${env:QSTASH_TOKEN}
     QSTASH_CURRENT_SIGNING_KEY: ${env:QSTASH_CURRENT_SIGNING_KEY}
     QSTASH_NEXT_SIGNING_KEY: ${env:QSTASH_NEXT_SIGNING_KEY}
-    WORKER_PUBLIC_URL: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/worker'
+    WORKER_PUBLIC_URL: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/worker"
 
 functions:
   api:
@@ -41,7 +40,7 @@ functions:
       command:
         - handlers.lambda_handler.api_handler
     events:
-      - httpApi: "*"  # api gateway v2
+      - httpApi: "*" # api gateway v2
     timeout: 30
 
   worker:
@@ -49,8 +48,8 @@ functions:
       name: appimage
       command:
         - handlers.lambda_handler.worker_handler
-    timeout: 900  # 15 mins max
-    memorySize: 2048  # 2gb ram
+    timeout: 900 # 15 mins max
+    memorySize: 2048 # 2gb ram
     events:
       - httpApi:
           path: /worker

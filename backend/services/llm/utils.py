@@ -64,14 +64,6 @@ def fix_json_response(response_text: str) -> str:
     
     return response_text
 
-def create_fallback_digest(response_text: str) -> Dict[str, Any]:
-    """fallback structure for failed parsing"""
-    return {
-        "course_info": {"title": "pdf analysis", "subject": "unknown"},
-        "sequential_concepts": [{"name": "content analysis", "brief_description": "malformed ai response"}],
-        "important_notes": ["parsing failed"]
-    }
-
 def fix_latex_json_escapes(text: str) -> str:
     """fix latex backslashes for json"""
     return re.sub(r'(?<!\\)\\([a-zA-Z]+)', r'\\\\\1', text)
