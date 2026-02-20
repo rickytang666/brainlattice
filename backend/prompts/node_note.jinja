@@ -2,16 +2,19 @@
 # target: gemini-2.0-flash
 # purpose: study notes for students — concise, essential, no fluff
 
-write study notes for the concept '{{ concept_id }}' based on the context below.
+write study notes for the concept **{{ concept_id }}** based on the context below.
 
 strict requirements:
 1. student study notes — concise, essential, exam-ready. no filler or meta-commentary.
-2. use obsidian markdown. link related concepts: {{ links_str }}
-3. include formulas from the chunks when relevant. use latex: $e = mc^2$, $\frac{a}{b}$, $\sum_{i=1}^n$.
-4. lowercase output.
-5. max 150 words. dense and scannable.
-6. prefer content from context. only fill gaps with general knowledge if necessary.
-7. no phrases like "it is important to note", "emphasis on", or research-style hedging.
+2. when referring to the main concept for the FIRST TIME ({{ concept_id }}), use **bold** — never [[{{ concept_id }}]]. never link the concept to itself.
+3. link related concepts only: {{ links_str }}. use [[concept name]] for each.
+4. include formulas from the chunks when helpful. use latex: $e = mc^2$, $\frac{a}{b}$, $$\sum_{i=1}^n$$. for superscripts use $r^3$ not html <sup>.
+5. lowercase output.
+6. use multiple paragraphs, bullet points (- or *), and numbered lists where they improve readability. break up dense blocks.
+7. max 180 words. dense but scannable.
+8. prefer content from context. only fill gaps with general knowledge if necessary.
+9. no phrases like "it is important to note", "emphasis on", or research-style hedging.
+10. output raw markdown only. do not wrap your response in ```markdown or any code block (no ```).
 
 context chunks (may contain formulas):
 {{ context_chunks }}

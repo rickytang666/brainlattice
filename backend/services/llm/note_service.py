@@ -3,6 +3,7 @@ from core.config import get_settings
 from services.llm.providers import get_gemini_client
 from services.embedding_service import EmbeddingService
 from services.llm.prompt_service import get_prompt_service
+from services.llm.utils import repair_note_markdown
 from sqlalchemy.orm import Session
 from db import models
 from typing import List, Optional
@@ -52,6 +53,7 @@ class NodeNoteService:
             )
             
             note_content = response.text.strip().lower()
+            note_content = repair_note_markdown(note_content)
             logger.info(f"successfully generated {len(note_content)} chars for {concept_id}")
             return note_content
             

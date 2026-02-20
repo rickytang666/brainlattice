@@ -355,10 +355,11 @@ export default function ProjectDashboard() {
             <NoteSidebar 
               projectId={selectedProjectId} 
               conceptId={selectedNodeId} 
+              aliases={projectGraph?.nodes.find((n) => n.id === selectedNodeId)?.aliases ?? []}
               onClose={() => setSelectedNodeId(null)} 
-              onNodeSelect={(id, opts) => {
+              onNodeSelect={(id) => {
                 setSelectedNodeId(id);
-                if (opts?.focusInGraph) setFocusNodeId(id);
+                setFocusNodeId(id);
               }}
             />
           </div>

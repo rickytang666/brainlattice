@@ -9,21 +9,21 @@ import { API_BASE } from '../../config';
 interface NoteSidebarProps {
   projectId: string;
   conceptId: string | null;
+  aliases?: string[];
   onClose: () => void;
-  onNodeSelect?: (id: string, opts?: { focusInGraph?: boolean }) => void;
+  onNodeSelect?: (id: string) => void;
 }
 
-export default function NoteSidebar({ projectId, conceptId, onClose, onNodeSelect }: NoteSidebarProps) {
+export default function NoteSidebar({ projectId, conceptId, aliases = [], onClose, onNodeSelect }: NoteSidebarProps) {
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // process content to handle [[obsidian-links]]
+  // process content to handle [[obsidian-links]] -> markdown links
+  // use angle brackets <href> so concepts with spaces (e.g. "scalar field") parse correctly
   const processedContent = useMemo(() => {
     if (!content) return null;
-    // replace [[concept]] with [concept](concept) to make it clickable via markdown components
-    // we use a special prefix or just use the link component override
-    return content.replace(/\[\[(.*?)\]\]/g, '[$1]($1)');
+    return content.replace(/\[\[([^\]]+)\]\]/g, (_, concept) => `[${concept}](<${concept}>)`);
   }, [content]);
 
   // sync state with props during render to avoid cascading effect renders
@@ -156,34 +156,41 @@ export default function NoteSidebar({ projectId, conceptId, onClose, onNodeSelec
                       {children}
                     </code>
                   ),
-                  a: ({ href, children }) => (
-                    <button 
-                      onClick={(e) => {
-                          const focusInGraph = e.metaKey || e.ctrlKey;
-                          console.log(`[Interaction] backlink_click: target=${href}, focusInGraph=${focusInGraph}`);
-                          onNodeSelect?.(href || '', { focusInGraph });
-                      }}
-                      className="text-emerald-400 hover:text-emerald-300 font-bold border-b border-emerald-500/30 hover:border-emerald-500 transition-all px-0.5"
-                    >
-                      {children}
-                    </button>
-                  )
+                  a: ({ href, children }) => {
+                    const targetId = (href || '').replace(/^<|>$/g, '').trim();
+                    return (
+                      <button 
+                        onClick={() => onNodeSelect?.(targetId)}
+                        className="text-emerald-400 hover:text-emerald-300 font-bold border-b border-emerald-500/30 hover:border-emerald-500 transition-all px-0.5"
+                      >
+                        {children}
+                      </button>
+                    );
+                  },
                 }}
               >
                 {processedContent || ''}
               </ReactMarkdown>
             </div>
             
-            <div className="mt-8 pt-6 border-t border-neutral-800">
+            {aliases.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-neutral-800">
                 <div className="flex items-center gap-2 text-neutral-600 mb-3">
-                    <Hash className="w-3 h-3" />
-                    <span className="text-[10px] uppercase tracking-wider font-bold">Metadata</span>
+                  <Hash className="w-3 h-3" />
+                  <span className="text-[10px] uppercase tracking-wider font-bold">Aliases</span>
                 </div>
-                <div className="bg-[#141414] p-3 rounded-lg border border-neutral-800/50">
-                    <p className="text-[10px] text-neutral-500 mb-1">Concept ID</p>
-                    <code className="text-[11px] text-neutral-400 break-all">{conceptId}</code>
+                <div className="flex flex-wrap gap-1.5">
+                  {aliases.map((a) => (
+                    <span
+                      key={a}
+                      className="text-[11px] text-neutral-500 bg-neutral-800/80 px-2 py-0.5 rounded lowercase"
+                    >
+                      {a}
+                    </span>
+                  ))}
                 </div>
-            </div>
+              </div>
+            )}
           </div>
         ) : null}
       </div>
