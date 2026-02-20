@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 
 class NodeNoteService:
     """
-    generates concise, obsidian-style research notes for graph nodes using rag.
+    generates concise, obsidian-style study notes for graph nodes using rag.
+    student-focused: essential content, formulas from chunks when possible.
     """
     
     def __init__(self):
@@ -24,7 +25,8 @@ class NodeNoteService:
 
     async def generate_note(self, db: Session, project_id: str, concept_id: str, outbound_links: List[str] = None) -> str:
         """
-        generates a short, lowercase research note for a concept using retrieved context chunks.
+        generates a short, study-focused note for a concept using retrieved context chunks.
+        includes formulas from chunks when relevant (e.g. math notes).
         """
         # 1. retrieve context via RAG
         context_chunks = self._get_context(db, project_id, concept_id)

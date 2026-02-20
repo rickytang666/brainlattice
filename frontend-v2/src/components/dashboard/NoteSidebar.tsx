@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { Loader2, X, BookOpen, ExternalLink, Hash } from 'lucide-react';
+import { Loader2, X, BookOpen, ExternalLink, Hash, RefreshCw } from 'lucide-react';
 import 'katex/dist/katex.min.css';
 import { API_BASE } from '../../config';
 
@@ -35,11 +35,38 @@ export default function NoteSidebar({ projectId, conceptId, onClose, onNodeSelec
     setLoading(!!conceptId && !!projectId);
   }
 
+  const fetchNote = (regenerate = false) => {
+    if (!conceptId || !projectId) return;
+    setError(null);
+    setLoading(true);
+
+    const url = regenerate
+      ? `${API_BASE}/project/${projectId}/node/${conceptId}/note?regenerate=true`
+      : `${API_BASE}/project/${projectId}/node/${conceptId}/note`;
+
+    fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error('failed to load note');
+        return res.json();
+      })
+      .then(data => {
+        setContent(data.content);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(`[Interaction] fetch_note_failed: ${conceptId}`, err);
+        setError('failed to generate note.');
+        setLoading(false);
+      });
+  };
+
   useEffect(() => {
     if (!conceptId || !projectId) return;
-
     console.log(`[Interaction] fetch_note: ${conceptId}`);
     let ignore = false;
+
+    setError(null);
+    setLoading(true);
 
     fetch(`${API_BASE}/project/${projectId}/node/${conceptId}/note`)
       .then(res => {
@@ -60,7 +87,7 @@ export default function NoteSidebar({ projectId, conceptId, onClose, onNodeSelec
           setLoading(false);
         }
       });
-    
+
     return () => { ignore = true; };
   }, [conceptId, projectId]);
 
@@ -72,16 +99,26 @@ export default function NoteSidebar({ projectId, conceptId, onClose, onNodeSelec
       <div className="p-4 border-b border-neutral-800 bg-[#141414] flex items-center justify-between">
         <div className="flex items-center gap-2 text-emerald-400">
           <BookOpen className="w-4 h-4" />
-          <h3 className="text-xs font-bold uppercase tracking-widest truncate max-w-[160px]">
+          <h3 className="text-xs font-bold uppercase tracking-widest truncate max-w-[140px]">
             {conceptId}
           </h3>
         </div>
-        <button 
-          onClick={onClose}
-          className="p-1 text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 rounded transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => fetchNote(true)}
+            disabled={loading}
+            title="Regenerate note"
+            className="p-1.5 text-neutral-500 hover:text-emerald-400 hover:bg-neutral-800 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <button 
+            onClick={onClose}
+            className="p-1 text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 rounded transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Content */}
@@ -90,7 +127,7 @@ export default function NoteSidebar({ projectId, conceptId, onClose, onNodeSelec
           <div className="h-full flex flex-col items-center justify-center space-y-4">
             <Loader2 className="w-8 h-8 animate-spin text-emerald-500/40" />
             <p className="text-[10px] text-neutral-500 uppercase tracking-[0.2em] animate-pulse">
-              researching note...
+              generating study note...
             </p>
           </div>
         ) : error ? (

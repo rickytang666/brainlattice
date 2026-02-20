@@ -1,17 +1,19 @@
 # node note generation template
 # target: gemini-2.0-flash
+# purpose: study notes for students — concise, essential, no fluff
 
-summarize the concept '{{ concept_id }}' based on the provided context chunks.
+write study notes for the concept '{{ concept_id }}' based on the context below.
 
 strict requirements:
-1. use obsidian markdown syntax.
-2. mention all related concepts using double brackets: {{ links_str }}
-3. use latex for any mathematical formulas or technical symbols (e.g. $e = mc^2$).
-4. strictly lowercase output.
-5. short and concise research notes. max 5 sentences.
-6. if the context is insufficient, use your general knowledge to write a high-quality academic note.
+1. student study notes — concise, essential, exam-ready. no filler or meta-commentary.
+2. use obsidian markdown. link related concepts: {{ links_str }}
+3. include formulas from the chunks when relevant. use latex: $e = mc^2$, $\frac{a}{b}$, $\sum_{i=1}^n$.
+4. lowercase output.
+5. max 150 words. dense and scannable.
+6. prefer content from context. only fill gaps with general knowledge if necessary.
+7. no phrases like "it is important to note", "emphasis on", or research-style hedging.
 
-context chunks:
+context chunks (may contain formulas):
 {{ context_chunks }}
 
 note:

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from db.session import get_db
 from db import models
@@ -113,10 +113,14 @@ async def get_project_graph(project_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"graph get error: {str(e)}")
 
 @router.get("/project/{project_id}/node/{concept_id}/note")
-async def get_node_note(project_id: str, concept_id: str, db: Session = Depends(get_db)):
+async def get_node_note(
+    project_id: str,
+    concept_id: str,
+    regenerate: bool = Query(False, description="force regenerate note, ignore cache"),
+    db: Session = Depends(get_db),
+):
     """get or generate note for a specific node"""
     try:
-        # 1. check if note already exists
         node = db.query(models.GraphNode).filter(
             models.GraphNode.project_id == project_id,
             models.GraphNode.concept_id == concept_id
@@ -125,10 +129,10 @@ async def get_node_note(project_id: str, concept_id: str, db: Session = Depends(
         if not node:
             raise HTTPException(status_code=404, detail="node not found")
             
-        if node.content:
+        if node.content and not regenerate:
             return {"concept_id": concept_id, "content": node.content, "cached": True}
             
-        # 2. generate new note via NodeNoteService
+        # generate note (either first time or regenerate)
         from services.llm.note_service import NodeNoteService
         note_service = NodeNoteService()
         
@@ -139,7 +143,7 @@ async def get_node_note(project_id: str, concept_id: str, db: Session = Depends(
             outbound_links=node.outbound_links
         )
         
-        # 3. persist the generated note
+        # persist the generated note
         node.content = note_content
         db.commit()
         
