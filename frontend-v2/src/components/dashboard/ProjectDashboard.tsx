@@ -43,7 +43,43 @@ export default function ProjectDashboard() {
   const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const panelsContainerRef = useRef<HTMLDivElement>(null);
+  const [graphWidthPercent, setGraphWidthPercent] = useState(60);
+  const [isResizing, setIsResizing] = useState(false);
+
   const clearFocusNodeId = useCallback(() => setFocusNodeId(null), []);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isResizing) return;
+    const container = panelsContainerRef.current;
+    if (!container) return;
+
+    const handleMove = (e: MouseEvent) => {
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const pct = (x / rect.width) * 100;
+      const minGraph = 25;
+      const maxGraph = Math.max(minGraph, 100 - (280 / rect.width) * 100);
+      setGraphWidthPercent(Math.max(minGraph, Math.min(maxGraph, pct)));
+    };
+    const handleEnd = () => setIsResizing(false);
+
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", handleEnd);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    return () => {
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleEnd);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isResizing]);
 
   const fetchProjects = () => {
     fetch(`${API_BASE}/projects/list`)
@@ -307,9 +343,15 @@ export default function ProjectDashboard() {
 
       {/* Main Area: Graph + Note as separate panels */}
       {selectedProjectId && (
-        <div className="flex-1 flex flex-row w-full min-w-0 overflow-hidden">
-          {/* Graph Panel (60%) - self-contained */}
-          <div className="flex-[6] min-w-0 h-full flex flex-col relative overflow-hidden bg-[#0a0a0a]">
+        <div
+          ref={panelsContainerRef}
+          className="flex-1 flex flex-row w-full min-w-0 overflow-hidden relative"
+        >
+          {/* Graph Panel - resizable */}
+          <div
+            className="min-w-0 h-full flex flex-col relative overflow-hidden bg-[#0a0a0a] shrink-0"
+            style={{ width: `${graphWidthPercent}%` }}
+          >
             {/* Header overlay - scoped to graph panel only */}
             <div className="absolute top-6 left-6 z-10 flex items-center gap-4">
               <button
@@ -393,8 +435,23 @@ export default function ProjectDashboard() {
             </div>
           </div>
 
-          {/* Note Panel (40%) - self-contained */}
-          <div className="flex-[4] min-w-[280px] max-w-[480px] shrink-0 h-full flex flex-col overflow-hidden border-l border-neutral-800 bg-[#0f0f0f]">
+          {/* Resize handle */}
+          <div
+            onMouseDown={handleResizeStart}
+            className="absolute top-0 bottom-0 w-1.5 cursor-col-resize z-30 shrink-0 select-none flex justify-center"
+            style={{ left: `calc(${graphWidthPercent}% - 3px)` }}
+            title="Drag to resize"
+          >
+            <div
+              className={`h-full w-px transition-colors ${isResizing ? "bg-neutral-500" : "bg-neutral-800 hover:bg-neutral-600"}`}
+            />
+          </div>
+
+          {/* Note Panel - resizable */}
+          <div
+            className="min-w-[280px] shrink-0 h-full flex flex-col overflow-hidden border-l border-neutral-800 bg-[#0f0f0f]"
+            style={{ width: `${100 - graphWidthPercent}%` }}
+          >
             <NoteSidebar
               projectId={selectedProjectId}
               conceptId={selectedNodeId}

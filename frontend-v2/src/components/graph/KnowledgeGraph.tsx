@@ -75,16 +75,23 @@ export default function KnowledgeGraph({
   const graphData = useMemo(() => {
     const nodes: ForceGraphNode[] = data.nodes.map((n) => ({ ...n }));
     const links: ForceGraphLink[] = [];
+    const linkCount: Record<string, number> = {};
 
     data.nodes.forEach((node) => {
+      linkCount[node.id] = 0;
       node.outbound_links.forEach((targetId) => {
         if (data.nodes.find((n) => n.id === targetId)) {
-          links.push({
-            source: node.id,
-            target: targetId,
-          });
+          links.push({ source: node.id, target: targetId });
+          linkCount[node.id] = (linkCount[node.id] ?? 0) + 1;
+          linkCount[targetId] = (linkCount[targetId] ?? 0) + 1;
         }
       });
+    });
+
+    const maxLinks = Math.max(1, ...Object.values(linkCount));
+    nodes.forEach((n) => {
+      (n as any).connectivity = linkCount[n.id] ?? 0;
+      (n as any).normConnectivity = (linkCount[n.id] ?? 0) / maxLinks;
     });
 
     return { nodes, links };
@@ -173,15 +180,16 @@ export default function KnowledgeGraph({
     updateHighlight();
   };
 
-  const NODE_R = 4; // Slightly smaller radius
+  const NODE_R_BASE = 3;
+  const NODE_R_EXTRA = 5; // more connected = bigger (range 3 to ~7)
   const ZOOM_LABEL_BREAKPOINT = 2;
 
   // Colors
   const COL_DEFAULT = "#9ca3af"; // zinc-400
   const COL_HIGHLIGHT = "#60a5fa"; // blue-400
   const COL_DIM = "#262626"; // zinc-800
-  const COL_LINK_DEFAULT = "#3f3f46";
-  const COL_LINK_DIM = "#171717";
+  const COL_LINK_DEFAULT = "#242424"; // very subtle grey, barely visible
+  const COL_LINK_DIM = "#0f0f0f"; // almost background
 
   // Physics tweaks
   useEffect(() => {
@@ -248,11 +256,16 @@ export default function KnowledgeGraph({
           globalScale: number,
         ) => {
           const label = node.id;
-          const fontSize = 10 / globalScale; // Smaller font
+          const fontSize = 10 / globalScale;
+
+          // Radius by connectivity (sqrt for subtle spread: base 3, max ~5.5)
+          const norm = (node as any).normConnectivity ?? 0;
+          const nodeR =
+            NODE_R_BASE + NODE_R_EXTRA * Math.sqrt(Math.min(1, norm));
 
           // 1. Draw Node
           ctx.beginPath();
-          ctx.arc(node.x, node.y, NODE_R, 0, 2 * Math.PI, false);
+          ctx.arc(node.x, node.y, nodeR, 0, 2 * Math.PI, false);
 
           // Use the interpolated color logic
           let targetColor = COL_DEFAULT;
@@ -282,7 +295,7 @@ export default function KnowledgeGraph({
               node.id === hoverNode || isNeighbor ? transitionLevel : 0.6;
             ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
 
-            ctx.fillText(label, node.x, node.y + NODE_R + fontSize * 0.8);
+            ctx.fillText(label, node.x, node.y + nodeR + fontSize * 0.8);
           }
         }}
         onNodeHover={handleNodeHover}
