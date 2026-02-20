@@ -1,24 +1,33 @@
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-.env
-.venv
-env/
+*.so
+.Python
+
+# Virtual environments
 venv/
+env/
 ENV/
-env.bak
-env.rm
-output/
-secrets/
-data/
-*.pdf
+.venv/
 
-# uv
-uv.lock
-.python-version
+# Environment variables
+.env
 
-# cloudflare
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+test/
+
+# Serverless & Cloudflare
+.serverless/
 .wrangler/
 
-# serverless
-.serverless/
+# Application data & outputs
+output/
+data/
+*.pdf
+uploads/
+temp-uploads/
+.python-version
