@@ -423,7 +423,10 @@ export default function ProjectDashboard() {
               ) : projectGraph ? (
                 <KnowledgeGraph
                   data={projectGraph}
-                  onNodeSelect={setSelectedNodeId}
+                  onNodeSelect={(id) => {
+                    setSelectedNodeId(id);
+                    setFocusNodeId(id);
+                  }}
                   focusNodeId={focusNodeId}
                   onFocusComplete={clearFocusNodeId}
                 />

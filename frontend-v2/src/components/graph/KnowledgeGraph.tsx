@@ -99,22 +99,8 @@ export default function KnowledgeGraph({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleNodeClick = useCallback(
-    (node: any, event: MouseEvent) => {
-      const isQuickFocus = event.metaKey || event.ctrlKey;
-      console.log(
-        `[Interaction] node_click: id=${node.id}, quickFocus=${isQuickFocus}`,
-      );
-
-      // Focus camera on node
-      const zoomLevel = isQuickFocus ? 5 : 2;
-      const duration = isQuickFocus ? 400 : 1000;
-      fgRef.current?.centerAt(node.x, node.y, duration);
-      fgRef.current?.zoom(zoomLevel, duration);
-
-      // notify parent of selection
-      if (onNodeSelect) {
-        onNodeSelect(node.id);
-      }
+    (node: any) => {
+      onNodeSelect?.(node.id);
     },
     [onNodeSelect],
   );
@@ -199,7 +185,7 @@ export default function KnowledgeGraph({
     }
   }, []);
 
-  // Focus on node when focusNodeId is set (e.g. cmd+click from note sidebar)
+  // Focus on node when focusNodeId is set
   useEffect(() => {
     if (!focusNodeId || !fgRef.current || !graphData.nodes.length) return;
     const node = graphData.nodes.find((n) => n.id === focusNodeId);
