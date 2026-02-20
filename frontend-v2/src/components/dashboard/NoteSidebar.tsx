@@ -1,4 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
+
+function decodeConceptId(id: string | null): string | null {
+  if (!id) return null;
+  try {
+    return decodeURIComponent(id);
+  } catch {
+    return id;
+  }
+}
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -49,9 +58,10 @@ export default function NoteSidebar({
     setError(null);
     setLoading(true);
 
+    const enc = encodeURIComponent(conceptId);
     const url = regenerate
-      ? `${API_BASE}/project/${projectId}/node/${conceptId}/note?regenerate=true`
-      : `${API_BASE}/project/${projectId}/node/${conceptId}/note`;
+      ? `${API_BASE}/project/${projectId}/node/${enc}/note?regenerate=true`
+      : `${API_BASE}/project/${projectId}/node/${enc}/note`;
 
     fetch(url)
       .then((res) => {
@@ -77,7 +87,7 @@ export default function NoteSidebar({
     setError(null);
     setLoading(true);
 
-    fetch(`${API_BASE}/project/${projectId}/node/${conceptId}/note`)
+    fetch(`${API_BASE}/project/${projectId}/node/${encodeURIComponent(conceptId)}/note`)
       .then((res) => {
         if (!res.ok) throw new Error("failed to load note");
         return res.json();
@@ -109,7 +119,7 @@ export default function NoteSidebar({
         <div className="flex items-center gap-2 text-emerald-400">
           <BookOpen className="w-4 h-4 flex-shrink-0" />
           <h3 className="text-sm font-bold tracking-widest truncate max-w-[250px]">
-            {conceptId || "Note"}
+            {decodeConceptId(conceptId) || "Note"}
           </h3>
         </div>
         <div className="flex items-center gap-1">
@@ -173,7 +183,8 @@ export default function NoteSidebar({
                     </code>
                   ),
                   a: ({ href, children }) => {
-                    const targetId = (href || "").replace(/^<|>$/g, "").trim();
+                    const raw = (href || "").replace(/^<|>$/g, "").trim();
+                    const targetId = decodeConceptId(raw) ?? raw;
                     return (
                       <button
                         onClick={() => onNodeSelect?.(targetId)}
