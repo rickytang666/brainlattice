@@ -10,7 +10,7 @@ interface NoteSidebarProps {
   projectId: string;
   conceptId: string | null;
   onClose: () => void;
-  onNodeSelect?: (id: string) => void;
+  onNodeSelect?: (id: string, opts?: { focusInGraph?: boolean }) => void;
 }
 
 export default function NoteSidebar({ projectId, conceptId, onClose, onNodeSelect }: NoteSidebarProps) {
@@ -91,30 +91,31 @@ export default function NoteSidebar({ projectId, conceptId, onClose, onNodeSelec
     return () => { ignore = true; };
   }, [conceptId, projectId]);
 
-  if (!conceptId) return null;
-
   return (
-    <div className="w-80 border-l border-neutral-800 bg-[#0f0f0f] flex flex-col h-full shadow-2xl relative z-20 overflow-hidden">
+    <div className="w-full min-w-0 border-l border-neutral-800 bg-[#0f0f0f] flex flex-col h-full shadow-2xl relative z-20 overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-neutral-800 bg-[#141414] flex items-center justify-between">
         <div className="flex items-center gap-2 text-emerald-400">
-          <BookOpen className="w-4 h-4" />
+          <BookOpen className="w-4 h-4 flex-shrink-0" />
           <h3 className="text-xs font-bold uppercase tracking-widest truncate max-w-[140px]">
-            {conceptId}
+            {conceptId || 'Note'}
           </h3>
         </div>
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => fetchNote(true)}
-            disabled={loading}
-            title="Regenerate note"
-            className="p-1.5 text-neutral-500 hover:text-emerald-400 hover:bg-neutral-800 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+          {conceptId && (
+            <button
+              onClick={() => fetchNote(true)}
+              disabled={loading}
+              title="Regenerate note"
+              className="p-1.5 text-neutral-500 hover:text-emerald-400 hover:bg-neutral-800 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          )}
           <button 
             onClick={onClose}
             className="p-1 text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 rounded transition-colors"
+            title="Clear selection"
           >
             <X className="w-4 h-4" />
           </button>
@@ -123,7 +124,15 @@ export default function NoteSidebar({ projectId, conceptId, onClose, onNodeSelec
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-neutral-800">
-        {loading ? (
+        {!conceptId ? (
+          <div className="h-full flex flex-col items-center justify-center text-center px-6">
+            <BookOpen className="w-10 h-10 text-neutral-700 mb-4" />
+            <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">Select a node</p>
+            <p className="text-[11px] text-neutral-600 leading-relaxed">
+              Click a node in the graph or cmd+click a concept link to view and focus.
+            </p>
+          </div>
+        ) : loading ? (
           <div className="h-full flex flex-col items-center justify-center space-y-4">
             <Loader2 className="w-8 h-8 animate-spin text-emerald-500/40" />
             <p className="text-[10px] text-neutral-500 uppercase tracking-[0.2em] animate-pulse">
@@ -150,9 +159,9 @@ export default function NoteSidebar({ projectId, conceptId, onClose, onNodeSelec
                   a: ({ href, children }) => (
                     <button 
                       onClick={(e) => {
-                          const isQuickFocus = e.metaKey || e.ctrlKey;
-                          console.log(`[Interaction] backlink_click: target=${href}, quickFocus=${isQuickFocus}`);
-                          onNodeSelect?.(href || '');
+                          const focusInGraph = e.metaKey || e.ctrlKey;
+                          console.log(`[Interaction] backlink_click: target=${href}, focusInGraph=${focusInGraph}`);
+                          onNodeSelect?.(href || '', { focusInGraph });
                       }}
                       className="text-emerald-400 hover:text-emerald-300 font-bold border-b border-emerald-500/30 hover:border-emerald-500 transition-all px-0.5"
                     >

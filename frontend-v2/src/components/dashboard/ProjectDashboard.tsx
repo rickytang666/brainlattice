@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import KnowledgeGraph from "../graph/KnowledgeGraph";
 import NoteSidebar from "./NoteSidebar";
 import type { GraphData } from "../../types/graph";
@@ -24,8 +24,10 @@ export default function ProjectDashboard() {
   const [newTitle, setNewTitle] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const clearFocusNodeId = useCallback(() => setFocusNodeId(null), []);
 
   const fetchProjects = () => {
     fetch(`${API_BASE}/projects/list`)
@@ -263,10 +265,12 @@ export default function ProjectDashboard() {
         </div>
       )}
 
-      {/* Main Area: Full Screen Graph View */}
+      {/* Main Area: Graph + Note as separate panels */}
       {selectedProjectId && (
-        <div className="flex-1 relative flex flex-row bg-[#0a0a0a]">
-          {/* Header (Absolute Overlay) */}
+        <div className="flex-1 flex flex-row w-full min-w-0 overflow-hidden">
+          {/* Graph Panel (60%) - self-contained */}
+          <div className="flex-[6] min-w-0 h-full flex flex-col relative overflow-hidden bg-[#0a0a0a]">
+          {/* Header overlay - scoped to graph panel only */}
           <div className="absolute top-6 left-6 z-10 flex items-center gap-4">
             <button
               onClick={() => {
@@ -325,8 +329,8 @@ export default function ProjectDashboard() {
             </div>
           </div>
 
-          {/* Graph Section */}
-          <div className="flex-1 relative">
+          {/* Graph Section - fills panel, explicit bounds for canvas */}
+          <div className="flex-1 min-h-0 relative w-full overflow-hidden">
             {graphLoading ? (
               <div className="w-full h-full flex items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-emerald-500/50" />
@@ -335,6 +339,8 @@ export default function ProjectDashboard() {
               <KnowledgeGraph 
                 data={projectGraph} 
                 onNodeSelect={setSelectedNodeId}
+                focusNodeId={focusNodeId}
+                onFocusComplete={clearFocusNodeId}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-neutral-600">
@@ -342,14 +348,18 @@ export default function ProjectDashboard() {
               </div>
             )}
           </div>
+          </div>
 
-          {/* Right Sidebar: Node Notes (Sliding In) */}
-          <div className={`transition-all duration-300 overflow-hidden ${selectedNodeId ? "w-80" : "w-0"}`}>
+          {/* Note Panel (40%) - self-contained */}
+          <div className="flex-[4] min-w-[280px] max-w-[480px] shrink-0 h-full flex flex-col overflow-hidden border-l border-neutral-800 bg-[#0f0f0f]">
             <NoteSidebar 
               projectId={selectedProjectId} 
               conceptId={selectedNodeId} 
               onClose={() => setSelectedNodeId(null)} 
-              onNodeSelect={setSelectedNodeId}
+              onNodeSelect={(id, opts) => {
+                setSelectedNodeId(id);
+                if (opts?.focusInGraph) setFocusNodeId(id);
+              }}
             />
           </div>
         </div>

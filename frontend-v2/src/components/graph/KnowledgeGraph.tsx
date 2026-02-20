@@ -2,9 +2,36 @@ import { useRef, useCallback, useMemo, useState, useEffect } from 'react';
 import ForceGraph2D, { type ForceGraphMethods } from 'react-force-graph-2d';
 import type { GraphData, ForceGraphNode, ForceGraphLink } from '../../types/graph';
 
+// explicit dimensions so graph centers in its panel, not the screen
+function useContainerSize() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 800, height: 600 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const updateSize = () => {
+      const rect = el.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        setSize({ width: rect.width, height: rect.height });
+      }
+    };
+
+    updateSize();
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  return { containerRef, ...size };
+}
+
 interface KnowledgeGraphProps {
   data: GraphData;
   onNodeSelect?: (nodeId: string | null) => void;
+  focusNodeId?: string | null;
+  onFocusComplete?: () => void;
 }
 
 // Helper: Linear Interpolation for Hex Colors
@@ -19,7 +46,8 @@ const lerpColor = (a: string, b: string, t: number) => {
   return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
 };
 
-export default function KnowledgeGraph({ data, onNodeSelect }: KnowledgeGraphProps) {
+export default function KnowledgeGraph({ data, onNodeSelect, focusNodeId, onFocusComplete }: KnowledgeGraphProps) {
+  const { containerRef, width, height } = useContainerSize();
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
   const [highlightNodes, setHighlightNodes] = useState(new Set<string>());
   const [highlightLinks, setHighlightLinks] = useState(new Set<string>());
@@ -140,10 +168,25 @@ export default function KnowledgeGraph({ data, onNodeSelect }: KnowledgeGraphPro
     }
   }, []);
 
+  // Focus on node when focusNodeId is set (e.g. cmd+click from note sidebar)
+  useEffect(() => {
+    if (!focusNodeId || !fgRef.current || !graphData.nodes.length) return;
+    const node = graphData.nodes.find((n) => n.id === focusNodeId);
+    if (!node || node.x == null || node.y == null) return;
+
+    const zoomLevel = 5;
+    const duration = 400;
+    fgRef.current.centerAt(node.x, node.y, duration);
+    fgRef.current.zoom(zoomLevel, duration);
+    onFocusComplete?.();
+  }, [focusNodeId, graphData.nodes, onFocusComplete]);
+
   return (
-    <div className="w-full h-full bg-[#0a0a0a]">
+    <div ref={containerRef} className="absolute inset-0 w-full h-full bg-[#0a0a0a]">
       <ForceGraph2D
         ref={fgRef}
+        width={width}
+        height={height}
         graphData={graphData}
         nodeLabel={() => ''}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
