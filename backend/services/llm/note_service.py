@@ -53,7 +53,10 @@ class NodeNoteService:
             )
             
             note_content = response.text.strip().lower()
-            note_content = repair_note_markdown(note_content)
+            valid_ids = {n.concept_id for n in db.query(models.GraphNode).filter(
+                models.GraphNode.project_id == project_id
+            ).all()}
+            note_content = repair_note_markdown(note_content, valid_concept_ids=valid_ids)
             logger.info(f"successfully generated {len(note_content)} chars for {concept_id}")
             return note_content
             

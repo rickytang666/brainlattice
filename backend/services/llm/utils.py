@@ -77,13 +77,24 @@ def fix_latex_json_escapes(text: str) -> str:
     return re.sub(r'(?<!\\)\\([a-zA-Z]+)', r'\\\\\1', text)
 
 
-def repair_note_markdown(text: str) -> str:
+def repair_note_markdown(text: str, valid_concept_ids: set[str] | None = None) -> str:
     """
     repair common llm markdown issues in study notes.
     safe, non-destructive fixes.
+    valid_concept_ids: if provided, [[x]] for x not in this set is converted to plain text (prevents broken links).
     """
     if not text or not text.strip():
         return text
+
+    # strip invalid [[concept]] links (hallucinated concepts not in graph)
+    if valid_concept_ids is not None:
+        valid_lower = {c.lower() for c in valid_concept_ids}
+
+        def replace_invalid_link(match: re.Match) -> str:
+            concept = match.group(1).strip()
+            return concept if concept.lower() not in valid_lower else match.group(0)
+
+        text = re.sub(r'\[\[([^\]]+)\]\]', replace_invalid_link, text)
 
     # unwrap if llm wrapped entire output in ```markdown or ``` code block
     text = text.strip()

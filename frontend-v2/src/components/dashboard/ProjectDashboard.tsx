@@ -462,6 +462,11 @@ export default function ProjectDashboard() {
                 projectGraph?.nodes.find((n) => n.id === selectedNodeId)
                   ?.aliases ?? []
               }
+              validNodeIds={
+                projectGraph
+                  ? new Set(projectGraph.nodes.map((n) => n.id.toLowerCase()))
+                  : undefined
+              }
               onClose={() => setSelectedNodeId(null)}
               onNodeSelect={(id) => {
                 setSelectedNodeId(id);

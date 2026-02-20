@@ -19,6 +19,7 @@ interface NoteSidebarProps {
   projectId: string;
   conceptId: string | null;
   aliases?: string[];
+  validNodeIds?: Set<string>;
   onClose: () => void;
   onNodeSelect?: (id: string) => void;
 }
@@ -27,6 +28,7 @@ export default function NoteSidebar({
   projectId,
   conceptId,
   aliases = [],
+  validNodeIds,
   onClose,
   onNodeSelect,
 }: NoteSidebarProps) {
@@ -185,6 +187,10 @@ export default function NoteSidebar({
                   a: ({ href, children }) => {
                     const raw = (href || "").replace(/^<|>$/g, "").trim();
                     const targetId = decodeConceptId(raw) ?? raw;
+                    const isLinked = !validNodeIds || validNodeIds.has(targetId.toLowerCase());
+                    if (!isLinked) {
+                      return <span className="text-neutral-500">{children}</span>;
+                    }
                     return (
                       <button
                         onClick={() => onNodeSelect?.(targetId)}
