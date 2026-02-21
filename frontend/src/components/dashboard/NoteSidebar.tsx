@@ -87,9 +87,6 @@ export default function NoteSidebar({
     console.log(`[Interaction] fetch_note: ${conceptId}`);
     let ignore = false;
 
-    setError(null);
-    setLoading(true);
-
     fetch(
       `${API_BASE}/project/${projectId}/node/${encodeURIComponent(conceptId)}/note`,
     )

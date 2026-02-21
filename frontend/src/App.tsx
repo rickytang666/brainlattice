@@ -5,7 +5,7 @@ import { LayoutDashboard, TestTube } from "lucide-react";
 
 const LAST_PROJECT_KEY = "brainlattice_last_project";
 
-export function getDashboardPath(): string {
+function getDashboardPath(): string {
   const last = sessionStorage.getItem(LAST_PROJECT_KEY);
   return last ? `/${last}` : "/";
 }

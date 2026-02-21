@@ -56,6 +56,8 @@ const lerpColor = (a: string, b: string, t: number) => {
   );
 };
 
+type GraphLinkType = ForceGraphLink | { source: ForceGraphNode; target: ForceGraphNode };
+
 export default function KnowledgeGraph({
   data,
   onNodeSelect,
@@ -65,7 +67,7 @@ export default function KnowledgeGraph({
   const { containerRef, width, height } = useContainerSize();
   const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
   const [highlightNodes, setHighlightNodes] = useState(new Set<string>());
-  const [highlightLinks, setHighlightLinks] = useState(new Set<string>());
+  const [highlightLinks, setHighlightLinks] = useState(new Set<GraphLinkType>());
   const [hoverNode, setHoverNode] = useState<string | null>(null);
 
   // Transition State (0 = Normal, 1 = Full Hover Effect)
@@ -90,8 +92,9 @@ export default function KnowledgeGraph({
 
     const maxLinks = Math.max(1, ...Object.values(linkCount));
     nodes.forEach((n) => {
-      (n as any).connectivity = linkCount[n.id] ?? 0;
-      (n as any).normConnectivity = (linkCount[n.id] ?? 0) / maxLinks;
+      const gNode = n as ForceGraphNode & { connectivity?: number; normConnectivity?: number };
+      gNode.connectivity = linkCount[n.id] ?? 0;
+      gNode.normConnectivity = (linkCount[n.id] ?? 0) / maxLinks;
     });
 
     return { nodes, links };
@@ -99,7 +102,7 @@ export default function KnowledgeGraph({
 
    
   const handleNodeClick = useCallback(
-    (node: any) => {
+    (node: ForceGraphNode) => {
       onNodeSelect?.(node.id);
     },
     [onNodeSelect],
@@ -134,19 +137,15 @@ export default function KnowledgeGraph({
     return () => cancelAnimationFrame(animationRef.current!);
   }, [hoverNode, transitionLevel]); // Dependency on transitionLevel ensures loop continues
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleNodeHover = (node: any | null) => {
+  const handleNodeHover = (node: ForceGraphNode | null) => {
     // Instant update, animation handles the fade
     highlightNodes.clear();
     highlightLinks.clear();
 
     if (node) {
       highlightNodes.add(node.id);
-      node.neighbors = node.neighbors || [];
-      node.links = node.links || [];
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      graphData.links.forEach((link: any) => {
+      graphData.links.forEach((link: GraphLinkType) => {
         const sourceId =
           typeof link.source === "object" ? link.source.id : link.source;
         const targetId =
@@ -204,13 +203,13 @@ export default function KnowledgeGraph({
       className="absolute inset-0 w-full h-full bg-[#0a0a0a]"
     >
       <ForceGraph2D
+        // @ts-expect-error third-party package type mismatch
         ref={fgRef}
         width={width}
         height={height}
         graphData={graphData}
         nodeLabel={() => ""}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        nodeColor={(node: any) => {
+        nodeColor={(node: ForceGraphNode) => {
           // Target Logic
           let targetColor = COL_DEFAULT;
           if (hoverNode) {
@@ -223,8 +222,7 @@ export default function KnowledgeGraph({
           // Interpolate: Base (Default) -> Target (Focus State)
           return lerpColor(COL_DEFAULT, targetColor, transitionLevel);
         }}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        linkColor={(link: any) => {
+        linkColor={(link: GraphLinkType) => {
           let targetColor = COL_LINK_DEFAULT;
           if (hoverNode) {
             if (highlightLinks.has(link)) targetColor = COL_HIGHLIGHT;
@@ -237,7 +235,7 @@ export default function KnowledgeGraph({
         linkDirectionalArrowRelPos={1}
          
         nodeCanvasObject={(
-          node: any,
+          node: ForceGraphNode,
           ctx: CanvasRenderingContext2D,
           globalScale: number,
         ) => {
@@ -245,14 +243,16 @@ export default function KnowledgeGraph({
           const fontSize = 10 / globalScale;
 
           // Radius by connectivity (sqrt for subtle spread: base 3, max ~5.5)
-          const norm = (node as any).normConnectivity ?? 0;
+          const norm = (node as ForceGraphNode & { normConnectivity?: number }).normConnectivity ?? 0;
           const nodeR =
             NODE_R_BASE + NODE_R_EXTRA * Math.sqrt(Math.min(1, norm));
 
           // 1. Draw Node
           ctx.beginPath();
-          ctx.arc(node.x, node.y, nodeR, 0, 2 * Math.PI, false);
-
+          if (node.x != null && node.y != null) {
+            ctx.arc(node.x, node.y, nodeR, 0, 2 * Math.PI, false);
+          }
+          
           // Use the interpolated color logic
           let targetColor = COL_DEFAULT;
           if (hoverNode) {
@@ -281,7 +281,9 @@ export default function KnowledgeGraph({
               node.id === hoverNode || isNeighbor ? transitionLevel : 0.6;
             ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
 
-            ctx.fillText(label, node.x, node.y + nodeR + fontSize * 0.8);
+            if (node.x != null && node.y != null) {
+              ctx.fillText(label, node.x, node.y + nodeR + fontSize * 0.8);
+            }
           }
         }}
         onNodeHover={handleNodeHover}
