@@ -15,7 +15,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { API_BASE } from "../../config";
+import { API_BASE, apiFetch } from "../../config";
 
 const LAST_PROJECT_KEY = "brainlattice_last_project";
 
@@ -82,7 +82,7 @@ export default function ProjectDashboard() {
   }, [isResizing]);
 
   const fetchProjects = () => {
-    fetch(`${API_BASE}/projects/list`)
+    apiFetch(`${API_BASE}/projects/list`)
       .then((res) => res.json())
       .then((data) => {
         setProjects(data);
@@ -125,7 +125,7 @@ export default function ProjectDashboard() {
       return;
     }
     setGraphLoading(true);
-    fetch(`${API_BASE}/project/${projectIdFromUrl}/graph`)
+    apiFetch(`${API_BASE}/project/${projectIdFromUrl}/graph`)
       .then((res) => {
         if (!res.ok) throw new Error(`http error! status: ${res.status}`);
         return res.json();
@@ -157,7 +157,7 @@ export default function ProjectDashboard() {
     formData.append("file", file);
 
     try {
-      const res = await fetch(`${API_BASE}/ingest/upload`, {
+      const res = await apiFetch(`${API_BASE}/ingest/upload`, {
         method: "POST",
         body: formData,
       });
@@ -185,7 +185,7 @@ export default function ProjectDashboard() {
     }
 
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_BASE}/project/${selectedProjectId}/title`,
         {
           method: "PATCH",
@@ -209,7 +209,7 @@ export default function ProjectDashboard() {
 
   const handleDeleteProject = async (id: string) => {
     try {
-      const res = await fetch(`${API_BASE}/project/${id}`, {
+      const res = await apiFetch(`${API_BASE}/project/${id}`, {
         method: "DELETE",
       });
       if (res.ok) {

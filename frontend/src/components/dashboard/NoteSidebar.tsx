@@ -14,7 +14,7 @@ import rehypeKatex from "rehype-katex";
 import { Loader2, X, BookOpen, Hash, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import "katex/dist/katex.min.css";
-import { API_BASE } from "../../config";
+import { API_BASE, apiFetch } from "../../config";
 
 interface NoteSidebarProps {
   projectId: string;
@@ -66,7 +66,7 @@ export default function NoteSidebar({
       ? `${API_BASE}/project/${projectId}/node/${enc}/note?regenerate=true`
       : `${API_BASE}/project/${projectId}/node/${enc}/note`;
 
-    fetch(url)
+    apiFetch(url)
       .then((res) => {
         if (!res.ok) throw new Error("failed to load note");
         return res.json();
@@ -87,7 +87,7 @@ export default function NoteSidebar({
     console.log(`[Interaction] fetch_note: ${conceptId}`);
     let ignore = false;
 
-    fetch(
+    apiFetch(
       `${API_BASE}/project/${projectId}/node/${encodeURIComponent(conceptId)}/note`,
     )
       .then((res) => {
