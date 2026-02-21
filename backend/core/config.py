@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     
     # ai api keys
     GEMINI_API_KEY: str
-    OPENAI_API_KEY: str
+    OPENAI_API_KEY: Optional[str] = None
     OPENROUTER_API_KEY: str
 
     # upstash redis (job status tracking)

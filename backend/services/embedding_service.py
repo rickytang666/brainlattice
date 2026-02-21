@@ -1,26 +1,50 @@
-from openai import OpenAI
+import logging
 from core.config import get_settings
 from typing import List
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 class EmbeddingService:
-    """embedding service using openai text-embedding-3-small"""
+    """embedding service with openai (primary) and gemini (fallback) gracefully supporting 1536 dimensions"""
     
     def __init__(self):
-        self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        self.model = "text-embedding-3-small"  # 1536 dimensions
+        self.dimensions = 1536
+        
+        if settings.OPENAI_API_KEY:
+            from openai import OpenAI
+            self.provider = "openai"
+            self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+            self.openai_model = "text-embedding-3-small"
+            logger.info("initialized openai embedding service")
+        else:
+            from google import genai
+            self.provider = "gemini"
+            self.gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY)
+            self.gemini_model = "text-embedding-004"
+            logger.info("initialized gemini embedding service (fallback)")
 
     def get_embedding(self, text: str) -> List[float]:
         """get single vector for text"""
         try:
             # clean text to avoid token issues
             text = text.replace("\n", " ")
-            response = self.client.embeddings.create(
-                input=[text],
-                model=self.model
-            )
-            return response.data[0].embedding
+            
+            if self.provider == "openai":
+                response = self.openai_client.embeddings.create(
+                    input=[text],
+                    model=self.openai_model
+                )
+                return response.data[0].embedding
+            else:
+                from google.genai import types
+                response = self.gemini_client.models.embed_content(
+                    model=self.gemini_model,
+                    contents=text,
+                    config=types.EmbedContentConfig(output_dimensionality=self.dimensions)
+                )
+                return response.embeddings[0].values
+                
         except Exception as e:
             raise Exception(f"failed to get embedding: {str(e)}")
 
@@ -29,10 +53,21 @@ class EmbeddingService:
         try:
             # clean all texts
             cleaned_texts = [t.replace("\n", " ") for t in texts]
-            response = self.client.embeddings.create(
-                input=cleaned_texts,
-                model=self.model
-            )
-            return [data.embedding for data in response.data]
+            
+            if self.provider == "openai":
+                response = self.openai_client.embeddings.create(
+                    input=cleaned_texts,
+                    model=self.openai_model
+                )
+                return [data.embedding for data in response.data]
+            else:
+                from google.genai import types
+                response = self.gemini_client.models.embed_content(
+                    model=self.gemini_model,
+                    contents=cleaned_texts,
+                    config=types.EmbedContentConfig(output_dimensionality=self.dimensions)
+                )
+                return [data.values for data in response.embeddings]
+                
         except Exception as e:
             raise Exception(f"failed to get batch embeddings: {str(e)}")
