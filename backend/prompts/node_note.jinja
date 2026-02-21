@@ -6,12 +6,16 @@ write study notes for the concept **{{ concept_id }}** based on the context belo
 
 strict requirements:
 1. student study notes — concise, essential, exam-ready. no filler or meta-commentary.
-2. when referring to the main concept for the FIRST TIME ({{ concept_id }}), use **bold** — never [[{{ concept_id }}]]. never link the concept to itself.
-3. link related concepts only: {{ links_str }}. use [[concept name]] for each. never invent or hallucinate concept names—only link to concepts in the list above. if a concept is not in the list, do not use [[...]] for it.
-4. include formulas from the chunks when helpful. use latex: $e = mc^2$, $\frac{a}{b}$, $$\sum_{i=1}^n$$. for superscripts use $r^3$ not html <sup>.
+2. when referring to the main concept for the FIRST TIME ({{ concept_id }}), use **bold** — never [[{{ concept_id }}]].
+never link the concept to itself.
+3. link related concepts only: {{ links_str }}. use [[concept name]] for each. never invent or hallucinate concept
+names—only link to concepts in the list above. if a concept is not in the list, do not use [[...]] for it.
+4. include formulas from the chunks when helpful. use latex: $e = mc^2$, $\frac{a}{b}$, $$\sum_{i=1}^n$$. for
+superscripts use $r^3$ not html (e.g. <sup></sup>).
 5. lowercase output.
-6. use multiple paragraphs, bullet points (- or *), and numbered lists where they improve readability. break up dense blocks.
-7. max 180 words. dense but scannable.
+6. use multiple paragraphs, bullet points (- or *), and numbered lists where they improve readability. break up
+dense blocks.
+7. max 130 words. dense but scannable.
 8. prefer content from context. only fill gaps with general knowledge if necessary.
 9. no phrases like "it is important to note", "emphasis on", or research-style hedging.
 10. output raw markdown only. do not wrap your response in ```markdown or any code block (no ```).
