@@ -7,6 +7,7 @@ import ConfigModal from "./components/dashboard/ConfigModal";
 import { LayoutDashboard, TestTube, Settings } from "lucide-react";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { useAuthSync } from "./hooks/useAuthSync";
+import { Logo } from "./components/Logo";
 
 const LAST_PROJECT_KEY = "brainlattice_last_project";
 
@@ -27,8 +28,14 @@ function App() {
 
       {/* Top Navigation */}
       <div className="flex-none h-12 border-b border-border bg-card px-4 flex items-center justify-between">
-        <div className="font-bold tracking-widest uppercase text-primary text-sm">
-          BrainLattice
+        <div className="flex items-center gap-2">
+          <Logo className="w-6 h-6 text-primary" />
+          <div 
+            className="font-bold text-primary text-lg mt-0.5" 
+            style={{ fontFamily: '"Space Grotesk", sans-serif' }}
+          >
+            BrainLattice
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 bg-muted border border-border rounded-lg p-1 mr-2">
