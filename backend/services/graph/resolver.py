@@ -11,9 +11,15 @@ class EntityResolver:
     uses semantic embeddings + agglomerative clustering to merge near-synonyms
     """
 
-    def __init__(self, clustering_threshold: float = 0.85):
-        self.embedder = EmbeddingService()
+    def __init__(self, clustering_threshold: float = 0.85, embedder: EmbeddingService = None):
+        self._embedder = embedder
         self.threshold = clustering_threshold
+
+    @property
+    def embedder(self) -> EmbeddingService:
+        if self._embedder is None:
+            raise ValueError("EmbeddingService not initialized in EntityResolver. Provide keys or an instance.")
+        return self._embedder
 
     def get_id_map(self, raw_nodes: List[GraphNode]) -> Dict[str, str]:
         """

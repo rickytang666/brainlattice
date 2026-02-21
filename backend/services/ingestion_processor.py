@@ -71,8 +71,10 @@ class IngestionProcessor:
             self.embedder = EmbeddingService(gemini_key=gemini_key, openai_key=openai_key)
             self.extractor = GraphExtractor(gemini_key=gemini_key)
             
-            # project the embedder into the connector for lazy use
+            # project the embedder into the connector and builder's resolver for lazy use
             self.connector._embeddings = self.embedder
+            if self.builder.resolver:
+                self.builder.resolver._embedder = self.embedder
             
             if not project_id:
                 # check if we already have a project for this job id (failsafe)
