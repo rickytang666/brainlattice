@@ -56,7 +56,7 @@ export default function ProjectDashboard() {
     message: string;
     download_url?: string;
   } | null>(null);
-  const exportPollRef = useRef<any>(null);
+  const exportPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const startExportPolling = useCallback(() => {
     if (exportPollRef.current) clearInterval(exportPollRef.current);

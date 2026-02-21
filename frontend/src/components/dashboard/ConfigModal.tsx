@@ -13,8 +13,11 @@ export default function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
 
   useEffect(() => {
     if (isOpen) {
-      setApiKey(localStorage.getItem(GEMINI_KEY_STORAGE) || "");
-      setOpenAiKey(localStorage.getItem(OPENAI_KEY_STORAGE) || "");
+      // defer state update to avoid synchronous cascading renders during mount
+      setTimeout(() => {
+        setApiKey(localStorage.getItem(GEMINI_KEY_STORAGE) || "");
+        setOpenAiKey(localStorage.getItem(OPENAI_KEY_STORAGE) || "");
+      }, 0);
     }
   }, [isOpen]);
 
