@@ -13,13 +13,15 @@ export function getSessionId(): string {
   return sessionId;
 }
 
-export function apiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+export function apiFetch(input: RequestInfo | URL, init?: RequestInit, clerkUserId?: string | null): Promise<Response> {
   const sessionId = getSessionId();
   const apiKey = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
   const openAiKey = localStorage.getItem(OPENAI_KEY_STORAGE) || "";
   
+  const userId = clerkUserId || sessionId;
+  
   const headers = new Headers(init?.headers);
-  headers.set("X-User-Id", sessionId);
+  headers.set("X-User-Id", userId);
   if (apiKey) {
     headers.set("X-Gemini-API-Key", apiKey);
   }

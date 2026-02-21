@@ -1,9 +1,11 @@
 import { NavLink, Routes, Route, useLocation } from "react-router-dom";
 import { useState } from "react";
+import { SignInButton, UserButton, SignedIn, SignedOut } from "@clerk/clerk-react";
 import GraphScratchpad from "./components/scratchpad/GraphScratchpad";
 import ProjectDashboard from "./components/dashboard/ProjectDashboard";
 import ConfigModal from "./components/dashboard/ConfigModal";
 import { LayoutDashboard, TestTube, Settings } from "lucide-react";
+import { useAuthSync } from "./hooks/useAuthSync";
 
 const LAST_PROJECT_KEY = "brainlattice_last_project";
 
@@ -13,6 +15,7 @@ function getDashboardPath(): string {
 }
 
 function App() {
+  useAuthSync();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const location = useLocation();
   const isDashboard = location.pathname !== "/scratchpad";
@@ -27,7 +30,7 @@ function App() {
           BrainLattice
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 rounded-lg p-1">
+          <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 rounded-lg p-1 mr-2">
             <NavLink
               to={getDashboardPath()}
               className={`flex items-center gap-2 px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${isDashboard ? "bg-emerald-500/10 text-emerald-400" : "text-neutral-500 hover:text-neutral-300"}`}
@@ -48,11 +51,24 @@ function App() {
           
           <button
             onClick={() => setIsConfigOpen(true)}
-            className="p-1.5 ml-2 text-neutral-500 hover:text-emerald-400 hover:bg-neutral-800 rounded-lg transition-colors"
+            className="p-1.5 text-neutral-500 hover:text-emerald-400 hover:bg-neutral-800 rounded-lg transition-colors"
             title="API Settings"
           >
             <Settings className="w-4 h-4" />
           </button>
+
+          <div className="flex items-center border-l border-neutral-800 pl-4 ml-2">
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white rounded transition-colors shadow-lg shadow-emerald-500/20">
+                  Sign In
+                </button>
+              </SignInButton>
+            </SignedOut>
+            <SignedIn>
+              <UserButton appearance={{ elements: { avatarBox: "w-8 h-8 rounded border border-neutral-700 hover:border-emerald-500 transition-colors" } }} />
+            </SignedIn>
+          </div>
         </div>
       </div>
 

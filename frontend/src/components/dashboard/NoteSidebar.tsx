@@ -12,6 +12,7 @@ import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import { Loader2, X, BookOpen, Hash, RefreshCw } from "lucide-react";
+import { useAuth } from "@clerk/clerk-react";
 import { motion } from "framer-motion";
 import "katex/dist/katex.min.css";
 import { API_BASE, apiFetch } from "../../config";
@@ -33,6 +34,7 @@ export default function NoteSidebar({
   onClose,
   onNodeSelect,
 }: NoteSidebarProps) {
+  const { userId } = useAuth();
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +68,7 @@ export default function NoteSidebar({
       ? `${API_BASE}/project/${projectId}/node/${enc}/note?regenerate=true`
       : `${API_BASE}/project/${projectId}/node/${enc}/note`;
 
-    apiFetch(url)
+    apiFetch(url, undefined, userId)
       .then((res) => {
         if (!res.ok) throw new Error("failed to load note");
         return res.json();
@@ -89,6 +91,8 @@ export default function NoteSidebar({
 
     apiFetch(
       `${API_BASE}/project/${projectId}/node/${encodeURIComponent(conceptId)}/note`,
+      undefined,
+      userId
     )
       .then((res) => {
         if (!res.ok) throw new Error("failed to load note");
@@ -112,7 +116,7 @@ export default function NoteSidebar({
     return () => {
       ignore = true;
     };
-  }, [conceptId, projectId]);
+  }, [conceptId, projectId, userId]);
 
   return (
     <div className="w-full min-w-0 border-l border-neutral-800 bg-[#0f0f0f] flex flex-col h-full shadow-2xl relative z-20 overflow-hidden">

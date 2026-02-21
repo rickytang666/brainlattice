@@ -14,6 +14,7 @@ import {
   X,
   Trash2,
 } from "lucide-react";
+import { useAuth } from "@clerk/clerk-react";
 
 import { API_BASE, apiFetch } from "../../config";
 
@@ -27,6 +28,7 @@ interface Project {
 }
 
 export default function ProjectDashboard() {
+  const { userId } = useAuth();
   const { projectId: projectIdFromUrl } = useParams<{ projectId?: string }>();
   const navigate = useNavigate();
 
@@ -81,8 +83,8 @@ export default function ProjectDashboard() {
     };
   }, [isResizing]);
 
-  const fetchProjects = () => {
-    apiFetch(`${API_BASE}/projects/list`)
+  const fetchProjects = useCallback(() => {
+    apiFetch(`${API_BASE}/projects/list`, undefined, userId)
       .then((res) => res.json())
       .then((data) => {
         setProjects(data);
@@ -92,7 +94,7 @@ export default function ProjectDashboard() {
         console.error(err);
         setLoading(false);
       });
-  };
+  }, [userId]);
 
   // persist last viewed project for "Dashboard" nav from scratchpad
   useEffect(() => {
@@ -113,7 +115,7 @@ export default function ProjectDashboard() {
       });
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchProjects]);
 
   // when projectId from URL changes, fetch graph and reset selection
   useEffect(() => {
@@ -125,7 +127,7 @@ export default function ProjectDashboard() {
       return;
     }
     setGraphLoading(true);
-    apiFetch(`${API_BASE}/project/${projectIdFromUrl}/graph`)
+    apiFetch(`${API_BASE}/project/${projectIdFromUrl}/graph`, undefined, userId)
       .then((res) => {
         if (!res.ok) throw new Error(`http error! status: ${res.status}`);
         return res.json();
@@ -139,7 +141,7 @@ export default function ProjectDashboard() {
         setProjectGraph(null);
         setGraphLoading(false);
       });
-  }, [projectIdFromUrl]);
+  }, [projectIdFromUrl, userId]);
 
   const selectProject = (id: string) => {
     setSelectedNodeId(null);
@@ -160,7 +162,7 @@ export default function ProjectDashboard() {
       const res = await apiFetch(`${API_BASE}/ingest/upload`, {
         method: "POST",
         body: formData,
-      });
+      }, userId);
       if (res.ok) {
         fetchProjects(); // refresh list
       } else {
@@ -192,6 +194,7 @@ export default function ProjectDashboard() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: newTitle }),
         },
+        userId
       );
       if (res.ok) {
         setProjects(
@@ -211,7 +214,7 @@ export default function ProjectDashboard() {
     try {
       const res = await apiFetch(`${API_BASE}/project/${id}`, {
         method: "DELETE",
-      });
+      }, userId);
       if (res.ok) {
         setProjects(projects.filter((p) => p.id !== id));
         if (selectedProjectId === id) {
