@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from db.session import get_db
 from db import models
 from schemas.project import ProjectSaveRequest, ProjectSaveResponse, ProjectGetResponse, UpdateTitleRequest, ProjectTransferRequest, ProjectTransferResponse
@@ -182,7 +183,12 @@ async def get_node_note(
             raise HTTPException(status_code=404, detail="node not found")
             
         if node.content and not regenerate:
-            return {"concept_id": concept_id, "content": node.content, "cached": True}
+            return {
+                "concept_id": concept_id, 
+                "content": node.content, 
+                "outbound_links": node.outbound_links or [],
+                "cached": True
+            }
             
         # generate note (either first time or regenerate)
         from services.llm.note_service import NodeNoteService
@@ -199,7 +205,12 @@ async def get_node_note(
         node.content = note_content
         db.commit()
         
-        return {"concept_id": concept_id, "content": note_content, "cached": False}
+        return {
+            "concept_id": concept_id, 
+            "content": note_content, 
+            "outbound_links": node.outbound_links or [],
+            "cached": False
+        }
         
     except HTTPException:
         raise
@@ -258,6 +269,7 @@ async def trigger_obsidian_export(
             "message": "export requested..."
         }
         project.project_metadata = metadata
+        flag_modified(project, "project_metadata")
         db.commit()
 
         # trigger background worker

@@ -36,14 +36,6 @@ class ExportProcessor:
         """
         db = SessionLocal()
         try:
-            # 0. Check if already complete
-            project = db.query(models.Project).filter(models.Project.id == self.project_id).first()
-            if project and project.project_metadata:
-                export_meta = project.project_metadata.get("export", {})
-                if export_meta.get("status") == "complete" and export_meta.get("download_url"):
-                    logger.info(f"project {self.project_id} export already complete. skipping.")
-                    return {"export_status": "already_complete"}
-
             # 1. find nodes missing content (check for None or empty string)
             from sqlalchemy import or_
             missing_nodes = db.query(models.GraphNode).filter(
@@ -168,14 +160,6 @@ class ExportProcessor:
         # content
         if node.content:
             lines.append(node.content)
-            lines.append("")
-
-        # links
-        outbound = node.outbound_links or []
-        if outbound:
-            lines.append("## connections")
-            for link in outbound:
-                lines.append(f"- [[{link}]]")
             lines.append("")
 
         return "\n".join(lines)

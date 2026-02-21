@@ -58,7 +58,16 @@ class NodeNoteService:
                 models.GraphNode.project_id == project_id
             ).all()}
             note_content = repair_note_markdown(note_content, valid_concept_ids=valid_ids)
-            logger.info(f"successfully generated {len(note_content)} chars for {concept_id}")
+
+            # unify related links logic: append missing links to content
+            if outbound_links:
+                lower_content = note_content.toLowerCase() if hasattr(note_content, 'toLowerCase') else note_content.lower()
+                missing_links = [link for link in outbound_links if f"[[{link.lower()}]]" not in lower_content]
+                
+                if missing_links:
+                    note_content += "\n\n## related\n\n" + "\n".join([f"- [[{link}]]" for link in missing_links])
+
+            logger.info(f"successfully generated {len(note_content)} chars for {concept_id} (included {len(outbound_links) if outbound_links else 0} links)")
             return note_content
             
         except Exception as e:
