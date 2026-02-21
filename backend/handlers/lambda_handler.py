@@ -56,9 +56,16 @@ def worker_handler(event, context):
             project_id = payload.get("project_id")
             if not project_id:
                 return {"statusCode": 400, "body": "missing project_id for export"}
+                
+            from services.export_processor import ExportProcessor
+            processor = ExportProcessor(
+                project_id=project_id,
+                user_id=user_id,
+                gemini_key=gemini_key,
+                openai_key=openai_key
+            )
             
-            print(f"[WORKER] preparation for project {project_id} export triggered. (skeleton)")
-            result = {"status": "triggered", "project_id": project_id}
+            result = loop.run_until_complete(processor.process())
             
         else:
             return {"statusCode": 400, "body": f"unknown action: {action}"}

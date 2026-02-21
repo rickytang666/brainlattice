@@ -49,6 +49,18 @@ class S3StorageService:
         except Exception as e:
             raise Exception(f"failed to delete from r2: {str(e)}")
 
+    def get_download_url(self, filename: str, expires_in: int = 3600) -> str:
+        """generate a signed url for downloading from r2"""
+        try:
+            url = self.s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': self.bucket, 'Key': filename},
+                ExpiresIn=expires_in
+            )
+            return url
+        except Exception as e:
+            raise Exception(f"failed to generate signed url: {str(e)}")
+
 class LocalStorageService:
     """local disk fallback storage service when r2 keys are omitted"""
     
@@ -76,7 +88,11 @@ class LocalStorageService:
                 return f.read()
         except Exception as e:
             raise Exception(f"failed to read from local storage: {str(e)}")
-            
+
+    def get_download_url(self, filename: str, expires_in: int = 3600) -> str:
+        """returns a local path-based URL for dev testing"""
+        return f"/api/storage/local/{filename}"
+
     def delete_file(self, filename: str):
         """delete file from local disk"""
         try:
