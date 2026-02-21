@@ -22,7 +22,16 @@ class IngestionOrchestrator:
         self.jobs = get_job_service()
         self.queue = get_queue_service()
 
-    async def init_ingestion(self, filename: str, content: bytes, project_id: Optional[str] = None, background_tasks: Optional[Any] = None) -> Dict[str, Any]:
+    async def init_ingestion(
+        self, 
+        filename: str, 
+        content: bytes, 
+        project_id: Optional[str] = None, 
+        background_tasks: Optional[Any] = None,
+        user_id: Optional[str] = None,
+        gemini_key: Optional[str] = None,
+        openai_key: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         initializes ingestion process for a new file
         returns job details
@@ -44,7 +53,10 @@ class IngestionOrchestrator:
                 "filename": filename, 
                 "file_id": file_id, 
                 "s3_key": s3_key,
-                "project_id": project_id
+                "project_id": project_id,
+                "user_id": user_id,
+                "gemini_key": gemini_key,
+                "openai_key": openai_key
             }
             
             self.jobs.create_job(
@@ -83,7 +95,14 @@ class IngestionOrchestrator:
             logger.exception("failed to initialize ingestion")
             raise e
 
-    async def retry_ingestion(self, job_id: str, background_tasks: Optional[Any] = None) -> Dict[str, Any]:
+    async def retry_ingestion(
+        self, 
+        job_id: str, 
+        background_tasks: Optional[Any] = None,
+        user_id: Optional[str] = None,
+        gemini_key: Optional[str] = None,
+        openai_key: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         re-triggers ingestion for an existing job ID
         looks up details from Redis and re-publishes to QStash
@@ -99,6 +118,16 @@ class IngestionOrchestrator:
             
             if not s3_key:
                 raise ValueError(f"missing s3_key in job {job_id} metadata")
+
+            # update metadata with fresh user_id/gemini_key if provided
+            if user_id:
+                metadata["user_id"] = user_id
+            if gemini_key:
+                metadata["gemini_key"] = gemini_key
+            if openai_key:
+                metadata["openai_key"] = openai_key
+                
+            self.jobs.create_job(job_id=job_id, job_type="ingest_pdf", metadata=metadata)
 
             # update job status to reset it
             self.jobs.update_progress(job_id, "pending", 0)

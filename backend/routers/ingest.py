@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks, Header
 from services.storage_service import S3StorageService
 from services.job_service import get_job_service
 
@@ -13,6 +13,9 @@ settings = get_settings()
 async def upload_file(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
+    x_user_id: str = Header(..., alias="X-User-Id"),
+    x_gemini_key: str = Header(None, alias="X-Gemini-API-Key"),
+    x_openai_key: str = Header(None, alias="X-OpenAI-API-Key")
 ):
     """
     uploads file to r2, creates job in redis, triggers async worker via qstash or locally
@@ -22,7 +25,14 @@ async def upload_file(
         orchestrator = IngestionOrchestrator()
         
         content = await file.read()
-        result = await orchestrator.init_ingestion(file.filename, content, background_tasks=background_tasks)
+        result = await orchestrator.init_ingestion(
+            file.filename, 
+            content, 
+            background_tasks=background_tasks,
+            user_id=x_user_id,
+            gemini_key=x_gemini_key,
+            openai_key=x_openai_key
+        )
         
         return result
         
@@ -39,12 +49,24 @@ async def get_status(job_id: str):
     return job
 
 @router.post("/ingest/retry/{job_id}")
-async def retry_ingest(job_id: str, background_tasks: BackgroundTasks):
+async def retry_ingest(
+    job_id: str, 
+    background_tasks: BackgroundTasks,
+    x_user_id: str = Header(..., alias="X-User-Id"),
+    x_gemini_key: str = Header(None, alias="X-Gemini-API-Key"),
+    x_openai_key: str = Header(None, alias="X-OpenAI-API-Key")
+):
     """manually retry a failed ingestion job using its ID"""
     try:
         from services.ingestion_orchestrator import IngestionOrchestrator
         orchestrator = IngestionOrchestrator()
-        result = await orchestrator.retry_ingestion(job_id, background_tasks=background_tasks)
+        result = await orchestrator.retry_ingestion(
+            job_id, 
+            background_tasks=background_tasks,
+            user_id=x_user_id,
+            gemini_key=x_gemini_key,
+            openai_key=x_openai_key
+        )
         return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

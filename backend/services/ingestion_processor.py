@@ -30,9 +30,7 @@ class IngestionProcessor:
         self.storage = get_storage_service()
         self.pdf_service = PDFService()
         self.splitter = RecursiveMarkdownSplitter()
-        self.embedder = EmbeddingService()
         self.jobs = get_job_service()
-        self.extractor = GraphExtractor()
         self.builder = GraphBuilder()
         self.connector = GraphConnector()
         
@@ -55,6 +53,13 @@ class IngestionProcessor:
             metadata = job_info.get("metadata", {})
             project_id = metadata.get("project_id")
             filename = metadata.get("filename", "unknown.pdf")
+            gemini_key = metadata.get("gemini_key")
+            openai_key = metadata.get("openai_key")
+            user_id = metadata.get("user_id")
+
+            # dynamically init services with the custom BYOK key if provided
+            self.embedder = EmbeddingService(gemini_key=gemini_key, openai_key=openai_key)
+            self.extractor = GraphExtractor(gemini_key=gemini_key)
             
             if not project_id:
                 # check if we already have a project for this job id (failsafe)
@@ -62,7 +67,11 @@ class IngestionProcessor:
                 if existing_proj:
                     project_id = existing_proj.id
                 else:
-                    new_proj = models.Project(title=f"upload_{self.job_id[:8]}", status="processing")
+                    new_proj = models.Project(
+                        title=f"upload_{self.job_id[:8]}", 
+                        status="processing",
+                        user_id=user_id
+                    )
                     db.add(new_proj)
                     db.flush()
                     project_id = new_proj.id

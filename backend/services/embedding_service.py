@@ -8,10 +8,22 @@ logger = logging.getLogger(__name__)
 class EmbeddingService:
     """embedding service with openai (primary) and gemini (fallback) gracefully supporting 1536 dimensions"""
     
-    def __init__(self):
+    def __init__(self, gemini_key: str = None, openai_key: str = None):
         self.dimensions = 1536
         
-        if settings.OPENAI_API_KEY:
+        if openai_key:
+            from openai import OpenAI
+            self.provider = "openai"
+            self.openai_client = OpenAI(api_key=openai_key)
+            self.openai_model = "text-embedding-3-small"
+            logger.info("initialized openai embedding service (BYOK custom key)")
+        elif gemini_key:
+            from google import genai
+            self.provider = "gemini"
+            self.gemini_client = genai.Client(api_key=gemini_key)
+            self.gemini_model = "text-embedding-004"
+            logger.info("initialized gemini embedding service (BYOK custom key)")
+        elif settings.OPENAI_API_KEY:
             from openai import OpenAI
             self.provider = "openai"
             self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
@@ -22,7 +34,7 @@ class EmbeddingService:
             self.provider = "gemini"
             self.gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY)
             self.gemini_model = "text-embedding-004"
-            logger.info("initialized gemini embedding service (fallback)")
+            logger.info("initialized gemini embedding service (fallback server key)")
 
     def get_embedding(self, text: str) -> List[float]:
         """get single vector for text"""

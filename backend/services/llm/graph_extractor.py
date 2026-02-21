@@ -14,8 +14,9 @@ class GraphExtractor:
     stateful: takes existing concepts to encourage id reuse
     """
     
-    def __init__(self):
-        self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    def __init__(self, gemini_key: str = None):
+        key = gemini_key or settings.GEMINI_API_KEY
+        self.client = genai.Client(api_key=key)
         self.model_id = 'gemini-2.0-flash'
         self.logger = logging.getLogger(__name__)
         self.prompts = get_prompt_service()

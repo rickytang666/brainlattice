@@ -3,18 +3,24 @@ from sqlalchemy.orm import Session
 from db.session import get_db
 from db import models
 from schemas.project import ProjectSaveRequest, ProjectSaveResponse, ProjectGetResponse, UpdateTitleRequest
+from fastapi import Header
 import uuid
 
 router = APIRouter()
 
 
 @router.post("/project/save", response_model=ProjectSaveResponse)
-async def save_project(request: ProjectSaveRequest, db: Session = Depends(get_db)):
+async def save_project(
+    request: ProjectSaveRequest,
+    db: Session = Depends(get_db),
+    x_user_id: str = Header(..., alias="X-User-Id")
+):
     """save project metadata to postgres"""
     try:
         project = models.Project(
             title=request.title,
-            status="complete"
+            status="complete",
+            user_id=uuid.UUID(x_user_id) if x_user_id else None
         )
         db.add(project)
         db.commit()
@@ -26,10 +32,14 @@ async def save_project(request: ProjectSaveRequest, db: Session = Depends(get_db
         raise HTTPException(status_code=500, detail=f"save error: {str(e)}")
 
 @router.get("/projects/list")
-async def list_all_projects(db: Session = Depends(get_db)):
-    """list all projects from postgres"""
+async def list_all_projects(
+    db: Session = Depends(get_db),
+    x_user_id: str = Header(..., alias="X-User-Id")
+):
+    """list all projects from postgres filtered by user_id"""
     try:
-        projects = db.query(models.Project).all()
+        user_uuid = uuid.UUID(x_user_id)
+        projects = db.query(models.Project).filter(models.Project.user_id == user_uuid).all()
         return [
             {"id": str(p.id), "title": p.title, "status": p.status, "created_at": p.created_at} 
             for p in projects
@@ -38,10 +48,18 @@ async def list_all_projects(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"list error: {str(e)}")
 
 @router.get("/project/{project_id}", response_model=ProjectGetResponse)
-async def get_project(project_id: str, db: Session = Depends(get_db)):
+async def get_project(
+    project_id: str,
+    db: Session = Depends(get_db),
+    x_user_id: str = Header(..., alias="X-User-Id")
+):
     """get project data"""
     try:
-        project = db.query(models.Project).filter(models.Project.id == project_id).first()
+        user_uuid = uuid.UUID(x_user_id)
+        project = db.query(models.Project).filter(
+            models.Project.id == project_id,
+            models.Project.user_id == user_uuid
+        ).first()
         if project:
             # format response
             return ProjectGetResponse(
@@ -60,10 +78,19 @@ async def get_project(project_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"get error: {str(e)}")
 
 @router.patch("/project/{project_id}/title")
-async def update_title(project_id: str, request: UpdateTitleRequest, db: Session = Depends(get_db)):
+async def update_title(
+    project_id: str,
+    request: UpdateTitleRequest,
+    db: Session = Depends(get_db),
+    x_user_id: str = Header(..., alias="X-User-Id")
+):
     """update project title"""
     try:
-        project = db.query(models.Project).filter(models.Project.id == project_id).first()
+        user_uuid = uuid.UUID(x_user_id)
+        project = db.query(models.Project).filter(
+            models.Project.id == project_id,
+            models.Project.user_id == user_uuid
+        ).first()
         if project:
             project.title = request.title
             db.commit()
@@ -76,10 +103,18 @@ async def update_title(project_id: str, request: UpdateTitleRequest, db: Session
         raise HTTPException(status_code=500, detail=f"update error: {str(e)}")
 
 @router.delete("/project/{project_id}")
-async def delete_project(project_id: str, db: Session = Depends(get_db)):
+async def delete_project(
+    project_id: str,
+    db: Session = Depends(get_db),
+    x_user_id: str = Header(..., alias="X-User-Id")
+):
     """delete project"""
     try:
-        project = db.query(models.Project).filter(models.Project.id == project_id).first()
+        user_uuid = uuid.UUID(x_user_id)
+        project = db.query(models.Project).filter(
+            models.Project.id == project_id,
+            models.Project.user_id == user_uuid
+        ).first()
         if project:
             db.delete(project)
             db.commit()
@@ -92,9 +127,21 @@ async def delete_project(project_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"delete error: {str(e)}")
 
 @router.get("/project/{project_id}/graph")
-async def get_project_graph(project_id: str, db: Session = Depends(get_db)):
+async def get_project_graph(
+    project_id: str,
+    db: Session = Depends(get_db),
+    x_user_id: str = Header(..., alias="X-User-Id")
+):
     """get project graph data"""
     try:
+        user_uuid = uuid.UUID(x_user_id)
+        project = db.query(models.Project).filter(
+            models.Project.id == project_id,
+            models.Project.user_id == user_uuid
+        ).first()
+        if not project:
+            raise HTTPException(status_code=404, detail="project not found or unauthorized")
+
         nodes = db.query(models.GraphNode).filter(models.GraphNode.project_id == project_id).all()
         
         formatted_nodes = []
@@ -118,9 +165,18 @@ async def get_node_note(
     concept_id: str,
     regenerate: bool = Query(False, description="force regenerate note, ignore cache"),
     db: Session = Depends(get_db),
+    x_user_id: str = Header(..., alias="X-User-Id")
 ):
     """get or generate note for a specific node"""
     try:
+        user_uuid = uuid.UUID(x_user_id)
+        project = db.query(models.Project).filter(
+            models.Project.id == project_id,
+            models.Project.user_id == user_uuid
+        ).first()
+        if not project:
+            raise HTTPException(status_code=404, detail="project not found or unauthorized")
+
         node = db.query(models.GraphNode).filter(
             models.GraphNode.project_id == project_id,
             models.GraphNode.concept_id == concept_id
