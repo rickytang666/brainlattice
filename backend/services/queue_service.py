@@ -1,6 +1,6 @@
-from qstash import QStash
+import logging
 from core.config import get_settings
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 settings = get_settings()
 
@@ -10,6 +10,7 @@ class QStashService:
     """
     
     def __init__(self):
+        from qstash import QStash
         self.client = QStash(token=settings.QSTASH_TOKEN)
 
     def publish_task(self, destination_url: str, payload: Dict[str, Any]) -> str:
@@ -27,3 +28,12 @@ class QStashService:
             
         except Exception as e:
             raise Exception(f"qstash publish failed: {str(e)}")
+
+def get_queue_service() -> Optional[QStashService]:
+    """returns qstash service if configured, else none for local fallback"""
+    if settings.QSTASH_TOKEN:
+        logging.getLogger(__name__).info("initializing qstash queue service")
+        return QStashService()
+    else:
+        logging.getLogger(__name__).info("qstash token missing, running without external queue")
+        return None

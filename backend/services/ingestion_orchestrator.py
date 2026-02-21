@@ -3,9 +3,9 @@ import uuid
 import logging
 from typing import Dict, Any, Optional
 
-from services.storage_service import S3StorageService
-from services.job_service import JobService
-from services.queue_service import QStashService
+from services.storage_service import get_storage_service
+from services.job_service import get_job_service
+from services.queue_service import get_queue_service
 from core.config import get_settings
 
 settings = get_settings()
@@ -18,9 +18,9 @@ class IngestionOrchestrator:
     """
 
     def __init__(self):
-        self.storage = S3StorageService()
-        self.jobs = JobService()
-        self.queue = QStashService()
+        self.storage = get_storage_service()
+        self.jobs = get_job_service()
+        self.queue = get_queue_service()
 
     async def init_ingestion(self, filename: str, content: bytes, project_id: Optional[str] = None, background_tasks: Optional[Any] = None) -> Dict[str, Any]:
         """
@@ -55,8 +55,12 @@ class IngestionOrchestrator:
             
             # publish task to worker
             worker_url = os.getenv("WORKER_PUBLIC_URL")
-            if not worker_url:
-                logger.warning("WORKER_PUBLIC_URL not set. running locally via background task.")
+            if not worker_url or not self.queue:
+                if not worker_url:
+                    logger.warning("WORKER_PUBLIC_URL not set. running locally via background task.")
+                else:
+                    logger.warning("QStash service not configured. running locally via background task.")
+                    
                 msg_id = "local_only"
                 if background_tasks:
                     from services.ingestion_processor import IngestionProcessor
@@ -101,8 +105,12 @@ class IngestionOrchestrator:
             
             # re-publish to worker
             worker_url = os.getenv("WORKER_PUBLIC_URL")
-            if not worker_url:
-                logger.warning("WORKER_PUBLIC_URL not set. skipping qstash publish, running locally instead.")
+            if not worker_url or not self.queue:
+                if not worker_url:
+                    logger.warning("WORKER_PUBLIC_URL not set. skipping qstash publish, running locally instead.")
+                else:
+                    logger.warning("QStash service not configured. running locally instead.")
+                    
                 msg_id = "local_only"
                 if background_tasks:
                     from services.ingestion_processor import IngestionProcessor

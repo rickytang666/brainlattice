@@ -4,11 +4,11 @@ import asyncio
 import logging
 from typing import Dict, Any, List
 
-from services.storage_service import S3StorageService
+from services.storage_service import get_storage_service
 from services.pdf_service import PDFService
 from services.chunking_service import RecursiveMarkdownSplitter
 from services.embedding_service import EmbeddingService
-from services.job_service import JobService
+from services.job_service import get_job_service
 from services.llm.graph_extractor import GraphExtractor
 from services.graph.builder import GraphBuilder
 from services.graph.connector import GraphConnector
@@ -27,11 +27,11 @@ class IngestionProcessor:
     def __init__(self, job_id: str, file_key: str):
         self.job_id = job_id
         self.file_key = file_key
-        self.storage = S3StorageService()
+        self.storage = get_storage_service()
         self.pdf_service = PDFService()
         self.splitter = RecursiveMarkdownSplitter()
         self.embedder = EmbeddingService()
-        self.jobs = JobService()
+        self.jobs = get_job_service()
         self.extractor = GraphExtractor()
         self.builder = GraphBuilder()
         self.connector = GraphConnector()
@@ -48,6 +48,7 @@ class IngestionProcessor:
             logger.info(f"downloading {self.file_key}...")
             file_bytes = self.storage.download_file(self.file_key)
             self.jobs.update_progress(self.job_id, "processing", 20)
+            await asyncio.sleep(0.1) # yield to event loop
             
             # create project/file records
             job_info = self.jobs.get_job(self.job_id)
@@ -96,6 +97,7 @@ class IngestionProcessor:
             db_file.content = markdown_content
             db.commit()
             self.jobs.update_progress(self.job_id, "processing", 40)
+            await asyncio.sleep(0.1) # yield after heavy pdf parsing
 
             # chunk text and generate embeddings
             logger.info("chunking and embedding...")
@@ -114,6 +116,7 @@ class IngestionProcessor:
             db.add_all(db_chunks)
             db.commit()
             self.jobs.update_progress(self.job_id, "processing", 60)
+            await asyncio.sleep(0.1) # yield after heavy embeddings
 
             # extract conceptual graph (stateful windowing)
             logger.info("extracting conceptual graph...")
@@ -131,6 +134,7 @@ class IngestionProcessor:
                 self.jobs.set_extraction_cache(self.job_id, [g.model_dump() for g in graph_data])
                 
             self.jobs.update_progress(self.job_id, "processing", 80)
+            await asyncio.sleep(0.1)
             
             # resolve and merge concepts
             logger.info("resolving concepts...")

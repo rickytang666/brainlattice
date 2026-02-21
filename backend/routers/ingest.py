@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
 from services.storage_service import S3StorageService
-from services.job_service import JobService
-from services.queue_service import QStashService
+from services.job_service import get_job_service
+
 from core.config import get_settings
 import uuid
 import os
@@ -32,7 +32,7 @@ async def upload_file(
 @router.get("/ingest/status/{job_id}")
 async def get_status(job_id: str):
     """check job status"""
-    jobs = JobService()
+    jobs = get_job_service()
     job = jobs.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="job not found")
