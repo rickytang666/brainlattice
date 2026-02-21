@@ -1,93 +1,54 @@
 <div align="center">
 
-<img src="frontend/public/brainlattice.png" alt="BrainLattice Logo" width="350">
+<img src="frontend/public/logo.png" alt="BrainLattice Logo" width="300">
 
-_Textbook becomes mind map, **before** you even finish reading._
+_Turn any PDF into an interactive conceptual network._
 
-**BrainLattice** maps the lattice structure of knowledge onto your brain's neural network. Learning designed for how the mind actually works.
-
-</div>
-
-<div align="center">
-
-[![Next.js 14](https://img.shields.io/badge/Next.js-black?logo=nextdotjs)](https://nextjs.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-%23009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Google Gemini](https://img.shields.io/badge/Gemini-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
-[![Fish Audio](https://img.shields.io/badge/Fish%20Audio-Blue)](https://fish.audio/)
-[![Firebase](https://img.shields.io/badge/Firebase-ffca28?logo=firebase&logoColor=black)](https://firebase.google.com/)
+**BrainLattice** is an AI-powered extraction engine that reads entire textbooks or research papers and reconstructs them as an explorable WebGL knowledge graph. Stop reading linearly. Start exploring spatially.
 
 </div>
 
 ---
 
-## Overview
+## What it does
 
-Traditional learning forces linear consumption of non-linear information. **BrainLattice** flips this paradigm by transforming static PDF textbooks into interactive, explorable knowledge graphs. It uses LLMs to extract core concepts, identify relationships, and generate high-fidelity study materials, allowing users to understand the "system" of a subject before memorizing the details.
+Knowledge isn't linear, but books are. **BrainLattice** breaks this limitation by parsing dense documents and using LLM to automatically discover core concepts, map their relationships, and plot them on an interactive 2D canvas. You get the 10,000-foot view of a subject instantly, with the ability to dive deep on command.
 
-## Key Features
+## Core Features
 
-- **Obsidian-like Knowledge Graph** - Spatially explore concepts. `Cmd + Shift + Click` to drill down into formulas, theorems, and prerequisites.
-- **Contextual Synthesis** - Auto-generates study guides and entity summaries from raw text.
-- **Audio Briefs** - Converts synthesized notes into podcast-style audio via Fish Audio.
-- **Universal Input** - Works with any text-heavy PDF: textbooks, research papers, lecture notes.
+- **Spatial Discovery**: Navigate complex subjects visually. See how concepts, formulas, and theorems connect before you even start reading.
+- **Instant Context**: Click any node on the graph to instantly pull up an AI-synthesized summary of that specific entity, sourced directly from the original text.
+- **Universal Ingestion**: Feed it 200-page textbooks, messy lecture notes, or dense research papers.
+- **Effortless Synthesis**: Skip the tedious note-taking. BrainLattice distills hours of reading into an explorable, high-yield conceptual network so you can focus entirely on understanding.
 
 ## Tech Stack
 
-- **FastAPI + Next.js**
-- **Google Gemini 2.5 Flash** - Concept extraction & graph topology.
-- **Grok 4 (OpenRouter)** - Summarization & synthesis.
-- **Fish Audio** - Low-latency and cost-effective TTS.
-- **React Force Graph** - WebGL-powered visualization.
-- **Firebase** - Real-time data & auth.
+- **Frontend**: React + Vite + Force Graph (WebGL)
+- **Backend**: FastAPI
+- **Infra**: AWS Lambda, Cloudflare R2, Upstash Redis, Upstash QStash, Neon PostgreSQL
 
-## Getting Started
+## Quick Run
 
-### Prerequisites
+_For full technical details, see the `README.md` files inside the `frontend/` and `backend/` folders._
 
-- Python 3.10+
-- Node.js 18+
-- [Fish Audio API Key](https://fish.audio/)
-- [Google Gemini API Key](https://ai.google.dev/)
-- [OpenRouter API Key](https://openrouter.ai/keys)
-- [Firebase Service Account](https://firebase.google.com/docs/admin/setup)
-
-### Installation
-
-1. **Backend Setup**
+1. **Clone the repo**
+2. **Configure Backend API Key**
+   Create a `.env` in the `backend/` directory with just your Gemini key (only this key is mandatory for local development):
 
    ```bash
-   cd backend
-   pip install -r requirements.txt
-   uvicorn main:app --reload
+   GEMINI_API_KEY=your_key_here
    ```
 
-   _Server runs at `http://localhost:8000`_
+3. **Start Backend**
 
-2. **Frontend Setup**
    ```bash
-   cd frontend
-   npm install
-   npm run dev
+   cd backend && uv sync && uv run uvicorn main:app
    ```
-   _App runs at `http://localhost:3000`_
 
-### Configuration (`backend/.env`)
+4. **Start Frontend**
 
-```bash
-GEMINI_API_KEY=your_gemini_key
-OPENROUTER_API_KEY=your_openrouter_key
-FISH_AUDIO_API_KEY=your_fish_audio_key
-FIREBASE_SERVICE_ACCOUNT_PATH=secrets/firebase_private.json
-```
+   ```bash
+   cd frontend && npm install && npm run dev
+   ```
 
-## How It Works
-
-1.  **Ingestion**: PyPDF extracts raw text from uploaded documents.
-2.  **Synthesis**: Grok 4 (via OpenRouter) identifies sequential concepts.
-3.  **Mapping**: Gemini 2.5 constructs the hierarchical knowledge graph.
-4.  **Generation**: The system produces study guides and audio scripts.
-5.  **Audio**: Scripts are streamed to **Fish Audio** for TTS generation.
-
----
-
-[View on Devpost](https://devpost.com/software/brainlattice)
+The Graph UI will be waiting for you at `http://localhost:5173`. Feed it a PDF and watch the brain grow.
