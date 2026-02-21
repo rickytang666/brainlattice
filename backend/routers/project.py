@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
+from core.dependencies import get_user_context, UserContext
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from db.session import get_db
@@ -14,14 +15,14 @@ router = APIRouter()
 async def save_project(
     request: ProjectSaveRequest,
     db: Session = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id")
+    context: UserContext = Depends(get_user_context)
 ):
     """save project metadata to postgres"""
     try:
         project = models.Project(
             title=request.title,
             status="complete",
-            user_id=x_user_id if x_user_id else None
+            user_id=context.user_id if context.user_id else None
         )
         db.add(project)
         db.commit()
@@ -35,11 +36,11 @@ async def save_project(
 @router.get("/projects/list")
 async def list_all_projects(
     db: Session = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id")
+    context: UserContext = Depends(get_user_context)
 ):
     """list all projects from postgres filtered by user_id"""
     try:
-        projects = db.query(models.Project).filter(models.Project.user_id == x_user_id).all()
+        projects = db.query(models.Project).filter(models.Project.user_id == context.user_id).all()
         return [
             {"id": str(p.id), "title": p.title, "status": p.status, "created_at": p.created_at} 
             for p in projects
@@ -51,13 +52,13 @@ async def list_all_projects(
 async def get_project(
     project_id: str,
     db: Session = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id")
+    context: UserContext = Depends(get_user_context)
 ):
     """get project data"""
     try:
         project = db.query(models.Project).filter(
             models.Project.id == project_id,
-            models.Project.user_id == x_user_id
+            models.Project.user_id == context.user_id
         ).first()
         if project:
             # format response
@@ -81,13 +82,13 @@ async def update_title(
     project_id: str,
     request: UpdateTitleRequest,
     db: Session = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id")
+    context: UserContext = Depends(get_user_context)
 ):
     """update project title"""
     try:
         project = db.query(models.Project).filter(
             models.Project.id == project_id,
-            models.Project.user_id == x_user_id
+            models.Project.user_id == context.user_id
         ).first()
         if project:
             project.title = request.title
@@ -104,13 +105,13 @@ async def update_title(
 async def delete_project(
     project_id: str,
     db: Session = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id")
+    context: UserContext = Depends(get_user_context)
 ):
     """delete project"""
     try:
         project = db.query(models.Project).filter(
             models.Project.id == project_id,
-            models.Project.user_id == x_user_id
+            models.Project.user_id == context.user_id
         ).first()
         if project:
             db.delete(project)
@@ -127,13 +128,13 @@ async def delete_project(
 async def get_project_graph(
     project_id: str,
     db: Session = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id")
+    context: UserContext = Depends(get_user_context)
 ):
     """get project graph data"""
     try:
         project = db.query(models.Project).filter(
             models.Project.id == project_id,
-            models.Project.user_id == x_user_id
+            models.Project.user_id == context.user_id
         ).first()
         if not project:
             raise HTTPException(status_code=404, detail="project not found or unauthorized")
@@ -161,15 +162,13 @@ async def get_node_note(
     concept_id: str,
     regenerate: bool = Query(False, description="force regenerate note, ignore cache"),
     db: Session = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id"),
-    x_gemini_key: str = Header(None, alias="X-Gemini-API-Key"),
-    x_openai_key: str = Header(None, alias="X-OpenAI-API-Key")
+    context: UserContext = Depends(get_user_context)
 ):
     """get or generate note for a specific node"""
     try:
         project = db.query(models.Project).filter(
             models.Project.id == project_id,
-            models.Project.user_id == x_user_id
+            models.Project.user_id == context.user_id
         ).first()
         if not project:
             raise HTTPException(status_code=404, detail="project not found or unauthorized")
@@ -192,7 +191,7 @@ async def get_node_note(
             
         # generate note (either first time or regenerate)
         from services.llm.note_service import NodeNoteService
-        note_service = NodeNoteService(gemini_key=x_gemini_key, openai_key=x_openai_key)
+        note_service = NodeNoteService(gemini_key=context.gemini_key, openai_key=context.openai_key)
         
         note_content = await note_service.generate_note(
             db, 
@@ -222,12 +221,12 @@ async def get_node_note(
 async def transfer_projects(
     request: ProjectTransferRequest,
     db: Session = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id")
+    context: UserContext = Depends(get_user_context)
 ):
     """transfer projects from one user to another (used during auth migration)"""
     try:
         # require the request sender to be the target owner
-        if x_user_id != request.target_id:
+        if context.user_id != request.target_id:
             raise HTTPException(status_code=403, detail="unauthorized transfer")
             
         projects = db.query(models.Project).filter(models.Project.user_id == request.source_id).all()
@@ -248,15 +247,13 @@ async def transfer_projects(
 async def trigger_obsidian_export(
     project_id: str,
     db: Session = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id"),
-    x_gemini_key: str = Header(..., alias="X-Gemini-API-Key"),
-    x_openai_key: str = Header(None, alias="X-OpenAI-API-Key")
+    context: UserContext = Depends(get_user_context)
 ):
     """trigger the asynchronous obsidian vault export process"""
     try:
         project = db.query(models.Project).filter(
             models.Project.id == project_id,
-            models.Project.user_id == x_user_id
+            models.Project.user_id == context.user_id
         ).first()
         if not project:
             raise HTTPException(status_code=404, detail="project not found")
@@ -277,9 +274,9 @@ async def trigger_obsidian_export(
         orchestrator = IngestionOrchestrator()
         await orchestrator.trigger_export(
             project_id=project_id,
-            user_id=x_user_id,
-            gemini_key=x_gemini_key,
-            openai_key=x_openai_key
+            user_id=context.user_id,
+            gemini_key=context.gemini_key,
+            openai_key=context.openai_key
         )
 
         return {"success": True, "message": "export triggered"}
@@ -293,13 +290,13 @@ async def trigger_obsidian_export(
 async def get_export_status(
     project_id: str,
     db: Session = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id")
+    context: UserContext = Depends(get_user_context)
 ):
     """get current status of obsidian export"""
     try:
         project = db.query(models.Project).filter(
             models.Project.id == project_id,
-            models.Project.user_id == x_user_id
+            models.Project.user_id == context.user_id
         ).first()
         if not project:
             raise HTTPException(status_code=404, detail="project not found")
@@ -313,13 +310,13 @@ async def get_export_status(
 async def download_obsidian_export(
     project_id: str,
     db: Session = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id")
+    context: UserContext = Depends(get_user_context)
 ):
     """get signed download URL for the obsidian vault zip"""
     try:
         project = db.query(models.Project).filter(
             models.Project.id == project_id,
-            models.Project.user_id == x_user_id
+            models.Project.user_id == context.user_id
         ).first()
         if not project:
             raise HTTPException(status_code=404, detail="project not found")
