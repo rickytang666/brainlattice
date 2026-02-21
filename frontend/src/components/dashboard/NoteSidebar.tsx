@@ -44,10 +44,18 @@ export default function NoteSidebar({
   // use angle brackets <href> so concepts with spaces (e.g. "scalar field") parse correctly
   const processedContent = useMemo(() => {
     if (!content) return null;
-    return content.replace(
+    let md = content.replace(
       /\[\[([^\]]+)\]\]/g,
       (_, concept) => `[${concept}](<${concept}>)`,
     );
+
+    // Normalize block math: ensure $$ starts on its own line and has padding
+    // Use a function as replacement to avoid the JS '$$' string literal trap
+    md = md.replace(/\s*\$\$\s*/g, () => "\n\n$$\n\n");
+    // Also collapse unnecessary multiple newlines created by the above
+    md = md.replace(/\n{3,}/g, "\n\n");
+
+    return md;
   }, [content]);
 
   // sync state with props during render to avoid cascading effect renders
@@ -262,11 +270,7 @@ export default function NoteSidebar({
                       {children}
                     </h3>
                   ),
-                  p: ({ children }) => (
-                    <p className="mb-4 text-neutral-400 leading-relaxed">
-                      {children}
-                    </p>
-                  ),
+                  // Removed 'p' component to allow rehype-katex display blocks to render correctly without nesting issues
                   ul: ({ children }) => (
                     <ul className="list-disc list-outside ml-4 mb-4 space-y-1.5 text-neutral-400">
                       {children}
@@ -365,6 +369,26 @@ export default function NoteSidebar({
                 </div>
               </div>
             )}
+
+            <style>{`
+              .katex-display {
+                margin: 1.5em 0 !important;
+                display: block;
+                text-align: center;
+              }
+              .katex {
+                font-size: 1.1em;
+              }
+              .prose p {
+                margin-bottom: 1.25rem;
+                color: #a3a3a3;
+                line-height: 1.6;
+              }
+              .prose hr {
+                border-color: #262626;
+                margin: 2rem 0;
+              }
+            `}</style>
           </div>
         ) : null}
       </div>
