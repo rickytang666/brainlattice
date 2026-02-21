@@ -25,22 +25,11 @@ def worker_handler(event, context):
             
         job_id = payload.get("job_id")
         file_key = payload.get("file_key")
+        action = payload.get("action", "ingest") # default to ingest for backward compatibility
+        
         gemini_key = payload.get("gemini_key")
         openai_key = payload.get("openai_key")
         user_id = payload.get("user_id")
-        
-        if not job_id or not file_key:
-            return {"statusCode": 400, "body": "missing job_id or file_key"}
-            
-        # delegate to pipeline service
-        from services.ingestion_processor import IngestionProcessor
-        processor = IngestionProcessor(
-            job_id=job_id, 
-            file_key=file_key,
-            gemini_key=gemini_key,
-            openai_key=openai_key,
-            user_id=user_id
-        )
         
         try:
             loop = asyncio.get_event_loop()
@@ -48,7 +37,31 @@ def worker_handler(event, context):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             
-        result = loop.run_until_complete(processor.process())
+        if action == "ingest":
+            if not job_id or not file_key:
+                return {"statusCode": 400, "body": "missing job_id or file_key"}
+                
+            from services.ingestion_processor import IngestionProcessor
+            processor = IngestionProcessor(
+                job_id=job_id, 
+                file_key=file_key,
+                gemini_key=gemini_key,
+                openai_key=openai_key,
+                user_id=user_id
+            )
+            
+            result = loop.run_until_complete(processor.process())
+            
+        elif action == "prepare_export":
+            project_id = payload.get("project_id")
+            if not project_id:
+                return {"statusCode": 400, "body": "missing project_id for export"}
+            
+            print(f"[WORKER] preparation for project {project_id} export triggered. (skeleton)")
+            result = {"status": "triggered", "project_id": project_id}
+            
+        else:
+            return {"statusCode": 400, "body": f"unknown action: {action}"}
             
         return {
             "statusCode": 200, 

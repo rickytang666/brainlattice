@@ -181,3 +181,42 @@ class IngestionOrchestrator:
         except Exception as e:
             logger.exception(f"failed to retry ingestion for job {job_id}")
             raise e
+
+    async def trigger_export(
+        self, 
+        project_id: str, 
+        user_id: str,
+        gemini_key: str,
+        openai_key: str = None,
+        background_tasks: Optional[Any] = None
+    ) -> str:
+        """
+        triggers the vault export process by publishing a prepare_export task
+        """
+        try:
+            worker_url = os.getenv("WORKER_PUBLIC_URL")
+            payload = {
+                "action": "prepare_export",
+                "project_id": project_id,
+                "user_id": user_id,
+                "gemini_key": gemini_key,
+                "openai_key": openai_key
+            }
+
+            if not worker_url or not self.queue:
+                msg_id = "local_only"
+                if background_tasks:
+                    # local execution skeleton
+                    print(f"[LOCAL] preparation for project {project_id} export triggered.")
+            else:
+                msg_id = self.queue.publish_task(
+                    destination_url=worker_url,
+                    payload=payload
+                )
+            
+            return msg_id
+            
+        except Exception as e:
+            logger.exception(f"failed to trigger export for project {project_id}")
+            raise e
+

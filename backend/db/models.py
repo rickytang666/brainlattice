@@ -13,6 +13,7 @@ class Project(Base):
     status = Column(String, nullable=False, default="processing")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    project_metadata = Column(JSONB, server_default="{}")
 
 class File(Base):
     __tablename__ = "files"
