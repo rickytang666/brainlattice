@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import KnowledgeGraph from "../graph/KnowledgeGraph";
 import NoteSidebar from "./NoteSidebar";
+import SearchBar from "./SearchBar";
 import type { GraphData } from "../../types/graph";
 import {
   Database,
@@ -626,6 +627,15 @@ export default function ProjectDashboard() {
 
             {/* Graph Section - fills panel, explicit bounds for canvas */}
             <div className="flex-1 min-h-0 relative w-full overflow-hidden">
+              {projectGraph && (
+                <SearchBar 
+                  data={projectGraph} 
+                  onSelectNode={(id) => {
+                    setSelectedNodeId(id);
+                    setFocusNodeId(id);
+                  }}
+                />
+              )}
               {graphLoading ? (
                 <div className="w-full h-full flex items-center justify-center">
                   <Loader2 className="w-8 h-8 animate-spin text-emerald-500/50" />
