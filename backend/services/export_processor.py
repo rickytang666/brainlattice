@@ -100,8 +100,8 @@ class ExportProcessor:
 
     async def _enqueue_next_step(self):
         """re-publishes the same export task to the queue"""
-        from services.ingestion_orchestrator import IngestionOrchestrator
-        orchestrator = IngestionOrchestrator()
+        from services.task_orchestrator import TaskOrchestrator
+        orchestrator = TaskOrchestrator()
         await orchestrator.trigger_export(
             project_id=self.project_id,
             user_id=self.user_id,

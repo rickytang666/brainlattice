@@ -20,8 +20,8 @@ async def upload_file(
     uploads file to r2, creates job in redis, triggers async worker via qstash or locally
     """
     try:
-        from services.ingestion_orchestrator import IngestionOrchestrator
-        orchestrator = IngestionOrchestrator()
+        from services.task_orchestrator import TaskOrchestrator
+        orchestrator = TaskOrchestrator()
         
         content = await file.read()
         result = await orchestrator.init_ingestion(
@@ -55,8 +55,8 @@ async def retry_ingest(
 ):
     """manually retry a failed ingestion job using its ID"""
     try:
-        from services.ingestion_orchestrator import IngestionOrchestrator
-        orchestrator = IngestionOrchestrator()
+        from services.task_orchestrator import TaskOrchestrator
+        orchestrator = TaskOrchestrator()
         result = await orchestrator.retry_ingestion(
             job_id, 
             background_tasks=background_tasks,

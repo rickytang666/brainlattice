@@ -11,9 +11,9 @@ from core.config import get_settings
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
-class IngestionOrchestrator:
+class TaskOrchestrator:
     """
-    handles high-level api ingestion:
+    handles high-level api ingestion and task dispatching:
     upload to r2 -> create job in redis -> publish task to qstash
     """
 
