@@ -45,14 +45,17 @@ class ExportProcessor:
                 await self._process_batch(db, missing_nodes)
                 # self-enqueue to continue
                 await self._enqueue_next_step()
+                return {"export_status": "batch_partial", "nodes_processed": len(missing_nodes)}
             else:
                 # all notes generated, move to assembly
                 logger.info(f"all notes generated for project {self.project_id}. moving to assembly.")
                 await self._assemble_vault(db)
+                return {"export_status": "assembly_completed"}
 
         except Exception as e:
             logger.exception(f"export processing failed for project {self.project_id}")
             self._update_metadata(db, {"status": "failed", "error": str(e)})
+            return {"export_status": "failed", "error": str(e)}
         finally:
             db.close()
 

@@ -72,7 +72,7 @@ def worker_handler(event, context):
             
         return {
             "statusCode": 200, 
-            "body": json.dumps({"status": "completed", **result})
+            "body": json.dumps({"status": "completed", **(result or {})})
         }
 
     except Exception as e:
