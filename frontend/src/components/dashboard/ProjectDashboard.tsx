@@ -41,6 +41,7 @@ export default function ProjectDashboard() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
 
@@ -102,9 +103,10 @@ export default function ProjectDashboard() {
       })
       .catch((err) => {
         console.error(err);
+        setError("Failed to fetch projects. Please check your connection.");
         setLoading(false);
       });
-  }, [userId]);
+  }, [userId, navigate, projectIdFromUrl]);
 
   // persist last viewed project for "Dashboard" nav from scratchpad
   useEffect(() => {
@@ -115,7 +117,7 @@ export default function ProjectDashboard() {
 
   useEffect(() => {
     fetchProjects();
-    // Poll every 5s if any project is processing
+    // Poll every 2s if any project is processing
     const interval = setInterval(() => {
       setProjects((prev) => {
         if (prev.some((p) => p.status === "processing")) {
@@ -123,7 +125,7 @@ export default function ProjectDashboard() {
         }
         return prev;
       });
-    }, 5000);
+    }, 2000);
     return () => clearInterval(interval);
   }, [fetchProjects]);
 
@@ -173,13 +175,21 @@ export default function ProjectDashboard() {
         method: "POST",
         body: formData,
       }, userId);
+      
       if (res.ok) {
-        fetchProjects(); // refresh list
+        setError(null);
+        fetchProjects(); // refresh list immediately
       } else {
-        console.error("Upload failed");
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401 || res.status === 403 || (data.detail && data.detail.includes("API key"))) {
+          setError("API key is required. Please click the Settings icon and enter your key.");
+        } else {
+          setError(`Upload failed: ${data.detail || 'Server error'}`);
+        }
       }
     } catch (err) {
       console.error(err);
+      setError("Network error. Could not connect to the processing engine.");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -239,7 +249,30 @@ export default function ProjectDashboard() {
   };
 
   return (
-    <div className="flex h-full w-full bg-[#0a0a0a] overflow-hidden text-neutral-200 font-sans">
+    <div className="flex h-full w-full bg-[#0a0a0a] overflow-hidden text-neutral-200 font-sans relative">
+      {/* Global Error Banner */}
+      {error && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-xl px-4 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-red-500/10 border border-red-500/50 backdrop-blur-md rounded-xl p-4 flex items-start gap-4 shadow-2xl shadow-red-950/40">
+            <div className="bg-red-500/20 p-2 rounded-lg">
+              <X className="w-5 h-5 text-red-400" />
+            </div>
+            <div className="flex-1 pt-0.5">
+              <h4 className="text-sm font-bold text-red-200 uppercase tracking-tight mb-1">Attention Required</h4>
+              <p className="text-sm text-red-300/90 leading-relaxed font-medium">
+                {error}
+              </p>
+            </div>
+            <button 
+              onClick={() => setError(null)}
+              className="p-1 text-red-400/50 hover:text-red-200 hover:bg-red-500/20 rounded transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Homepage: Project List */}
       {!selectedProjectId && (
         <div className="flex flex-col w-full max-w-4xl mx-auto px-6 py-16">
