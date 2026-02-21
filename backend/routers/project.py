@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 from db.session import get_db
 from db import models
-from schemas.project import ProjectSaveRequest, ProjectSaveResponse, ProjectGetResponse, UpdateTitleRequest
+from schemas.project import ProjectSaveRequest, ProjectSaveResponse, ProjectGetResponse, UpdateTitleRequest, ProjectTransferRequest, ProjectTransferResponse
 from fastapi import Header
 import uuid
 
@@ -20,7 +20,7 @@ async def save_project(
         project = models.Project(
             title=request.title,
             status="complete",
-            user_id=uuid.UUID(x_user_id) if x_user_id else None
+            user_id=x_user_id if x_user_id else None
         )
         db.add(project)
         db.commit()
@@ -38,8 +38,7 @@ async def list_all_projects(
 ):
     """list all projects from postgres filtered by user_id"""
     try:
-        user_uuid = uuid.UUID(x_user_id)
-        projects = db.query(models.Project).filter(models.Project.user_id == user_uuid).all()
+        projects = db.query(models.Project).filter(models.Project.user_id == x_user_id).all()
         return [
             {"id": str(p.id), "title": p.title, "status": p.status, "created_at": p.created_at} 
             for p in projects
@@ -55,10 +54,9 @@ async def get_project(
 ):
     """get project data"""
     try:
-        user_uuid = uuid.UUID(x_user_id)
         project = db.query(models.Project).filter(
             models.Project.id == project_id,
-            models.Project.user_id == user_uuid
+            models.Project.user_id == x_user_id
         ).first()
         if project:
             # format response
@@ -86,10 +84,9 @@ async def update_title(
 ):
     """update project title"""
     try:
-        user_uuid = uuid.UUID(x_user_id)
         project = db.query(models.Project).filter(
             models.Project.id == project_id,
-            models.Project.user_id == user_uuid
+            models.Project.user_id == x_user_id
         ).first()
         if project:
             project.title = request.title
@@ -110,10 +107,9 @@ async def delete_project(
 ):
     """delete project"""
     try:
-        user_uuid = uuid.UUID(x_user_id)
         project = db.query(models.Project).filter(
             models.Project.id == project_id,
-            models.Project.user_id == user_uuid
+            models.Project.user_id == x_user_id
         ).first()
         if project:
             db.delete(project)
@@ -134,10 +130,9 @@ async def get_project_graph(
 ):
     """get project graph data"""
     try:
-        user_uuid = uuid.UUID(x_user_id)
         project = db.query(models.Project).filter(
             models.Project.id == project_id,
-            models.Project.user_id == user_uuid
+            models.Project.user_id == x_user_id
         ).first()
         if not project:
             raise HTTPException(status_code=404, detail="project not found or unauthorized")
@@ -169,10 +164,9 @@ async def get_node_note(
 ):
     """get or generate note for a specific node"""
     try:
-        user_uuid = uuid.UUID(x_user_id)
         project = db.query(models.Project).filter(
             models.Project.id == project_id,
-            models.Project.user_id == user_uuid
+            models.Project.user_id == x_user_id
         ).first()
         if not project:
             raise HTTPException(status_code=404, detail="project not found or unauthorized")
@@ -210,3 +204,30 @@ async def get_node_note(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"note generation error: {str(e)}")
+
+@router.post("/project/transfer", response_model=ProjectTransferResponse)
+async def transfer_projects(
+    request: ProjectTransferRequest,
+    db: Session = Depends(get_db),
+    x_user_id: str = Header(..., alias="X-User-Id")
+):
+    """transfer projects from one user to another (used during auth migration)"""
+    try:
+        # require the request sender to be the target owner
+        if x_user_id != request.target_id:
+            raise HTTPException(status_code=403, detail="unauthorized transfer")
+            
+        projects = db.query(models.Project).filter(models.Project.user_id == request.source_id).all()
+        count = len(projects)
+        
+        for project in projects:
+            project.user_id = request.target_id
+            
+        db.commit()
+        return ProjectTransferResponse(transferred_count=count, success=True)
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"transfer error: {str(e)}")
+

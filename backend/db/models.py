@@ -8,7 +8,7 @@ class Project(Base):
     __tablename__ = "projects"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), nullable=True, index=True)
+    user_id = Column(String, nullable=True, index=True)
     title = Column(String, nullable=False)
     status = Column(String, nullable=False, default="processing")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
