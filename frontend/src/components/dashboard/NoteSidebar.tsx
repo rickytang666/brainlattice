@@ -12,6 +12,7 @@ import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import { Loader2, X, BookOpen, Hash, RefreshCw } from "lucide-react";
+import { motion } from "framer-motion";
 import "katex/dist/katex.min.css";
 import { API_BASE } from "../../config";
 
@@ -89,7 +90,9 @@ export default function NoteSidebar({
     setError(null);
     setLoading(true);
 
-    fetch(`${API_BASE}/project/${projectId}/node/${encodeURIComponent(conceptId)}/note`)
+    fetch(
+      `${API_BASE}/project/${projectId}/node/${encodeURIComponent(conceptId)}/note`,
+    )
       .then((res) => {
         if (!res.ok) throw new Error("failed to load note");
         return res.json();
@@ -161,11 +164,75 @@ export default function NoteSidebar({
             </p>
           </div>
         ) : loading ? (
-          <div className="h-full flex flex-col items-center justify-center space-y-4">
-            <Loader2 className="w-8 h-8 animate-spin text-emerald-500/40" />
-            <p className="text-[10px] text-neutral-500 uppercase tracking-[0.2em] animate-pulse">
-              generating study note...
-            </p>
+          <div className="h-full flex flex-col p-2 space-y-6">
+            <div className="space-y-3">
+              <motion.div
+                initial={{ opacity: 0.3 }}
+                animate={{ opacity: 1 }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 1.2,
+                  repeatType: "reverse",
+                }}
+                className="h-6 bg-neutral-800/50 rounded w-3/4"
+              />
+              <motion.div
+                initial={{ opacity: 0.3 }}
+                animate={{ opacity: 1 }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 1.2,
+                  delay: 0.2,
+                  repeatType: "reverse",
+                }}
+                className="h-4 bg-neutral-800/30 rounded w-1/2"
+              />
+            </div>
+
+            <div className="space-y-2 pt-4">
+              {[...Array(6)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0.2 }}
+                  animate={{ opacity: 0.7 }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 1.5,
+                    delay: i * 0.1,
+                    repeatType: "reverse",
+                  }}
+                  className="h-3 bg-neutral-800/40 rounded w-full"
+                  style={{ width: `${100 - (i % 3) * 10}%` }}
+                />
+              ))}
+            </div>
+
+            <div className="space-y-2 pt-6">
+              {[...Array(4)].map((_, i) => (
+                <motion.div
+                  key={`block2-${i}`}
+                  initial={{ opacity: 0.2 }}
+                  animate={{ opacity: 0.7 }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 1.5,
+                    delay: 0.5 + i * 0.1,
+                    repeatType: "reverse",
+                  }}
+                  className="h-3 bg-neutral-800/40 rounded w-full"
+                  style={{ width: `${95 - (i % 2) * 15}%` }}
+                />
+              ))}
+            </div>
+
+            <div className="flex-1 flex flex-col justify-end pb-8">
+              <div className="flex items-center gap-2 text-emerald-500/60">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-[10px] uppercase tracking-[0.2em] font-medium">
+                  synthesizing notes...
+                </span>
+              </div>
+            </div>
           </div>
         ) : error ? (
           <div className="text-red-400 text-xs p-4 bg-red-400/5 border border-red-400/20 rounded-lg">
@@ -173,23 +240,88 @@ export default function NoteSidebar({
           </div>
         ) : content ? (
           <div className="prose prose-invert prose-sm max-w-none">
-            <div className="text-neutral-400 leading-relaxed text-sm lowercase">
+            <div className="text-neutral-300 leading-relaxed text-sm">
               <ReactMarkdown
                 remarkPlugins={[remarkMath]}
                 rehypePlugins={[rehypeKatex]}
                 components={{
-                  p: ({ children }) => <p className="mb-4">{children}</p>,
-                  code: ({ children }) => (
-                    <code className="bg-neutral-800 px-1 py-0.5 rounded text-emerald-400 text-xs">
+                  h1: ({ children }) => (
+                    <h1 className="text-xl font-bold text-neutral-100 mt-6 mb-4">
                       {children}
-                    </code>
+                    </h1>
                   ),
+                  h2: ({ children }) => (
+                    <h2 className="text-lg font-semibold text-neutral-200 mt-5 mb-3">
+                      {children}
+                    </h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="text-base font-medium text-neutral-300 mt-4 mb-2">
+                      {children}
+                    </h3>
+                  ),
+                  p: ({ children }) => (
+                    <p className="mb-4 text-neutral-400 leading-relaxed">
+                      {children}
+                    </p>
+                  ),
+                  ul: ({ children }) => (
+                    <ul className="list-disc list-outside ml-4 mb-4 space-y-1.5 text-neutral-400">
+                      {children}
+                    </ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="list-decimal list-outside ml-4 mb-4 space-y-1.5 text-neutral-400">
+                      {children}
+                    </ol>
+                  ),
+                  li: ({ children }) => <li>{children}</li>,
+                  blockquote: ({ children }) => (
+                    <blockquote className="border-l-2 border-emerald-500/50 pl-4 py-0.5 my-4 text-neutral-500 italic bg-emerald-500/5 rounded-r">
+                      {children}
+                    </blockquote>
+                  ),
+                  table: ({ children }) => (
+                    <div className="overflow-x-auto mb-4 border border-neutral-800 rounded-lg">
+                      <table className="w-full text-sm text-left text-neutral-400">
+                        {children}
+                      </table>
+                    </div>
+                  ),
+                  th: ({ children }) => (
+                    <th className="px-4 py-2.5 bg-neutral-800/50 font-medium text-neutral-300 border-b border-neutral-800">
+                      {children}
+                    </th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="px-4 py-2 border-b border-neutral-800/50 last:border-0">
+                      {children}
+                    </td>
+                  ),
+                  pre: ({ children }) => (
+                    <pre className="bg-[#111] p-3 rounded-lg overflow-x-auto mb-4 border border-neutral-800/80">
+                      {children}
+                    </pre>
+                  ),
+                  code: ({ className, children }) => {
+                    const isInline = !className;
+                    return (
+                      <code
+                        className={`${isInline ? "bg-[#1a1a1a] px-1.5 py-0.5 rounded text-emerald-400 text-[11px] font-mono border border-neutral-800/50" : "text-emerald-400 text-[11px] font-mono"}`}
+                      >
+                        {children}
+                      </code>
+                    );
+                  },
                   a: ({ href, children }) => {
                     const raw = (href || "").replace(/^<|>$/g, "").trim();
                     const targetId = decodeConceptId(raw) ?? raw;
-                    const isLinked = !validNodeIds || validNodeIds.has(targetId.toLowerCase());
+                    const isLinked =
+                      !validNodeIds || validNodeIds.has(targetId.toLowerCase());
                     if (!isLinked) {
-                      return <span className="text-neutral-500">{children}</span>;
+                      return (
+                        <span className="text-neutral-500">{children}</span>
+                      );
                     }
                     return (
                       <button

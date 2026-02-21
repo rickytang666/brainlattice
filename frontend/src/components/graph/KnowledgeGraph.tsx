@@ -97,7 +97,7 @@ export default function KnowledgeGraph({
     return { nodes, links };
   }, [data]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const handleNodeClick = useCallback(
     (node: any) => {
       onNodeSelect?.(node.id);
@@ -235,7 +235,7 @@ export default function KnowledgeGraph({
         backgroundColor="#0a0a0a"
         linkDirectionalArrowLength={3.5}
         linkDirectionalArrowRelPos={1}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         nodeCanvasObject={(
           node: any,
           ctx: CanvasRenderingContext2D,
