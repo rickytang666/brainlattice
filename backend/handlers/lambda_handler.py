@@ -5,11 +5,6 @@ import os
 import asyncio
 
 # pipeline services
-from services.storage_service import S3StorageService
-from services.pdf_service import PDFService
-from services.chunking_service import RecursiveMarkdownSplitter
-from services.embedding_service import EmbeddingService
-from services.job_service import JobService
 from db.session import get_db, SessionLocal
 from db import models
 
