@@ -63,20 +63,20 @@ export default function GraphScratchpad() {
       <div className="w-1/3 flex flex-col border-r border-neutral-800 bg-[#0f0f0f]">
         <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Code className="w-5 h-5 text-blue-500" />
+            <Code className="w-5 h-5 text-primary" />
             <h2 className="font-bold text-neutral-200 uppercase tracking-tighter">JSON Scratchpad</h2>
           </div>
           <div className="flex gap-2 bg-neutral-900 rounded-lg p-1 border border-neutral-800">
             <button 
               onClick={() => setMode('upload')}
-              className={`p-1.5 rounded transition-all ${mode === 'upload' ? 'bg-neutral-800 text-blue-400 shadow-sm' : 'text-neutral-500 hover:text-neutral-300'}`}
+              className={`p-1.5 rounded transition-all ${mode === 'upload' ? 'bg-neutral-800 text-primary shadow-sm' : 'text-neutral-500 hover:text-neutral-300'}`}
               title="Upload File"
             >
               <Upload className="w-4 h-4" />
             </button>
             <button 
               onClick={() => setMode('paste')}
-              className={`p-1.5 rounded transition-all ${mode === 'paste' ? 'bg-neutral-800 text-blue-400 shadow-sm' : 'text-neutral-500 hover:text-neutral-300'}`}
+              className={`p-1.5 rounded transition-all ${mode === 'paste' ? 'bg-neutral-800 text-primary shadow-sm' : 'text-neutral-500 hover:text-neutral-300'}`}
               title="Paste JSON"
             >
               <FileJson className="w-4 h-4" />
@@ -94,7 +94,7 @@ export default function GraphScratchpad() {
 
         <div className="flex-1 p-4 relative flex flex-col">
           {mode === 'upload' ? (
-            <div className="flex-1 border-2 border-dashed border-neutral-800 rounded-lg flex flex-col items-center justify-center p-8 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group">
+            <div className="flex-1 border-2 border-dashed border-neutral-800 rounded-lg flex flex-col items-center justify-center p-8 hover:border-primary/50 hover:bg-primary/5 transition-all group">
               <input 
                 type="file" 
                 ref={fileInputRef}
@@ -107,7 +107,7 @@ export default function GraphScratchpad() {
                 className="flex flex-col items-center gap-4 w-full h-full justify-center"
               >
                 <div className="p-4 bg-neutral-900 rounded-full group-hover:scale-110 transition-transform">
-                  <Upload className="w-8 h-8 text-neutral-500 group-hover:text-blue-400" />
+                  <Upload className="w-8 h-8 text-neutral-500 group-hover:text-primary" />
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-medium text-neutral-300">Click to upload JSON</p>
@@ -117,7 +117,7 @@ export default function GraphScratchpad() {
             </div>
           ) : (
             <textarea
-              className="w-full h-full bg-[#141414] text-emerald-400 font-mono text-xs p-4 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500/50 resize-none border border-neutral-800"
+              className="w-full h-full bg-[#141414] text-primary font-mono text-xs p-4 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none border border-neutral-800"
               placeholder='Paste your graph JSON here...
 
 Example:
@@ -144,7 +144,7 @@ Example:
           <div className="p-4 bg-[#0a0a0a] border-t border-neutral-800">
             <button
               onClick={handleRender}
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 active:scale-[0.98]"
+              className="w-full bg-primary hover:bg-primary/80 text-primary-foreground font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98]"
             >
               <Play className="w-4 h-4 fill-current" />
               VITALIZE GRAPH

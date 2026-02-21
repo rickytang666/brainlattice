@@ -53,11 +53,11 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
     >
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-4 w-4 text-emerald-500/50" />
+          <Search className="h-4 w-4 text-primary/50" />
         </div>
         <input
           type="text"
-          className="block w-full pl-10 pr-10 py-2 bg-black/60 border border-emerald-500/30 rounded-lg text-emerald-50 placeholder-emerald-500/50 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 backdrop-blur-sm transition-all"
+          className="block w-full pl-10 pr-10 py-2 bg-black/60 border border-primary/30 rounded-lg text-neutral-200 placeholder-primary/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary backdrop-blur-sm transition-all"
           placeholder="Search graph..."
           value={query}
           onChange={(e) => {
@@ -102,7 +102,7 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
               setQuery("");
               setIsOpen(false);
             }}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-emerald-500/50 hover:text-emerald-400"
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-primary/50 hover:text-primary"
           >
             <X className="h-4 w-4" />
           </button>
@@ -111,7 +111,7 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
 
       {/* dropdown results */}
       {isOpen && query && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-black/90 border border-emerald-500/30 rounded-lg shadow-xl shadow-black overflow-hidden backdrop-blur-md max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-black/90 border border-primary/30 rounded-lg shadow-xl shadow-black overflow-hidden backdrop-blur-md max-h-96 overflow-y-auto">
           {results.map((result, index) => (
             <button
               key={result.item.id}
@@ -121,15 +121,15 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
                 setQuery(result.item.id);
               }}
               onMouseEnter={() => setSelectedIndex(index)}
-              className={`w-full text-left px-4 py-3 border-b border-emerald-500/10 transition-colors last:border-0 flex flex-col gap-1 ${
-                selectedIndex === index ? "bg-emerald-500/20" : "hover:bg-emerald-500/10"
+              className={`w-full text-left px-4 py-3 border-b border-primary/10 transition-colors last:border-0 flex flex-col gap-1 ${
+                selectedIndex === index ? "bg-primary/20" : "hover:bg-primary/10"
               }`}
             >
-              <span className="text-emerald-50 font-bold text-sm truncate">
+              <span className="text-neutral-200 font-bold text-sm truncate">
                 {result.item.id}
               </span>
               {result.item.aliases && result.item.aliases.length > 0 && (
-                <span className="text-emerald-500/60 text-[10px] truncate">
+                <span className="text-primary/60 text-[10px] truncate">
                   also: {result.item.aliases.join(", ")}
                 </span>
               )}

@@ -405,7 +405,7 @@ export default function ProjectDashboard() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="w-full max-w-md mx-auto flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-neutral-800 disabled:text-neutral-500 text-white font-semibold py-4 px-6 rounded-xl transition-all text-base shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 disabled:shadow-none"
+              className="w-full max-w-md mx-auto flex items-center justify-center gap-3 bg-primary hover:bg-primary/80 disabled:bg-neutral-800 disabled:text-neutral-500 text-primary-foreground font-semibold py-4 px-6 rounded-xl transition-all text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:shadow-none"
             >
               {uploading ? (
                 <>
@@ -472,7 +472,7 @@ export default function ProjectDashboard() {
                       <span
                         className={`px-2.5 py-1 rounded-md text-xs font-medium ${
                           p.status === "complete"
-                            ? "bg-emerald-500/10 text-emerald-400"
+                            ? "bg-primary/10 text-primary"
                             : p.status === "failed"
                             ? "bg-red-500/10 text-red-400"
                             : "bg-amber-500/10 text-amber-400"
@@ -548,7 +548,7 @@ export default function ProjectDashboard() {
                       type="text"
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
-                      className="bg-neutral-900 border border-neutral-700 rounded px-2 py-0.5 text-xs text-neutral-200 outline-none focus:border-emerald-500 font-sans normal-case"
+                      className="bg-neutral-900 border border-neutral-700 rounded px-2 py-0.5 text-xs text-neutral-200 outline-none focus:border-primary font-sans normal-case"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleRename();
@@ -557,7 +557,7 @@ export default function ProjectDashboard() {
                     />
                     <button
                       onClick={handleRename}
-                      className="text-emerald-500 hover:text-emerald-400"
+                      className="text-primary hover:text-primary/80"
                     >
                       <Check className="w-3.5 h-3.5" />
                     </button>
@@ -587,7 +587,7 @@ export default function ProjectDashboard() {
                 {projectGraph && (
                   <>
                     <span className="w-1 h-1 bg-neutral-700 rounded-full" />
-                    <span className="text-xs text-emerald-400">
+                    <span className="text-xs text-primary">
                       {projectGraph.nodes.length} Nodes
                     </span>
                     <span className="w-1 h-1 bg-neutral-700 rounded-full" />
@@ -597,7 +597,7 @@ export default function ProjectDashboard() {
                        {exportStatus?.status === "complete" && (
                          <button
                            onClick={handleDownloadVault}
-                           className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold uppercase rounded-lg border border-emerald-500/30 transition-all animate-pulse"
+                           className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/20 hover:bg-primary/30 text-primary text-[10px] font-bold uppercase rounded-lg border border-primary/30 transition-all animate-pulse"
                          >
                            <FileDown className="w-3 h-3" />
                            Download .Zip
@@ -610,7 +610,7 @@ export default function ProjectDashboard() {
                          className="flex items-center gap-1.5 px-2.5 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-neutral-200 text-[10px] font-bold uppercase rounded-lg border border-neutral-700 transition-all"
                          title={exportStatus?.status === "generating" ? "Click to force retry if stuck" : "Export this graph to Obsidian"}
                        >
-                         <Sparkles className={`w-3 h-3 ${exportLoading ? "animate-spin text-emerald-400" : "text-emerald-500"}`} />
+                         <Sparkles className={`w-3 h-3 ${exportLoading ? "animate-spin text-primary/80" : "text-primary"}`} />
                          {exportStatus?.status === "generating" 
                            ? `Exporting ${exportStatus.progress || 0}%`
                            : exportStatus?.status === "complete"
@@ -638,7 +638,7 @@ export default function ProjectDashboard() {
               )}
               {graphLoading ? (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-emerald-500/50" />
+                  <Loader2 className="w-8 h-8 animate-spin text-primary/50" />
                 </div>
               ) : projectGraph ? (
                 <KnowledgeGraph

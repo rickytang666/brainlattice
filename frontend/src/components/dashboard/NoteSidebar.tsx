@@ -131,7 +131,7 @@ export default function NoteSidebar({
     <div className="w-full min-w-0 border-l border-neutral-800 bg-[#0f0f0f] flex flex-col h-full shadow-2xl relative z-20 overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-neutral-800 bg-[#141414] flex items-center justify-between">
-        <div className="flex items-center gap-2 text-emerald-400">
+        <div className="flex items-center gap-2 text-primary">
           <BookOpen className="w-4 h-4 flex-shrink-0" />
           <h3 className="text-sm font-bold tracking-widest truncate max-w-[250px]">
             {decodeConceptId(conceptId) || "Note"}
@@ -143,7 +143,7 @@ export default function NoteSidebar({
               onClick={() => fetchNote(true)}
               disabled={loading}
               title="Regenerate note"
-              className="p-1.5 text-neutral-500 hover:text-emerald-400 hover:bg-neutral-800 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1.5 text-neutral-500 hover:text-primary hover:bg-neutral-800 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw
                 className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
@@ -236,7 +236,7 @@ export default function NoteSidebar({
             </div>
 
             <div className="flex-1 flex flex-col justify-end pb-8">
-              <div className="flex items-center gap-2 text-emerald-500/60">
+              <div className="flex items-center gap-2 text-primary/60">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span className="text-[10px] uppercase tracking-[0.2em] font-medium">
                   synthesizing notes...
@@ -283,7 +283,7 @@ export default function NoteSidebar({
                   ),
                   li: ({ children }) => <li>{children}</li>,
                   blockquote: ({ children }) => (
-                    <blockquote className="border-l-2 border-emerald-500/50 pl-4 py-0.5 my-4 text-neutral-500 italic bg-emerald-500/5 rounded-r">
+                    <blockquote className="border-l-2 border-primary/50 pl-4 py-0.5 my-4 text-neutral-500 italic bg-primary/5 rounded-r">
                       {children}
                     </blockquote>
                   ),
@@ -318,7 +318,7 @@ export default function NoteSidebar({
                     const isInline = !className;
                     return (
                       <code
-                        className={`${isInline ? "bg-[#1a1a1a] px-1.5 py-0.5 rounded text-emerald-400 text-[11px] font-mono border border-neutral-800/50" : "text-emerald-400 text-[11px] font-mono"}`}
+                        className={`${isInline ? "bg-[#1a1a1a] px-1.5 py-0.5 rounded text-primary text-[11px] font-mono border border-neutral-800/50" : "text-primary text-[11px] font-mono"}`}
                       >
                         {children}
                       </code>
@@ -337,7 +337,7 @@ export default function NoteSidebar({
                     return (
                       <button
                         onClick={() => onNodeSelect?.(targetId)}
-                        className="text-emerald-400 hover:text-emerald-300 font-bold border-b border-emerald-500/30 hover:border-emerald-500 transition-all px-0.5"
+                        className="text-primary hover:text-primary/80 font-bold border-b border-primary/30 hover:border-primary transition-all px-0.5"
                       >
                         {children}
                       </button>

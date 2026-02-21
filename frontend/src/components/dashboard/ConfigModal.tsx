@@ -33,7 +33,7 @@ export default function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
       <div className="bg-[#141414] border border-neutral-800 rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-neutral-800">
-          <div className="flex items-center gap-2 text-emerald-400">
+          <div className="flex items-center gap-2 text-primary">
             <Key className="w-4 h-4" />
             <h3 className="font-bold tracking-widest uppercase text-sm">API Configuration</h3>
           </div>
@@ -44,14 +44,14 @@ export default function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
         <div className="p-6">
           <label className="flex items-center justify-between text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">
             <span>Google Gemini API Key</span>
-            <span className="text-[10px] text-emerald-500/80 bg-emerald-500/10 px-1.5 py-0.5 rounded">Required</span>
+            <span className="text-[10px] text-primary/80 bg-primary/10 px-1.5 py-0.5 rounded">Required</span>
           </label>
           <input
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             placeholder="AIzaSy..."
-            className="w-full bg-[#0a0a0a] border border-neutral-800 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-emerald-500 transition-colors mb-4 font-mono"
+            className="w-full bg-[#0a0a0a] border border-neutral-800 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-primary transition-colors mb-4 font-mono"
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSave();
               if (e.key === "Escape") onClose();
@@ -67,7 +67,7 @@ export default function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
             value={openAiKey}
             onChange={(e) => setOpenAiKey(e.target.value)}
             placeholder="sk-proj-..."
-            className="w-full bg-[#0a0a0a] border border-neutral-800 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-emerald-500 transition-colors mb-4 font-mono"
+            className="w-full bg-[#0a0a0a] border border-neutral-800 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-primary transition-colors mb-4 font-mono"
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSave();
               if (e.key === "Escape") onClose();
@@ -85,7 +85,7 @@ export default function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-bold transition-colors shadow-lg shadow-emerald-500/20"
+              className="px-4 py-2 bg-primary hover:bg-primary/80 text-primary-foreground rounded-lg text-sm font-bold transition-colors shadow-lg shadow-primary/20"
             >
               Save Key
             </button>

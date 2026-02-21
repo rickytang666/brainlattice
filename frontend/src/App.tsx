@@ -26,14 +26,14 @@ function App() {
 
       {/* Top Navigation */}
       <div className="flex-none h-12 border-b border-neutral-800 bg-[#0f0f0f] px-4 flex items-center justify-between">
-        <div className="font-bold tracking-widest uppercase text-emerald-500 text-sm">
+        <div className="font-bold tracking-widest uppercase text-primary text-sm">
           BrainLattice
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 rounded-lg p-1 mr-2">
             <NavLink
               to={getDashboardPath()}
-              className={`flex items-center gap-2 px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${isDashboard ? "bg-emerald-500/10 text-emerald-400" : "text-neutral-500 hover:text-neutral-300"}`}
+              className={`flex items-center gap-2 px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${isDashboard ? "bg-primary/10 text-primary" : "text-neutral-500 hover:text-neutral-300"}`}
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
               Dashboard
@@ -41,7 +41,7 @@ function App() {
             <NavLink
               to="/scratchpad"
               className={({ isActive }) =>
-                `flex items-center gap-2 px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${isActive ? "bg-blue-500/10 text-blue-400" : "text-neutral-500 hover:text-neutral-300"}`
+                `flex items-center gap-2 px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${isActive ? "bg-primary/10 text-primary" : "text-neutral-500 hover:text-neutral-300"}`
               }
             >
               <TestTube className="w-3.5 h-3.5" />
@@ -51,7 +51,7 @@ function App() {
           
           <button
             onClick={() => setIsConfigOpen(true)}
-            className="p-1.5 text-neutral-500 hover:text-emerald-400 hover:bg-neutral-800 rounded-lg transition-colors"
+            className="p-1.5 text-neutral-500 hover:text-primary hover:bg-neutral-800 rounded-lg transition-colors"
             title="API Settings"
           >
             <Settings className="w-4 h-4" />
@@ -60,13 +60,13 @@ function App() {
           <div className="flex items-center border-l border-neutral-800 pl-4 ml-2">
             <SignedOut>
               <SignInButton mode="modal">
-                <button className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white rounded transition-colors shadow-lg shadow-emerald-500/20">
+                <button className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider bg-primary hover:bg-primary/80 text-primary-foreground rounded transition-colors shadow-lg shadow-primary/20">
                   Sign In
                 </button>
               </SignInButton>
             </SignedOut>
             <SignedIn>
-              <UserButton appearance={{ elements: { avatarBox: "w-8 h-8 rounded border border-neutral-700 hover:border-emerald-500 transition-colors" } }} />
+              <UserButton appearance={{ elements: { avatarBox: "w-8 h-8 rounded border border-neutral-700 hover:border-primary transition-colors" } }} />
             </SignedIn>
           </div>
         </div>
