@@ -2,6 +2,7 @@ import logging
 import asyncio
 from typing import List, Optional
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from db.session import SessionLocal
 from db import models
 from services.llm.note_service import NodeNoteService
@@ -35,10 +36,19 @@ class ExportProcessor:
         """
         db = SessionLocal()
         try:
-            # 1. find nodes missing content
+            # 0. Check if already complete
+            project = db.query(models.Project).filter(models.Project.id == self.project_id).first()
+            if project and project.project_metadata:
+                export_meta = project.project_metadata.get("export", {})
+                if export_meta.get("status") == "complete" and export_meta.get("download_url"):
+                    logger.info(f"project {self.project_id} export already complete. skipping.")
+                    return {"export_status": "already_complete"}
+
+            # 1. find nodes missing content (check for None or empty string)
+            from sqlalchemy import or_
             missing_nodes = db.query(models.GraphNode).filter(
                 models.GraphNode.project_id == self.project_id,
-                models.GraphNode.content == None
+                or_(models.GraphNode.content == None, models.GraphNode.content == "")
             ).limit(10).all() # process in batches of 10
 
             if missing_nodes:
@@ -61,9 +71,10 @@ class ExportProcessor:
 
     async def _process_batch(self, db: Session, nodes: List[models.GraphNode]):
         """generates notes for a batch of nodes"""
+        from sqlalchemy import or_
         total_missing = db.query(models.GraphNode).filter(
             models.GraphNode.project_id == self.project_id,
-            models.GraphNode.content == None
+            or_(models.GraphNode.content == None, models.GraphNode.content == "")
         ).count()
         
         total_nodes = db.query(models.GraphNode).filter(
@@ -71,6 +82,8 @@ class ExportProcessor:
         ).count()
 
         progress = int(((total_nodes - total_missing) / total_nodes) * 100) if total_nodes > 0 else 0
+        
+        logger.info(f"project {self.project_id} export progress: {progress}% ({total_nodes - total_missing}/{total_nodes})")
         
         self._update_metadata(db, {
             "status": "generating",
@@ -172,8 +185,9 @@ class ExportProcessor:
         project = db.query(models.Project).filter(models.Project.id == self.project_id).first()
         if project:
             metadata = project.project_metadata or {}
-            export_meta = metadata.get("export", {})
+            export_meta = metadata.get("export") or {}
             export_meta.update(update)
             metadata["export"] = export_meta
             project.project_metadata = metadata
+            flag_modified(project, "project_metadata")
             db.commit()

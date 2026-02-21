@@ -57,14 +57,37 @@ export default function ProjectDashboard() {
   } | null>(null);
   const exportPollRef = useRef<any>(null);
 
+  const startExportPolling = useCallback(() => {
+    if (exportPollRef.current) clearInterval(exportPollRef.current);
+    exportPollRef.current = setInterval(async () => {
+      try {
+        const res = await apiFetch(
+          `${API_BASE}/project/${projectIdFromUrl}/export/status`,
+          undefined,
+          userId
+        );
+        if (res.ok) {
+          const status = await res.json();
+          setExportStatus(status);
+          if (status.status === "complete" || status.status === "failed") {
+            if (exportPollRef.current) clearInterval(exportPollRef.current);
+            setExportLoading(false);
+          }
+        }
+      } catch (err) {
+        console.error("poll error:", err);
+      }
+    }, 2000);
+  }, [projectIdFromUrl, userId]);
+
   const handleExport = async () => {
-    if (!selectedProjectId) return;
+    if (!projectIdFromUrl) return;
     setExportLoading(true);
     setExportStatus({ status: "pending", progress: 0, message: "Exporting..." });
 
     try {
       const res = await apiFetch(
-        `${API_BASE}/project/${selectedProjectId}/export/obsidian`,
+        `${API_BASE}/project/${projectIdFromUrl}/export/obsidian`,
         { method: "POST" },
         userId
       );
@@ -81,34 +104,11 @@ export default function ProjectDashboard() {
     }
   };
 
-  const startExportPolling = () => {
-    if (exportPollRef.current) clearInterval(exportPollRef.current);
-    exportPollRef.current = setInterval(async () => {
-      try {
-        const res = await apiFetch(
-          `${API_BASE}/project/${selectedProjectId}/export/status`,
-          undefined,
-          userId
-        );
-        if (res.ok) {
-          const status = await res.json();
-          setExportStatus(status);
-          if (status.status === "complete" || status.status === "failed") {
-            if (exportPollRef.current) clearInterval(exportPollRef.current);
-            setExportLoading(false);
-          }
-        }
-      } catch (err) {
-        console.error("poll error:", err);
-      }
-    }, 2000);
-  };
-
   const handleDownloadVault = async () => {
-    if (!selectedProjectId) return;
+    if (!projectIdFromUrl) return;
     try {
       const res = await apiFetch(
-        `${API_BASE}/project/${selectedProjectId}/export/download`,
+        `${API_BASE}/project/${projectIdFromUrl}/export/download`,
         undefined,
         userId
       );
@@ -123,6 +123,27 @@ export default function ProjectDashboard() {
       setError("Failed to download vault.");
     }
   };
+
+  // Check export status on load
+  useEffect(() => {
+    if (!projectIdFromUrl) {
+      setExportStatus(null);
+      return;
+    }
+
+    apiFetch(`${API_BASE}/project/${projectIdFromUrl}/export/status`, undefined, userId)
+      .then(res => res.json())
+      .then(status => {
+        if (status && status.status !== "none") {
+          setExportStatus(status);
+          if (status.status === "pending" || status.status === "generating") {
+            setExportLoading(true);
+            startExportPolling();
+          }
+        }
+      })
+      .catch(err => console.error("Initial export status check failed:", err));
+  }, [projectIdFromUrl, userId, startExportPolling]);
 
   useEffect(() => {
     return () => {
@@ -570,46 +591,34 @@ export default function ProjectDashboard() {
                     </span>
                     <span className="w-1 h-1 bg-neutral-700 rounded-full" />
                     
-                    {/* Obsidian Export Button / Progress */}
-                    {exportStatus ? (
-                      <div className="flex items-center gap-2">
-                        {exportStatus.status === "complete" ? (
-                          <button
-                            onClick={handleDownloadVault}
-                            className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold uppercase rounded-lg border border-emerald-500/30 transition-all animate-pulse"
-                          >
-                            <FileDown className="w-3 h-3" />
-                            Download .Zip
-                          </button>
-                        ) : exportStatus.status === "failed" ? (
-                          <span className="text-[10px] font-bold text-red-400 uppercase">
-                            Export Failed
-                          </span>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                             <div className="w-16 h-1 bg-neutral-800 rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-emerald-500 transition-all duration-500" 
-                                  style={{ width: `${exportStatus.progress}%` }}
-                                />
-                             </div>
-                             <span className="text-[10px] font-bold text-neutral-400 uppercase whitespace-nowrap">
-                               {exportStatus.progress}%
-                             </span>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <button
-                        onClick={handleExport}
-                        disabled={exportLoading}
-                        className="flex items-center gap-1.5 px-2.5 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-neutral-200 text-[10px] font-bold uppercase rounded-lg border border-neutral-700 transition-all"
-                        title="Export this graph to an Obsidian Vault"
-                      >
-                        <Sparkles className="w-3 h-3 text-emerald-500" />
-                        Export to Obsidian
-                      </button>
-                    )}
+                    {/* Obsidian Export Actions */}
+                    <div className="flex items-center gap-2">
+                       {exportStatus?.status === "complete" && (
+                         <button
+                           onClick={handleDownloadVault}
+                           className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[10px] font-bold uppercase rounded-lg border border-emerald-500/30 transition-all animate-pulse"
+                         >
+                           <FileDown className="w-3 h-3" />
+                           Download .Zip
+                         </button>
+                       )}
+                       
+                       <button
+                         onClick={handleExport}
+                         disabled={exportLoading && (!exportStatus || exportStatus.status === "pending")}
+                         className="flex items-center gap-1.5 px-2.5 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-neutral-200 text-[10px] font-bold uppercase rounded-lg border border-neutral-700 transition-all"
+                         title={exportStatus?.status === "generating" ? "Click to force retry if stuck" : "Export this graph to Obsidian"}
+                       >
+                         <Sparkles className={`w-3 h-3 ${exportLoading ? "animate-spin text-emerald-400" : "text-emerald-500"}`} />
+                         {exportStatus?.status === "generating" 
+                           ? `Exporting ${exportStatus.progress || 0}%`
+                           : exportStatus?.status === "complete"
+                             ? "Update Vault"
+                             : exportStatus?.status === "failed"
+                               ? "Retry Export"
+                               : "Export to Obsidian"}
+                       </button>
+                    </div>
                   </>
                 )}
               </div>
