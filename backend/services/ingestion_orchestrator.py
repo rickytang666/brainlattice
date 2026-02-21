@@ -81,7 +81,14 @@ class IngestionOrchestrator:
             else:
                 msg_id = self.queue.publish_task(
                     destination_url=worker_url,
-                    payload={"job_id": job_id, "file_key": s3_key, "action": "ingest"}
+                    payload={
+                        "job_id": job_id, 
+                        "file_key": s3_key, 
+                        "action": "ingest",
+                        "gemini_key": gemini_key,
+                        "openai_key": openai_key,
+                        "user_id": user_id
+                    }
                 )
             
             return {
@@ -148,7 +155,14 @@ class IngestionOrchestrator:
             else:
                 msg_id = self.queue.publish_task(
                     destination_url=worker_url,
-                    payload={"job_id": job_id, "file_key": s3_key, "action": "ingest"}
+                    payload={
+                        "job_id": job_id, 
+                        "file_key": s3_key, 
+                        "action": "ingest",
+                        "gemini_key": metadata.get("gemini_key"),
+                        "openai_key": metadata.get("openai_key"),
+                        "user_id": metadata.get("user_id")
+                    }
                 )
             
             return {

@@ -25,13 +25,22 @@ def worker_handler(event, context):
             
         job_id = payload.get("job_id")
         file_key = payload.get("file_key")
+        gemini_key = payload.get("gemini_key")
+        openai_key = payload.get("openai_key")
+        user_id = payload.get("user_id")
         
         if not job_id or not file_key:
             return {"statusCode": 400, "body": "missing job_id or file_key"}
             
         # delegate to pipeline service
         from services.ingestion_processor import IngestionProcessor
-        processor = IngestionProcessor(job_id, file_key)
+        processor = IngestionProcessor(
+            job_id=job_id, 
+            file_key=file_key,
+            gemini_key=gemini_key,
+            openai_key=openai_key,
+            user_id=user_id
+        )
         
         try:
             loop = asyncio.get_event_loop()

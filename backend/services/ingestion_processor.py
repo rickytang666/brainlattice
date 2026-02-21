@@ -24,15 +24,19 @@ class IngestionProcessor:
     download -> parse -> chunk -> embed -> extract graph -> resolve concepts
     """
 
-    def __init__(self, job_id: str, file_key: str):
+    def __init__(self, job_id: str, file_key: str, gemini_key: str = None, openai_key: str = None, user_id: str = None):
         self.job_id = job_id
         self.file_key = file_key
+        self.gemini_key = gemini_key
+        self.openai_key = openai_key
+        self.user_id = user_id
+        
         self.storage = get_storage_service()
         self.pdf_service = PDFService()
         self.splitter = RecursiveMarkdownSplitter()
         self.jobs = get_job_service()
         self.builder = GraphBuilder()
-        self.connector = GraphConnector()
+        self.connector = GraphConnector() # lazily uses self.embedder in process()
         
     async def process(self) -> Dict[str, Any]:
         """runs the full pipeline asynchronously"""
@@ -48,18 +52,27 @@ class IngestionProcessor:
             self.jobs.update_progress(self.job_id, "processing", 20)
             await asyncio.sleep(0.1) # yield to event loop
             
-            # create project/file records
+            # check if we have keys from constructor or fallback to metadata
             job_info = self.jobs.get_job(self.job_id)
             metadata = job_info.get("metadata", {})
+            
             project_id = metadata.get("project_id")
             filename = metadata.get("filename", "unknown.pdf")
-            gemini_key = metadata.get("gemini_key")
-            openai_key = metadata.get("openai_key")
-            user_id = metadata.get("user_id")
+            
+            # prioritize keys from constructor (passed by handler) over stale metadata
+            gemini_key = self.gemini_key or metadata.get("gemini_key")
+            openai_key = self.openai_key or metadata.get("openai_key")
+            user_id = self.user_id or metadata.get("user_id")
+            
+            if not gemini_key:
+                raise ValueError(f"No Gemini API key found for job {self.job_id}. Strict BYOK is enabled.")
 
-            # dynamically init services with the custom BYOK key if provided
+            # dynamically init services with the custom BYOK keys
             self.embedder = EmbeddingService(gemini_key=gemini_key, openai_key=openai_key)
             self.extractor = GraphExtractor(gemini_key=gemini_key)
+            
+            # project the embedder into the connector for lazy use
+            self.connector._embeddings = self.embedder
             
             if not project_id:
                 # check if we already have a project for this job id (failsafe)

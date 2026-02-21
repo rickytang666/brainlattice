@@ -14,8 +14,14 @@ class GraphConnector:
     acts as a fallback to ensure 100% connectivity.
     """
 
-    def __init__(self):
-        self.embeddings = EmbeddingService()
+    def __init__(self, embeddings: EmbeddingService = None):
+        self._embeddings = embeddings
+
+    @property
+    def embeddings(self) -> EmbeddingService:
+        if self._embeddings is None:
+            raise ValueError("EmbeddingService not initialized in GraphConnector. Provide keys or an instance.")
+        return self._embeddings
 
     def connect_orphans(self, graph_data: GraphData) -> GraphData:
         # 1. build networkx graph (undirected for component analysis)
