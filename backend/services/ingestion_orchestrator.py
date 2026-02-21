@@ -76,7 +76,13 @@ class IngestionOrchestrator:
                 msg_id = "local_only"
                 if background_tasks:
                     from services.ingestion_processor import IngestionProcessor
-                    processor = IngestionProcessor(job_id=job_id, file_key=s3_key)
+                    processor = IngestionProcessor(
+                        job_id=job_id, 
+                        file_key=s3_key,
+                        gemini_key=gemini_key,
+                        openai_key=openai_key,
+                        user_id=user_id
+                    )
                     background_tasks.add_task(processor.process)
             else:
                 msg_id = self.queue.publish_task(
