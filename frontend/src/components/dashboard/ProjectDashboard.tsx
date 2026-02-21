@@ -89,6 +89,16 @@ export default function ProjectDashboard() {
       .then((data) => {
         setProjects(data);
         setLoading(false);
+        
+        // redirect if in a project view but it doesn't exist
+        if (projectIdFromUrl && !data.find((p: Project) => p.id === projectIdFromUrl)) {
+          navigate("/");
+        }
+        
+        // clean up stale last_project if list is empty
+        if (data.length === 0) {
+          sessionStorage.removeItem(LAST_PROJECT_KEY);
+        }
       })
       .catch((err) => {
         console.error(err);
@@ -420,7 +430,7 @@ export default function ProjectDashboard() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 group">
-                    <span className="text-xs font-bold text-neutral-300 uppercase tracking-wider">
+                    <span className="text-xs font-bold text-neutral-300 tracking-wider">
                       {currentProject?.title}
                     </span>
                     <button
