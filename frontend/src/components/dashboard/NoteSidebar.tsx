@@ -128,12 +128,12 @@ export default function NoteSidebar({
   }, [conceptId, projectId, userId]);
 
   return (
-    <div className="w-full min-w-0 border-l border-neutral-800 bg-[#0f0f0f] flex flex-col h-full shadow-2xl relative z-20 overflow-hidden">
+    <div className="w-full min-w-0 border-l border-border bg-background flex flex-col h-full shadow-2xl relative z-20 overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-neutral-800 bg-[#141414] flex items-center justify-between">
+      <div className="p-4 border-b border-border bg-card flex items-center justify-between">
         <div className="flex items-center gap-2 text-primary">
           <BookOpen className="w-4 h-4 flex-shrink-0" />
-          <h3 className="text-sm font-bold tracking-widest truncate max-w-[250px]">
+          <h3 className="text-sm font-bold truncate max-w-[300px]">
             {decodeConceptId(conceptId) || "Note"}
           </h3>
         </div>
@@ -143,7 +143,7 @@ export default function NoteSidebar({
               onClick={() => fetchNote(true)}
               disabled={loading}
               title="Regenerate note"
-              className="p-1.5 text-neutral-500 hover:text-primary hover:bg-neutral-800 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1.5 text-muted-foreground hover:text-primary hover:bg-muted rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw
                 className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
@@ -152,7 +152,7 @@ export default function NoteSidebar({
           )}
           <button
             onClick={onClose}
-            className="p-1 text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 rounded transition-colors"
+            className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
             title="Clear selection"
           >
             <X className="w-4 h-4" />
@@ -161,14 +161,14 @@ export default function NoteSidebar({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-neutral-800">
+      <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-muted">
         {!conceptId ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-6">
-            <BookOpen className="w-10 h-10 text-neutral-700 mb-4" />
-            <p className="text-xs text-neutral-500 uppercase tracking-wider mb-1">
+            <BookOpen className="w-10 h-10 text-muted-foreground mb-4" />
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
               Select a node
             </p>
-            <p className="text-[11px] text-neutral-600 leading-relaxed">
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
               Click a node in the graph or cmd+click a concept link to view and
               focus.
             </p>
@@ -184,7 +184,7 @@ export default function NoteSidebar({
                   duration: 1.2,
                   repeatType: "reverse",
                 }}
-                className="h-6 bg-neutral-800/50 rounded w-3/4"
+                className="h-6 bg-muted/50 rounded w-3/4"
               />
               <motion.div
                 initial={{ opacity: 0.3 }}
@@ -195,7 +195,7 @@ export default function NoteSidebar({
                   delay: 0.2,
                   repeatType: "reverse",
                 }}
-                className="h-4 bg-neutral-800/30 rounded w-1/2"
+                className="h-4 bg-muted/30 rounded w-1/2"
               />
             </div>
 
@@ -211,7 +211,7 @@ export default function NoteSidebar({
                     delay: i * 0.1,
                     repeatType: "reverse",
                   }}
-                  className="h-3 bg-neutral-800/40 rounded w-full"
+                  className="h-3 bg-muted/40 rounded w-full"
                   style={{ width: `${100 - (i % 3) * 10}%` }}
                 />
               ))}
@@ -229,7 +229,7 @@ export default function NoteSidebar({
                     delay: 0.5 + i * 0.1,
                     repeatType: "reverse",
                   }}
-                  className="h-3 bg-neutral-800/40 rounded w-full"
+                  className="h-3 bg-muted/40 rounded w-full"
                   style={{ width: `${95 - (i % 2) * 15}%` }}
                 />
               ))}
@@ -249,68 +249,68 @@ export default function NoteSidebar({
             {error}
           </div>
         ) : content ? (
-          <div className="prose prose-invert prose-sm max-w-none">
-            <div className="text-neutral-300 leading-relaxed text-sm">
+          <div className="prose prose-sm max-w-none dark:prose-invert">
+            <div className="text-foreground leading-relaxed text-sm">
               <ReactMarkdown
                 remarkPlugins={[remarkMath, remarkGfm]}
                 rehypePlugins={[rehypeKatex]}
                 components={{
                   h1: ({ children }) => (
-                    <h1 className="text-xl font-bold text-neutral-100 mt-6 mb-4">
+                    <h1 className="text-xl font-bold text-foreground mt-6 mb-4">
                       {children}
                     </h1>
                   ),
                   h2: ({ children }) => (
-                    <h2 className="text-lg font-semibold text-neutral-200 mt-5 mb-3">
+                    <h2 className="text-lg font-semibold text-foreground mt-5 mb-3">
                       {children}
                     </h2>
                   ),
                   h3: ({ children }) => (
-                    <h3 className="text-base font-medium text-neutral-300 mt-4 mb-2">
+                    <h3 className="text-base font-medium text-foreground mt-4 mb-2">
                       {children}
                     </h3>
                   ),
                   // Removed 'p' component to allow rehype-katex display blocks to render correctly without nesting issues
                   ul: ({ children }) => (
-                    <ul className="list-disc list-outside ml-4 mb-4 space-y-1.5 text-neutral-400">
+                    <ul className="list-disc list-outside ml-4 mb-4 space-y-1.5">
                       {children}
                     </ul>
                   ),
                   ol: ({ children }) => (
-                    <ol className="list-decimal list-outside ml-4 mb-4 space-y-1.5 text-neutral-400">
+                    <ol className="list-decimal list-outside ml-4 mb-4 space-y-1.5">
                       {children}
                     </ol>
                   ),
                   li: ({ children }) => <li>{children}</li>,
                   blockquote: ({ children }) => (
-                    <blockquote className="border-l-2 border-primary/50 pl-4 py-0.5 my-4 text-neutral-500 italic bg-primary/5 rounded-r">
+                    <blockquote className="border-l-2 border-primary/50 pl-4 py-0.5 my-4 italic bg-primary/5 rounded-r">
                       {children}
                     </blockquote>
                   ),
                   table: ({ children }) => (
-                    <div className="overflow-x-auto mb-6 border border-neutral-800 rounded-lg bg-[#111]">
-                      <table className="w-full text-[13px] text-left text-neutral-400 border-collapse">
+                    <div className="overflow-x-auto mb-6 border border-border rounded-lg bg-card">
+                      <table className="w-full text-[13px] text-left text-muted-foreground border-collapse">
                         {children}
                       </table>
                     </div>
                   ),
                   thead: ({ children }) => (
-                    <thead className="bg-neutral-800/40">
+                    <thead className="bg-muted">
                       {children}
                     </thead>
                   ),
                   th: ({ children }) => (
-                    <th className="px-4 py-3 font-semibold text-neutral-200 border-b border-neutral-800 text-xs uppercase tracking-wider">
+                    <th className="px-4 py-3 font-semibold text-foreground border-b border-border text-xs uppercase tracking-wider">
                       {children}
                     </th>
                   ),
                   td: ({ children }) => (
-                    <td className="px-4 py-2.5 border-b border-neutral-800/50 last:border-0">
+                    <td className="px-4 py-2.5 border-b border-border/50 last:border-0">
                       {children}
                     </td>
                   ),
                   pre: ({ children }) => (
-                    <pre className="bg-[#111] p-3 rounded-lg overflow-x-auto mb-4 border border-neutral-800/80">
+                    <pre className="bg-muted p-3 rounded-lg overflow-x-auto mb-4 border border-border/80">
                       {children}
                     </pre>
                   ),
@@ -318,7 +318,7 @@ export default function NoteSidebar({
                     const isInline = !className;
                     return (
                       <code
-                        className={`${isInline ? "bg-[#1a1a1a] px-1.5 py-0.5 rounded text-primary text-[11px] font-mono border border-neutral-800/50" : "text-primary text-[11px] font-mono"}`}
+                        className={`${isInline ? "bg-muted px-1.5 py-0.5 rounded text-primary text-[11px] font-mono border border-border/50" : "text-primary text-[11px] font-mono"}`}
                       >
                         {children}
                       </code>
@@ -331,7 +331,7 @@ export default function NoteSidebar({
                       !validNodeIds || validNodeIds.has(targetId.toLowerCase());
                     if (!isLinked) {
                       return (
-                        <span className="text-neutral-500">{children}</span>
+                        <span className="text-muted-foreground">{children}</span>
                       );
                     }
                     return (
@@ -350,8 +350,8 @@ export default function NoteSidebar({
             </div>
 
             {aliases.length > 0 && (
-              <div className="mt-8 pt-6 border-t border-neutral-800">
-                <div className="flex items-center gap-2 text-neutral-600 mb-3">
+              <div className="mt-8 pt-6 border-t border-border">
+                <div className="flex items-center gap-2 text-muted-foreground mb-3">
                   <Hash className="w-3 h-3" />
                   <span className="text-[10px] uppercase tracking-wider font-bold">
                     Aliases
@@ -361,7 +361,7 @@ export default function NoteSidebar({
                   {aliases.map((a) => (
                     <span
                       key={a}
-                      className="text-[11px] text-neutral-500 bg-neutral-800/80 px-2 py-0.5 rounded lowercase"
+                      className="text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded lowercase border border-border"
                     >
                       {a}
                     </span>
@@ -381,11 +381,10 @@ export default function NoteSidebar({
               }
               .prose p {
                 margin-bottom: 1.25rem;
-                color: #a3a3a3;
                 line-height: 1.6;
               }
               .prose hr {
-                border-color: #262626;
+                border-color: var(--border);
                 margin: 2rem 0;
               }
             `}</style>

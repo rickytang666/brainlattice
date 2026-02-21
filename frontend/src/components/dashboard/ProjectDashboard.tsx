@@ -356,7 +356,7 @@ export default function ProjectDashboard() {
   };
 
   return (
-    <div className="flex h-full w-full bg-[#0a0a0a] overflow-hidden text-neutral-200 font-sans relative">
+    <div className="flex h-full w-full bg-background overflow-hidden text-foreground font-sans relative">
       {/* Global Error Banner */}
       {error && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-xl px-4 animate-in fade-in slide-in-from-top-4 duration-300">
@@ -385,10 +385,10 @@ export default function ProjectDashboard() {
         <div className="flex flex-col w-full max-w-4xl mx-auto px-6 py-16">
           {/* Hero Section */}
           <div className="text-center mb-16">
-            <h1 className="text-4xl font-bold text-neutral-100 mb-3 tracking-tight">
+            <h1 className="text-4xl font-bold text-foreground mb-3 tracking-tight">
               Your Knowledge Graph
             </h1>
-            <p className="text-neutral-400 text-lg max-w-xl mx-auto">
+            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
               Transform PDFs into interactive study notes. Upload a document to get started.
             </p>
           </div>
@@ -405,7 +405,7 @@ export default function ProjectDashboard() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="w-full max-w-md mx-auto flex items-center justify-center gap-3 bg-primary hover:bg-primary/80 disabled:bg-neutral-800 disabled:text-neutral-500 text-primary-foreground font-semibold py-4 px-6 rounded-xl transition-all text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:shadow-none"
+              className="w-full max-w-md mx-auto flex items-center justify-center gap-3 bg-primary hover:bg-primary/80 disabled:bg-muted disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground font-semibold py-4 px-6 rounded-xl transition-all text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:shadow-none"
             >
               {uploading ? (
                 <>
@@ -424,23 +424,23 @@ export default function ProjectDashboard() {
           {/* Projects List */}
           {loading ? (
             <div className="flex justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-neutral-600" />
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
           ) : projects.length === 0 ? (
             <div className="text-center py-20">
-              <Database className="w-12 h-12 text-neutral-700 mx-auto mb-4" />
-              <p className="text-neutral-500 text-lg mb-1">No projects yet</p>
-              <p className="text-neutral-600 text-sm">Upload your first PDF to create a knowledge graph</p>
+              <Database className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground text-lg mb-1">No projects yet</p>
+              <p className="text-muted-foreground/70 text-sm">Upload your first PDF to create a knowledge graph</p>
             </div>
           ) : (
             <>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-neutral-200">
+                <h2 className="text-xl font-semibold text-foreground">
                   Recent Projects
                 </h2>
                 <button
                   onClick={fetchProjects}
-                  className="p-2 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800 rounded-lg transition-colors"
+                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                   title="Refresh"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -450,11 +450,11 @@ export default function ProjectDashboard() {
                 {projects.map((p) => (
                   <div
                     key={p.id}
-                    className="group relative bg-neutral-900/50 border border-neutral-800 rounded-xl p-5 hover:border-neutral-700 hover:bg-neutral-900 transition-all cursor-pointer"
+                    className="group relative bg-card/50 border border-border rounded-xl p-5 hover:border-border/80 hover:bg-card transition-all cursor-pointer"
                     onClick={() => selectProject(p.id)}
                   >
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-semibold text-neutral-100 text-base pr-8 line-clamp-2">
+                      <h3 className="font-semibold text-foreground text-base pr-8 line-clamp-2">
                         {p.title}
                       </h3>
                       <button
@@ -480,7 +480,7 @@ export default function ProjectDashboard() {
                       >
                         {p.status}
                       </span>
-                      <span className="text-neutral-500 text-xs">
+                      <span className="text-muted-foreground text-xs">
                         {new Date(p.created_at).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
@@ -490,8 +490,8 @@ export default function ProjectDashboard() {
                     </div>
 
                     {deletingId === p.id && (
-                      <div className="absolute inset-0 bg-neutral-950/95 backdrop-blur-sm rounded-xl flex items-center justify-center gap-3 z-10 border border-red-500/30">
-                        <span className="text-sm font-medium text-red-400">
+                      <div className="absolute inset-0 bg-background/95 backdrop-blur-sm rounded-xl flex items-center justify-center gap-3 z-10 border border-destructive/30">
+                        <span className="text-sm font-medium text-destructive">
                           Delete this project?
                         </span>
                         <button
@@ -499,7 +499,7 @@ export default function ProjectDashboard() {
                             e.stopPropagation();
                             handleDeleteProject(p.id);
                           }}
-                          className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm font-medium transition-colors"
+                          className="px-3 py-1.5 bg-destructive/20 hover:bg-destructive/30 text-destructive rounded-lg text-sm font-medium transition-colors"
                         >
                           Delete
                         </button>
@@ -508,7 +508,7 @@ export default function ProjectDashboard() {
                             e.stopPropagation();
                             setDeletingId(null);
                           }}
-                          className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-lg text-sm font-medium transition-colors"
+                          className="px-3 py-1.5 bg-muted hover:bg-accent hover:text-accent-foreground text-muted-foreground rounded-lg text-sm font-medium transition-colors"
                         >
                           Cancel
                         </button>
@@ -530,25 +530,25 @@ export default function ProjectDashboard() {
         >
           {/* Graph Panel - resizable */}
           <div
-            className="min-w-0 h-full flex flex-col relative overflow-hidden bg-[#0a0a0a] shrink-0"
+            className="min-w-0 h-full flex flex-col relative overflow-hidden bg-background shrink-0"
             style={{ width: `${graphWidthPercent}%` }}
           >
-            {/* Header overlay - scoped to graph panel only */}
+             {/* Header overlay - scoped to graph panel only */}
             <div className="absolute top-6 left-6 z-10 flex items-center gap-4">
               <button
                 onClick={() => navigate("/")}
-                className="p-2 bg-neutral-900 border border-neutral-800 rounded-full hover:bg-neutral-800 transition-colors"
+                className="p-2 bg-card border border-border rounded-full hover:bg-muted transition-colors"
               >
-                <ArrowLeft className="w-4 h-4 text-neutral-400" />
+                <ArrowLeft className="w-4 h-4 text-muted-foreground" />
               </button>
-              <div className="px-4 py-2 bg-neutral-900/80 backdrop-blur-md border border-neutral-800 rounded-full flex items-center gap-3">
+              <div className="px-4 py-2 bg-card/80 backdrop-blur-md border border-border rounded-full flex items-center gap-3">
                 {editingTitle ? (
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
-                      className="bg-neutral-900 border border-neutral-700 rounded px-2 py-0.5 text-xs text-neutral-200 outline-none focus:border-primary font-sans normal-case"
+                      className="bg-muted border border-border rounded px-2 py-0.5 text-xs text-foreground outline-none focus:border-primary font-sans normal-case"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleRename();
@@ -563,14 +563,14 @@ export default function ProjectDashboard() {
                     </button>
                     <button
                       onClick={() => setEditingTitle(false)}
-                      className="text-neutral-500 hover:text-red-400"
+                      className="text-muted-foreground hover:text-destructive"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 group">
-                    <span className="text-xs font-bold text-neutral-300 tracking-wider">
+                    <span className="text-xs font-bold text-foreground tracking-wider">
                       {currentProject?.title}
                     </span>
                     <button
@@ -578,7 +578,7 @@ export default function ProjectDashboard() {
                         setNewTitle(currentProject?.title || "");
                         setEditingTitle(true);
                       }}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-500 hover:text-neutral-300"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
                     >
                       <Edit2 className="w-3 h-3" />
                     </button>
@@ -586,11 +586,11 @@ export default function ProjectDashboard() {
                 )}
                 {projectGraph && (
                   <>
-                    <span className="w-1 h-1 bg-neutral-700 rounded-full" />
+                    <span className="w-1 h-1 bg-border rounded-full" />
                     <span className="text-xs text-primary">
                       {projectGraph.nodes.length} Nodes
                     </span>
-                    <span className="w-1 h-1 bg-neutral-700 rounded-full" />
+                    <span className="w-1 h-1 bg-border rounded-full" />
                     
                     {/* Obsidian Export Actions */}
                     <div className="flex items-center gap-2">
@@ -607,7 +607,7 @@ export default function ProjectDashboard() {
                        <button
                          onClick={handleExport}
                          disabled={exportLoading && (!exportStatus || exportStatus.status === "pending")}
-                         className="flex items-center gap-1.5 px-2.5 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-neutral-200 text-[10px] font-bold uppercase rounded-lg border border-neutral-700 transition-all"
+                         className="flex items-center gap-1.5 px-2.5 py-1 bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground text-[10px] font-bold uppercase rounded-lg border border-border transition-all"
                          title={exportStatus?.status === "generating" ? "Click to force retry if stuck" : "Export this graph to Obsidian"}
                        >
                          <Sparkles className={`w-3 h-3 ${exportLoading ? "animate-spin text-primary/80" : "text-primary"}`} />
@@ -651,7 +651,7 @@ export default function ProjectDashboard() {
                   onFocusComplete={clearFocusNodeId}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-neutral-600">
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                   Failed to load graph.
                 </div>
               )}
@@ -666,13 +666,13 @@ export default function ProjectDashboard() {
             title="Drag to resize"
           >
             <div
-              className={`h-full w-px transition-colors ${isResizing ? "bg-neutral-500" : "bg-neutral-800 hover:bg-neutral-600"}`}
+              className={`h-full w-px transition-colors ${isResizing ? "bg-muted-foreground" : "bg-border hover:bg-muted-foreground"}`}
             />
           </div>
 
           {/* Note Panel - resizable */}
           <div
-            className="min-w-[280px] shrink-0 h-full flex flex-col overflow-hidden border-l border-neutral-800 bg-[#0f0f0f]"
+            className="min-w-[280px] shrink-0 h-full flex flex-col overflow-hidden border-l border-border bg-card"
             style={{ width: `${100 - graphWidthPercent}%` }}
           >
             <NoteSidebar

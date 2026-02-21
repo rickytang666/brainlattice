@@ -57,7 +57,7 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
         </div>
         <input
           type="text"
-          className="block w-full pl-10 pr-10 py-2 bg-black/60 border border-primary/30 rounded-lg text-neutral-200 placeholder-primary/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary backdrop-blur-sm transition-all"
+          className="block w-full pl-10 pr-10 py-2 bg-background/60 border border-primary/30 rounded-lg text-foreground placeholder-primary/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary backdrop-blur-sm transition-all"
           placeholder="Search graph..."
           value={query}
           onChange={(e) => {
@@ -111,7 +111,7 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
 
       {/* dropdown results */}
       {isOpen && query && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-black/90 border border-primary/30 rounded-lg shadow-xl shadow-black overflow-hidden backdrop-blur-md max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-popover/90 border border-primary/30 rounded-lg shadow-xl shadow-black/20 dark:shadow-black overflow-hidden backdrop-blur-md max-h-96 overflow-y-auto">
           {results.map((result, index) => (
             <button
               key={result.item.id}
@@ -125,7 +125,7 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
                 selectedIndex === index ? "bg-primary/20" : "hover:bg-primary/10"
               }`}
             >
-              <span className="text-neutral-200 font-bold text-sm truncate">
+              <span className="text-foreground font-bold text-sm truncate">
                 {result.item.id}
               </span>
               {result.item.aliases && result.item.aliases.length > 0 && (
@@ -139,8 +139,8 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
       )}
 
       {isOpen && query && results.length === 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-black/90 border border-red-500/30 rounded-lg p-4 text-center backdrop-blur-md">
-          <span className="text-red-400 text-xs">no concepts found</span>
+        <div className="absolute top-full left-0 right-0 mt-2 bg-popover/90 border border-destructive/30 rounded-lg p-4 text-center backdrop-blur-md shadow-xl shadow-black/20 dark:shadow-black">
+          <span className="text-destructive text-xs">no concepts found</span>
         </div>
       )}
     </div>

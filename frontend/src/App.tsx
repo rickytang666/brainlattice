@@ -5,6 +5,7 @@ import GraphScratchpad from "./components/scratchpad/GraphScratchpad";
 import ProjectDashboard from "./components/dashboard/ProjectDashboard";
 import ConfigModal from "./components/dashboard/ConfigModal";
 import { LayoutDashboard, TestTube, Settings } from "lucide-react";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { useAuthSync } from "./hooks/useAuthSync";
 
 const LAST_PROJECT_KEY = "brainlattice_last_project";
@@ -21,19 +22,19 @@ function App() {
   const isDashboard = location.pathname !== "/scratchpad";
 
   return (
-    <div className="w-screen h-screen overflow-hidden antialiased text-neutral-200 bg-[#0a0a0a] flex flex-col">
+    <div className="w-screen h-screen overflow-hidden antialiased text-foreground bg-background flex flex-col">
       <ConfigModal isOpen={isConfigOpen} onClose={() => setIsConfigOpen(false)} />
 
       {/* Top Navigation */}
-      <div className="flex-none h-12 border-b border-neutral-800 bg-[#0f0f0f] px-4 flex items-center justify-between">
+      <div className="flex-none h-12 border-b border-border bg-card px-4 flex items-center justify-between">
         <div className="font-bold tracking-widest uppercase text-primary text-sm">
           BrainLattice
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 rounded-lg p-1 mr-2">
+          <div className="flex items-center gap-2 bg-muted border border-border rounded-lg p-1 mr-2">
             <NavLink
               to={getDashboardPath()}
-              className={`flex items-center gap-2 px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${isDashboard ? "bg-primary/10 text-primary" : "text-neutral-500 hover:text-neutral-300"}`}
+              className={`flex items-center gap-2 px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${isDashboard ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
               Dashboard
@@ -41,7 +42,7 @@ function App() {
             <NavLink
               to="/scratchpad"
               className={({ isActive }) =>
-                `flex items-center gap-2 px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${isActive ? "bg-primary/10 text-primary" : "text-neutral-500 hover:text-neutral-300"}`
+                `flex items-center gap-2 px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`
               }
             >
               <TestTube className="w-3.5 h-3.5" />
@@ -51,13 +52,15 @@ function App() {
           
           <button
             onClick={() => setIsConfigOpen(true)}
-            className="p-1.5 text-neutral-500 hover:text-primary hover:bg-neutral-800 rounded-lg transition-colors"
+            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
             title="API Settings"
           >
             <Settings className="w-4 h-4" />
           </button>
 
-          <div className="flex items-center border-l border-neutral-800 pl-4 ml-2">
+          <ThemeToggle />
+
+          <div className="flex items-center border-l border-border pl-4 ml-2">
             <SignedOut>
               <SignInButton mode="modal">
                 <button className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider bg-primary hover:bg-primary/80 text-primary-foreground rounded transition-colors shadow-lg shadow-primary/20">
@@ -66,7 +69,7 @@ function App() {
               </SignInButton>
             </SignedOut>
             <SignedIn>
-              <UserButton appearance={{ elements: { avatarBox: "w-8 h-8 rounded border border-neutral-700 hover:border-primary transition-colors" } }} />
+              <UserButton appearance={{ elements: { avatarBox: "w-8 h-8 rounded border border-border hover:border-primary transition-colors" } }} />
             </SignedIn>
           </div>
         </div>

@@ -5,6 +5,7 @@ import type {
   ForceGraphNode,
   ForceGraphLink,
 } from "../../types/graph";
+import { useTheme } from "../ThemeProvider";
 
 // explicit dimensions so graph centers in its panel, not the screen
 function useContainerSize() {
@@ -56,6 +57,24 @@ const lerpColor = (a: string, b: string, t: number) => {
   );
 };
 
+// static theme palette
+const THEME_COLORS = {
+  light: {
+    background: "#e7e5e4",
+    foreground: "#1e293b",
+    primary: "#069eb9",
+    mutedForeground: "#6b7280",
+    border: "#d6d3d1",
+  },
+  dark: {
+    background: "#1e1b18",
+    foreground: "#e2e8f0",
+    primary: "#07b7d6",
+    mutedForeground: "#9ca3af",
+    border: "#3a3633",
+  },
+};
+
 type GraphLinkType = ForceGraphLink | { source: ForceGraphNode; target: ForceGraphNode };
 
 export default function KnowledgeGraph({
@@ -73,6 +92,11 @@ export default function KnowledgeGraph({
   // Transition State (0 = Normal, 1 = Full Hover Effect)
   const [transitionLevel, setTransitionLevel] = useState(0);
   const animationRef = useRef<number>(0);
+  const { theme } = useTheme();
+
+  // determine current active palette (handles "system" preference fallback assuming dark for now - can optimize later)
+  const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const palette = isDark ? THEME_COLORS.dark : THEME_COLORS.light;
 
   const graphData = useMemo(() => {
     const nodes: ForceGraphNode[] = data.nodes.map((n) => ({ ...n }));
@@ -169,12 +193,12 @@ export default function KnowledgeGraph({
   const NODE_R_EXTRA = 5; // more connected = bigger (range 3 to ~7)
   const ZOOM_LABEL_BREAKPOINT = 2;
 
-  // Colors
-  const COL_DEFAULT = "#9ca3af"; // zinc-400
-  const COL_HIGHLIGHT = "#60a5fa"; // blue-400
-  const COL_DIM = "#262626"; // zinc-800
-  const COL_LINK_DEFAULT = "#242424"; // very subtle grey, barely visible
-  const COL_LINK_DIM = "#0f0f0f"; // almost background
+  // Colors based on current theme
+  const COL_DEFAULT = palette.mutedForeground; 
+  const COL_HIGHLIGHT = palette.primary; 
+  const COL_DIM = palette.border; 
+  const COL_LINK_DEFAULT = palette.border; 
+  const COL_LINK_DIM = palette.background; 
 
   // Physics tweaks
   useEffect(() => {
@@ -200,7 +224,7 @@ export default function KnowledgeGraph({
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 w-full h-full bg-[#0a0a0a]"
+      className="absolute inset-0 w-full h-full bg-background"
     >
       <ForceGraph2D
         // @ts-expect-error third-party package type mismatch
@@ -230,7 +254,7 @@ export default function KnowledgeGraph({
           }
           return lerpColor(COL_LINK_DEFAULT, targetColor, transitionLevel);
         }}
-        backgroundColor="#0a0a0a"
+        backgroundColor={palette.background}
         linkDirectionalArrowLength={3.5}
         linkDirectionalArrowRelPos={1}
          
@@ -279,7 +303,12 @@ export default function KnowledgeGraph({
             // Fade text opacity
             const opacity =
               node.id === hoverNode || isNeighbor ? transitionLevel : 0.6;
-            ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+            
+            // Text color from palette
+            const r = parseInt(palette.foreground.slice(1, 3), 16);
+            const g = parseInt(palette.foreground.slice(3, 5), 16);
+            const b = parseInt(palette.foreground.slice(5, 7), 16);
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
 
             if (node.x != null && node.y != null) {
               ctx.fillText(label, node.x, node.y + nodeR + fontSize * 0.8);
