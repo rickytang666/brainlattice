@@ -23,18 +23,8 @@ class EmbeddingService:
             self.gemini_client = genai.Client(api_key=gemini_key)
             self.gemini_model = "text-embedding-004"
             logger.info("initialized gemini embedding service (BYOK custom key)")
-        elif settings.OPENAI_API_KEY:
-            from openai import OpenAI
-            self.provider = "openai"
-            self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-            self.openai_model = "text-embedding-3-small"
-            logger.info("initialized openai embedding service")
         else:
-            from google import genai
-            self.provider = "gemini"
-            self.gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY)
-            self.gemini_model = "text-embedding-004"
-            logger.info("initialized gemini embedding service (fallback server key)")
+            raise ValueError("No API key provided for EmbeddingService. Strict BYOK is enabled.")
 
     def get_embedding(self, text: str) -> List[float]:
         """get single vector for text"""

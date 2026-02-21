@@ -16,11 +16,6 @@ class Settings(BaseSettings):
     R2_ACCESS_KEY_ID: Optional[str] = None
     R2_SECRET_ACCESS_KEY: Optional[str] = None
     R2_S3_API_URL: Optional[str] = None
-    
-    # ai api keys
-    GEMINI_API_KEY: str
-    OPENAI_API_KEY: Optional[str] = None
-    OPENROUTER_API_KEY: str
 
     # upstash redis (job status tracking)
     UPSTASH_REDIS_REST_URL: Optional[str] = None

@@ -1,6 +1,5 @@
 from google import genai
 from core.config import get_settings
-from services.llm.providers import get_gemini_client
 from services.embedding_service import EmbeddingService
 from services.llm.prompt_service import get_prompt_service
 from services.llm.utils import repair_note_markdown
@@ -18,10 +17,12 @@ class NodeNoteService:
     student-focused: essential content, formulas from chunks when possible.
     """
     
-    def __init__(self):
-        self.client = get_gemini_client()
+    def __init__(self, gemini_key: str, openai_key: str = None):
+        if not gemini_key:
+            raise ValueError("gemini_key is required for NodeNoteService. Strict BYOK is enabled.")
+        self.client = genai.Client(api_key=gemini_key)
         self.model_id = 'gemini-2.0-flash'
-        self.embedder = EmbeddingService()
+        self.embedder = EmbeddingService(gemini_key=gemini_key, openai_key=openai_key)
         self.prompts = get_prompt_service()
 
     async def generate_note(self, db: Session, project_id: str, concept_id: str, outbound_links: List[str] = None) -> str:

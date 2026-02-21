@@ -6,10 +6,11 @@ fastapi-based extraction engine. ingests pdfs, chunks text, extracts knowledge g
 
 **mandatory keys** (`backend/.env`):
 
-- `GEMINI_API_KEY`: required for graph extraction.
 - `DATABASE_URL`: required for persistence (neon or local postgres).
 
-other keys are optional for local dev.
+**Note:** No AI API keys are required in the backend environment. All generation services strictly use the keys provided by the client in the request headers (BYOK).
+
+other keys (R2, Upstash) are optional for local dev.
 
 **run local server:**
 

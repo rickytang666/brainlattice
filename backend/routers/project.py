@@ -160,7 +160,9 @@ async def get_node_note(
     concept_id: str,
     regenerate: bool = Query(False, description="force regenerate note, ignore cache"),
     db: Session = Depends(get_db),
-    x_user_id: str = Header(..., alias="X-User-Id")
+    x_user_id: str = Header(..., alias="X-User-Id"),
+    x_gemini_key: str = Header(None, alias="X-Gemini-API-Key"),
+    x_openai_key: str = Header(None, alias="X-OpenAI-API-Key")
 ):
     """get or generate note for a specific node"""
     try:
@@ -184,7 +186,7 @@ async def get_node_note(
             
         # generate note (either first time or regenerate)
         from services.llm.note_service import NodeNoteService
-        note_service = NodeNoteService()
+        note_service = NodeNoteService(gemini_key=x_gemini_key, openai_key=x_openai_key)
         
         note_content = await note_service.generate_note(
             db, 
