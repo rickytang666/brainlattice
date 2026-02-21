@@ -10,6 +10,7 @@ function decodeConceptId(id: string | null): string | null {
 }
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
+import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import { Loader2, X, BookOpen, Hash, RefreshCw } from "lucide-react";
 import { useAuth } from "@clerk/clerk-react";
@@ -243,7 +244,7 @@ export default function NoteSidebar({
           <div className="prose prose-invert prose-sm max-w-none">
             <div className="text-neutral-300 leading-relaxed text-sm">
               <ReactMarkdown
-                remarkPlugins={[remarkMath]}
+                remarkPlugins={[remarkMath, remarkGfm]}
                 rehypePlugins={[rehypeKatex]}
                 components={{
                   h1: ({ children }) => (
@@ -283,19 +284,24 @@ export default function NoteSidebar({
                     </blockquote>
                   ),
                   table: ({ children }) => (
-                    <div className="overflow-x-auto mb-4 border border-neutral-800 rounded-lg">
-                      <table className="w-full text-sm text-left text-neutral-400">
+                    <div className="overflow-x-auto mb-6 border border-neutral-800 rounded-lg bg-[#111]">
+                      <table className="w-full text-[13px] text-left text-neutral-400 border-collapse">
                         {children}
                       </table>
                     </div>
                   ),
+                  thead: ({ children }) => (
+                    <thead className="bg-neutral-800/40">
+                      {children}
+                    </thead>
+                  ),
                   th: ({ children }) => (
-                    <th className="px-4 py-2.5 bg-neutral-800/50 font-medium text-neutral-300 border-b border-neutral-800">
+                    <th className="px-4 py-3 font-semibold text-neutral-200 border-b border-neutral-800 text-xs uppercase tracking-wider">
                       {children}
                     </th>
                   ),
                   td: ({ children }) => (
-                    <td className="px-4 py-2 border-b border-neutral-800/50 last:border-0">
+                    <td className="px-4 py-2.5 border-b border-neutral-800/50 last:border-0">
                       {children}
                     </td>
                   ),
