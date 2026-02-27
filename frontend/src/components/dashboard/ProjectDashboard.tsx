@@ -357,10 +357,9 @@ export default function ProjectDashboard() {
 
   return (
     <div className="flex h-full w-full bg-background overflow-hidden text-foreground font-sans relative">
-      {/* Global Error Banner */}
       {error && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-xl px-4 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="bg-red-500/10 border border-red-500/50 backdrop-blur-md rounded-xl p-4 flex items-start gap-4 shadow-2xl shadow-red-950/40">
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-4">
             <div className="bg-red-500/20 p-2 rounded-lg">
               <X className="w-5 h-5 text-red-400" />
             </div>
@@ -405,7 +404,7 @@ export default function ProjectDashboard() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="w-full max-w-md mx-auto flex items-center justify-center gap-3 bg-primary hover:bg-primary/80 disabled:bg-muted disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground font-semibold py-4 px-6 rounded-xl transition-all text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 disabled:shadow-none"
+              className="w-full max-w-md mx-auto flex items-center justify-center gap-3 bg-primary hover:bg-primary/80 disabled:bg-muted disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground font-semibold py-4 px-6 rounded-xl transition-all text-base disabled:shadow-none"
             >
               {uploading ? (
                 <>
@@ -490,7 +489,7 @@ export default function ProjectDashboard() {
                     </div>
 
                     {deletingId === p.id && (
-                      <div className="absolute inset-0 bg-background/95 backdrop-blur-sm rounded-xl flex items-center justify-center gap-3 z-10 border border-destructive/30">
+                      <div className="absolute inset-0 bg-background/95 rounded-xl flex items-center justify-center gap-3 z-10 border border-border/50">
                         <span className="text-sm font-medium text-destructive">
                           Delete this project?
                         </span>
@@ -537,11 +536,11 @@ export default function ProjectDashboard() {
             <div className="absolute top-6 left-6 z-10 flex items-center gap-4">
               <button
                 onClick={() => navigate("/")}
-                className="p-2 bg-card border border-border rounded-full hover:bg-muted transition-colors"
+                className="p-2 bg-card border border-border/50 rounded-full hover:bg-muted transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 text-muted-foreground" />
               </button>
-              <div className="px-4 py-2 bg-card/80 backdrop-blur-md border border-border rounded-full flex items-center gap-3">
+              <div className="px-4 py-2 bg-card border border-border/50 rounded-full flex items-center gap-3">
                 {editingTitle ? (
                   <div className="flex items-center gap-2">
                     <input
@@ -672,7 +671,7 @@ export default function ProjectDashboard() {
 
           {/* Note Panel - resizable */}
           <div
-            className="min-w-[280px] shrink-0 h-full flex flex-col overflow-hidden border-l border-border bg-card"
+            className="min-w-[280px] shrink-0 h-full flex flex-col overflow-hidden border-l border-border/50 bg-card"
             style={{ width: `${100 - graphWidthPercent}%` }}
           >
             <NoteSidebar

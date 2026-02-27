@@ -57,7 +57,7 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
         </div>
         <input
           type="text"
-          className="block w-full pl-10 pr-10 py-2 bg-background/60 border border-primary/30 rounded-lg text-foreground placeholder-primary/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary backdrop-blur-sm transition-all"
+          className="block w-full pl-10 pr-10 py-2 bg-background/60 border border-primary/30 rounded-lg text-foreground placeholder-primary/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
           placeholder="Search graph..."
           value={query}
           onChange={(e) => {
@@ -111,7 +111,7 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
 
       {/* dropdown results */}
       {isOpen && query && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-popover/90 border border-primary/30 rounded-lg shadow-xl shadow-black/20 dark:shadow-black overflow-hidden backdrop-blur-md max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-lg shadow-sm overflow-hidden max-h-96 overflow-y-auto">
           {results.map((result, index) => (
             <button
               key={result.item.id}
@@ -121,8 +121,8 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
                 setQuery(result.item.id);
               }}
               onMouseEnter={() => setSelectedIndex(index)}
-              className={`w-full text-left px-4 py-3 border-b border-primary/10 transition-colors last:border-0 flex flex-col gap-1 ${
-                selectedIndex === index ? "bg-primary/20" : "hover:bg-primary/10"
+              className={`w-full text-left px-4 py-3 border-b border-border/50 transition-colors last:border-0 flex flex-col gap-1 ${
+                selectedIndex === index ? "bg-muted" : "hover:bg-muted/50"
               }`}
             >
               <span className="text-foreground font-bold text-sm truncate">
@@ -139,7 +139,7 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
       )}
 
       {isOpen && query && results.length === 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-popover/90 border border-destructive/30 rounded-lg p-4 text-center backdrop-blur-md shadow-xl shadow-black/20 dark:shadow-black">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-popover border border-destructive/30 rounded-lg p-4 text-center shadow-sm">
           <span className="text-destructive text-xs">no concepts found</span>
         </div>
       )}

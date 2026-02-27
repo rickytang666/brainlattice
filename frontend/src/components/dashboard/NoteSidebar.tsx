@@ -128,7 +128,7 @@ export default function NoteSidebar({
   }, [conceptId, projectId, userId]);
 
   return (
-    <div className="w-full min-w-0 border-l border-border bg-background flex flex-col h-full shadow-2xl relative z-20 overflow-hidden">
+    <div className="w-full min-w-0 border-l border-border bg-background flex flex-col h-full relative z-20 overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-border bg-card flex items-center justify-between">
         <div className="flex items-center gap-2 text-primary">
