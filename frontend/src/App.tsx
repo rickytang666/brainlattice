@@ -41,7 +41,7 @@ function App() {
           <div className="flex items-center gap-2 bg-muted border border-border rounded-lg p-1 mr-2">
             <NavLink
               to={getDashboardPath()}
-              className={`flex items-center gap-2 px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${isDashboard ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded text-sm font-medium transition-colors ${isDashboard ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
               Dashboard
@@ -49,7 +49,7 @@ function App() {
             <NavLink
               to="/scratchpad"
               className={({ isActive }) =>
-                `flex items-center gap-2 px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${isActive ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`
+                `flex items-center gap-2 px-3 py-1.5 rounded text-sm font-medium transition-colors ${isActive ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`
               }
             >
               <TestTube className="w-3.5 h-3.5" />
@@ -70,7 +70,7 @@ function App() {
           <div className="flex items-center border-l border-border pl-4 ml-2">
             <SignedOut>
               <SignInButton mode="modal">
-                <button className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider bg-primary hover:bg-primary/80 text-primary-foreground rounded transition-colors">
+                <button className="px-3 py-1.5 text-sm font-medium bg-primary hover:bg-primary/80 text-primary-foreground rounded transition-colors">
                   Sign In
                 </button>
               </SignInButton>

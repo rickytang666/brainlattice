@@ -364,7 +364,7 @@ export default function ProjectDashboard() {
               <X className="w-5 h-5 text-red-400" />
             </div>
             <div className="flex-1 pt-0.5">
-              <h4 className="text-sm font-bold text-red-200 uppercase tracking-tight mb-1">Attention Required</h4>
+              <h4 className="text-sm font-semibold text-red-200 mb-1">Attention Required</h4>
               <p className="text-sm text-red-300/90 leading-relaxed font-medium">
                 {error}
               </p>
@@ -596,7 +596,7 @@ export default function ProjectDashboard() {
                        {exportStatus?.status === "complete" && (
                          <button
                            onClick={handleDownloadVault}
-                           className="flex items-center gap-1.5 px-2.5 py-1 bg-muted hover:bg-muted/80 text-foreground text-[10px] font-bold uppercase rounded-lg border border-border/50 transition-all animate-pulse"
+                           className="flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 text-foreground text-xs font-medium rounded-lg border border-border/50 transition-all animate-pulse"
                          >
                            <FileDown className="w-3 h-3" />
                            Download .Zip
@@ -606,7 +606,7 @@ export default function ProjectDashboard() {
                        <button
                          onClick={handleExport}
                          disabled={exportLoading && (!exportStatus || exportStatus.status === "pending")}
-                         className="flex items-center gap-1.5 px-2.5 py-1 bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground text-[10px] font-bold uppercase rounded-lg border border-border transition-all"
+                         className="flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground text-xs font-medium rounded-lg border border-border transition-all"
                          title={exportStatus?.status === "generating" ? "Click to force retry if stuck" : "Export this graph to Obsidian"}
                        >
                          <Sparkles className={`w-3 h-3 ${exportLoading ? "animate-spin text-muted-foreground" : "text-foreground"}`} />

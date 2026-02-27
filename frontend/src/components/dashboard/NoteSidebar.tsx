@@ -165,10 +165,10 @@ export default function NoteSidebar({
         {!conceptId ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-6">
             <BookOpen className="w-10 h-10 text-muted-foreground mb-4" />
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+            <p className="text-sm font-medium text-muted-foreground mb-1">
               Select a node
             </p>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground/70 leading-relaxed">
               Click a node in the graph or cmd+click a concept link to view and
               focus.
             </p>
@@ -238,7 +238,7 @@ export default function NoteSidebar({
             <div className="flex-1 flex flex-col justify-end pb-8">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-[10px] uppercase tracking-[0.2em] font-medium">
+                <span className="text-xs font-medium">
                   synthesizing notes...
                 </span>
               </div>
@@ -300,7 +300,7 @@ export default function NoteSidebar({
                     </thead>
                   ),
                   th: ({ children }) => (
-                    <th className="px-4 py-3 font-semibold text-foreground border-b border-border text-xs uppercase tracking-wider">
+                    <th className="px-4 py-3 font-semibold text-muted-foreground border-b border-border text-xs">
                       {children}
                     </th>
                   ),
@@ -318,7 +318,7 @@ export default function NoteSidebar({
                     const isInline = !className;
                     return (
                       <code
-                        className={`${isInline ? "bg-muted px-1.5 py-0.5 rounded text-foreground text-[11px] font-mono border border-border/50" : "text-foreground text-[11px] font-mono"}`}
+                        className={`${isInline ? "bg-muted px-1.5 py-0.5 rounded text-foreground text-xs font-mono border border-border/50" : "text-foreground text-xs font-mono"}`}
                       >
                         {children}
                       </code>
@@ -353,7 +353,7 @@ export default function NoteSidebar({
               <div className="mt-8 pt-6 border-t border-border">
                 <div className="flex items-center gap-2 text-muted-foreground mb-3">
                   <Hash className="w-3 h-3" />
-                  <span className="text-[10px] uppercase tracking-wider font-bold">
+                  <span className="text-xs font-medium">
                     Aliases
                   </span>
                 </div>
@@ -361,7 +361,7 @@ export default function NoteSidebar({
                   {aliases.map((a) => (
                     <span
                       key={a}
-                      className="text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded lowercase border border-border"
+                      className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border"
                     >
                       {a}
                     </span>
@@ -379,13 +379,19 @@ export default function NoteSidebar({
               .katex {
                 font-size: 1.1em;
               }
+              .prose {
+                line-height: 1.7;
+              }
               .prose p {
-                margin-bottom: 1.25rem;
-                line-height: 1.6;
+                margin-bottom: 1.25em;
+              }
+              .prose li {
+                margin-bottom: 0.25em;
               }
               .prose hr {
                 border-color: var(--border);
-                margin: 2rem 0;
+                margin: 2em 0;
+                opacity: 0.5;
               }
             `}</style>
           </div>

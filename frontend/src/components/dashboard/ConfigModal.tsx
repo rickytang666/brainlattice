@@ -35,16 +35,16 @@ export default function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2 text-primary">
             <Key className="w-4 h-4" />
-            <h3 className="font-bold tracking-widest uppercase text-sm">API Configuration</h3>
+            <h3 className="font-semibold text-base">API Configuration</h3>
           </div>
           <button onClick={onClose} className="p-1 text-muted-foreground hover:text-destructive transition-colors rounded">
             <X className="w-4 h-4" />
           </button>
         </div>
         <div className="p-6">
-          <label className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+          <label className="flex items-center justify-between text-sm font-medium text-foreground mb-2">
             <span>Google Gemini API Key</span>
-            <span className="text-[10px] text-primary/80 bg-primary/10 px-1.5 py-0.5 rounded">Required</span>
+            <span className="text-xs text-muted-foreground">Required</span>
           </label>
           <input
             type="password"
@@ -58,9 +58,9 @@ export default function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
             }}
           />
 
-          <label className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 mt-2">
+          <label className="flex items-center justify-between text-sm font-medium text-foreground mb-2 mt-2">
             <span>OpenAI API Key</span>
-            <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Optional</span>
+            <span className="text-xs text-muted-foreground">Optional</span>
           </label>
           <input
             type="password"

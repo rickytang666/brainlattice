@@ -63,20 +63,20 @@ export default function GraphScratchpad() {
       <div className="w-1/3 flex flex-col border-r border-border bg-card">
         <div className="p-4 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Code className="w-5 h-5 text-primary" />
-            <h2 className="font-bold text-foreground uppercase tracking-tighter">JSON Scratchpad</h2>
+            <Code className="w-5 h-5 text-foreground" />
+            <h2 className="font-semibold text-foreground text-base">JSON Scratchpad</h2>
           </div>
           <div className="flex gap-2 bg-muted rounded-lg p-1 border border-border">
             <button 
               onClick={() => setMode('upload')}
-              className={`p-1.5 rounded transition-all ${mode === 'upload' ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`p-1.5 rounded transition-all ${mode === 'upload' ? 'bg-background text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
               title="Upload File"
             >
               <Upload className="w-4 h-4" />
             </button>
             <button 
               onClick={() => setMode('paste')}
-              className={`p-1.5 rounded transition-all ${mode === 'paste' ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`p-1.5 rounded transition-all ${mode === 'paste' ? 'bg-background text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
               title="Paste JSON"
             >
               <FileJson className="w-4 h-4" />
@@ -94,7 +94,7 @@ export default function GraphScratchpad() {
 
         <div className="flex-1 p-4 relative flex flex-col">
           {mode === 'upload' ? (
-            <div className="flex-1 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center p-8 hover:border-primary/50 hover:bg-primary/5 transition-all group">
+            <div className="flex-1 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center p-8 hover:border-foreground/30 hover:bg-muted/50 transition-all group">
               <input 
                 type="file" 
                 ref={fileInputRef}
@@ -107,7 +107,7 @@ export default function GraphScratchpad() {
                 className="flex flex-col items-center gap-4 w-full h-full justify-center"
               >
                 <div className="p-4 bg-muted rounded-full group-hover:scale-110 transition-transform">
-                  <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary" />
+                  <Upload className="w-8 h-8 text-muted-foreground group-hover:text-foreground" />
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-medium text-foreground">Click to upload JSON</p>
@@ -117,7 +117,7 @@ export default function GraphScratchpad() {
             </div>
           ) : (
             <textarea
-              className="w-full h-full bg-background text-primary font-mono text-xs p-4 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none border border-border"
+              className="w-full h-full bg-background text-foreground font-mono text-xs p-4 rounded-lg focus:outline-none focus:ring-1 focus:ring-foreground/50 resize-none border border-border"
               placeholder='Paste your graph JSON here...
 
 Example:
@@ -144,7 +144,7 @@ Example:
           <div className="p-4 bg-background border-t border-border">
             <button
               onClick={handleRender}
-              className="w-full bg-primary hover:bg-primary/80 text-primary-foreground font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-[0.98]"
+              className="w-full bg-foreground hover:bg-foreground/80 text-background font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
             >
               <Play className="w-4 h-4 fill-current" />
               VITALIZE GRAPH
@@ -162,13 +162,13 @@ Example:
             <div className="mb-4 p-8 rounded-full border border-dashed border-border">
               <Code className="w-12 h-12 opacity-20" />
             </div>
-            <p className="text-sm font-medium uppercase tracking-[0.2em] opacity-40">Awaiting Influx of Knowledge</p>
+            <p className="text-sm font-medium text-muted-foreground">Awaiting Influx of Knowledge</p>
           </div>
         )}
         
         {/* Overlay Info */}
         {graphData && (
-          <div className="absolute bottom-6 right-6 flex items-center gap-4 text-[10px] text-muted-foreground uppercase tracking-widest bg-background/80 backdrop-blur-md px-4 py-2 rounded-full border border-border">
+          <div className="absolute bottom-6 right-6 flex items-center gap-4 text-xs font-medium text-muted-foreground bg-popover px-4 py-2 rounded-full border border-border shadow-sm">
             <span>{graphData.nodes.length} Concepts</span>
             <span className="w-1 h-1 bg-muted-foreground rounded-full" />
             <span>Interactive Node Focus Active</span>
