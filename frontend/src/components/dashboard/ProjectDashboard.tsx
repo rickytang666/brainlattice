@@ -471,10 +471,10 @@ export default function ProjectDashboard() {
                       <span
                         className={`px-2.5 py-1 rounded-md text-xs font-medium ${
                           p.status === "complete"
-                            ? "bg-primary/10 text-primary"
+                            ? "bg-muted text-foreground"
                             : p.status === "failed"
-                            ? "bg-red-500/10 text-red-400"
-                            : "bg-amber-500/10 text-amber-400"
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-amber-500/10 text-amber-500/80"
                         }`}
                       >
                         {p.status}
@@ -547,7 +547,7 @@ export default function ProjectDashboard() {
                       type="text"
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
-                      className="bg-muted border border-border rounded px-2 py-0.5 text-xs text-foreground outline-none focus:border-primary font-sans normal-case"
+                      className="bg-muted border border-border rounded px-2 py-0.5 text-xs text-foreground outline-none focus:border-foreground font-sans normal-case"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleRename();
@@ -556,7 +556,7 @@ export default function ProjectDashboard() {
                     />
                     <button
                       onClick={handleRename}
-                      className="text-primary hover:text-primary/80"
+                      className="text-foreground hover:text-muted-foreground"
                     >
                       <Check className="w-3.5 h-3.5" />
                     </button>
@@ -586,7 +586,7 @@ export default function ProjectDashboard() {
                 {projectGraph && (
                   <>
                     <span className="w-1 h-1 bg-border rounded-full" />
-                    <span className="text-xs text-primary">
+                    <span className="text-xs text-muted-foreground">
                       {projectGraph.nodes.length} Nodes
                     </span>
                     <span className="w-1 h-1 bg-border rounded-full" />
@@ -596,7 +596,7 @@ export default function ProjectDashboard() {
                        {exportStatus?.status === "complete" && (
                          <button
                            onClick={handleDownloadVault}
-                           className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/20 hover:bg-primary/30 text-primary text-[10px] font-bold uppercase rounded-lg border border-primary/30 transition-all animate-pulse"
+                           className="flex items-center gap-1.5 px-2.5 py-1 bg-muted hover:bg-muted/80 text-foreground text-[10px] font-bold uppercase rounded-lg border border-border/50 transition-all animate-pulse"
                          >
                            <FileDown className="w-3 h-3" />
                            Download .Zip
@@ -609,7 +609,7 @@ export default function ProjectDashboard() {
                          className="flex items-center gap-1.5 px-2.5 py-1 bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground text-[10px] font-bold uppercase rounded-lg border border-border transition-all"
                          title={exportStatus?.status === "generating" ? "Click to force retry if stuck" : "Export this graph to Obsidian"}
                        >
-                         <Sparkles className={`w-3 h-3 ${exportLoading ? "animate-spin text-primary/80" : "text-primary"}`} />
+                         <Sparkles className={`w-3 h-3 ${exportLoading ? "animate-spin text-muted-foreground" : "text-foreground"}`} />
                          {exportStatus?.status === "generating" 
                            ? `Exporting ${exportStatus.progress || 0}%`
                            : exportStatus?.status === "complete"
@@ -637,7 +637,7 @@ export default function ProjectDashboard() {
               )}
               {graphLoading ? (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary/50" />
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                 </div>
               ) : projectGraph ? (
                 <KnowledgeGraph
