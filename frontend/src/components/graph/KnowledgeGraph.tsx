@@ -137,14 +137,14 @@ export default function KnowledgeGraph({
     setHighlightLinks(highlightLinks);
   };
 
-  // Animation Loop for Smooth Transitions
+  // animation loop for smooth transitions
   useEffect(() => {
     const targetLevel = hoverNode ? 1 : 0;
 
     const animate = () => {
       setTransitionLevel((prev) => {
         const delta = targetLevel - prev;
-        const speed = 0.1; // Adjust for 0.5s feel (depends on frame rate, approx 60fps * 0.1 step)
+        const speed = 0.1; // adjust for 0.5s feel (depends on frame rate, approx 60fps * 0.1 step)
 
         if (Math.abs(delta) < 0.01) {
           return targetLevel;
@@ -255,7 +255,7 @@ export default function KnowledgeGraph({
           return lerpColor(COL_LINK_DEFAULT, targetColor, transitionLevel);
         }}
         backgroundColor={palette.background}
-        linkDirectionalArrowLength={3.5}
+        linkDirectionalArrowLength={4.5}
         linkDirectionalArrowRelPos={1}
          
         nodeCanvasObject={(
