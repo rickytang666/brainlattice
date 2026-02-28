@@ -6,9 +6,13 @@ fastapi-based extraction engine. ingests pdfs, chunks text, extracts knowledge g
 
 **mandatory keys** (`backend/.env`):
 
-- `DATABASE_URL`: required for persistence (neon or local postgres).
+- `DATABASE_URL`: required for persistence. choose one of two routes:
+  - **option 1 (local dev):** use a local SQLite file. no external setup required. The file will be created automatically.
+    - `DATABASE_URL=sqlite:///./brainlattice.db`
+  - **option 2 (serverless postgres):** use a managed postgres database like [Neon](https://neon.tech). create a project, grab your pooled connection string, and set it.
+    - `DATABASE_URL=postgres://user:password@host/neondb?sslmode=require`
 
-**Note:** No AI API keys are required in the backend environment. All generation services strictly use the keys provided by the client in the request headers (BYOK).
+**note:** no AI API keys are required in the backend environment. all generation services strictly use the keys provided by the client in the request headers (BYOK).
 
 other keys (R2, Upstash) are optional for local dev.
 
