@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { IconLoader2, IconUpload, IconRefresh, IconTrash, IconSearch } from "@tabler/icons-react";
 import { useSafeAuth } from "../../hooks/useSafeAuth";
 import { API_BASE, apiFetch } from "../../config";
+import { ObsidianLogo } from "../Logo";
 
 interface Project {
   id: string;
@@ -24,6 +25,27 @@ export default function LandingPage() {
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // typewritter effect
+  const [heroText, setHeroText] = useState("");
+  const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const fullText = "turn pdfs into living knowledge networks.";
+  
+  useEffect(() => {
+    let index = 0;
+    setHeroText(""); // Reset on mount
+    setIsTypingComplete(false);
+    const intervalId = setInterval(() => {
+      setHeroText(fullText.slice(0, index + 1));
+      index++;
+      if (index === fullText.length) {
+        clearInterval(intervalId);
+        setTimeout(() => setIsTypingComplete(true), 300); // Slight pause before dropping the badge
+      }
+    }, 35); // Typing speed
+    
+    return () => clearInterval(intervalId);
+  }, []);
 
   // Cmd+K shortcut listener
   useEffect(() => {
@@ -148,6 +170,26 @@ export default function LandingPage() {
       />
       
       <div className="z-10 w-full max-w-2xl px-6 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-1000">
+         {/* Hero Typewriter & Badge */}
+         <div className="mb-8 flex flex-col items-center justify-center min-h-[60px]">
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground/90 font-serif lowercase text-center">
+              {heroText}<span className="animate-pulse text-primary ml-0.5">_</span>
+            </h1>
+            
+            <div 
+              className={`mt-3 flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/50 bg-muted/30 transition-all duration-700 ${
+                isTypingComplete ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"
+              }`}
+            >
+              <div className={`w-3.5 h-3.5 transition-colors duration-1000 delay-300 ${isTypingComplete ? "text-obsidian" : "text-muted-foreground"}`}>
+                <ObsidianLogo />
+              </div>
+              <span className="text-[10px] font-medium tracking-wide text-muted-foreground/80">
+                Native Obsidian Vault Export
+              </span>
+            </div>
+         </div>
+
          {/* The Omnibar */}
          <div className="w-full relative group">
            {/* Static ambient glow that intensifies on focus */}
@@ -200,6 +242,17 @@ export default function LandingPage() {
             accept=".pdf"
             className="hidden"
          />
+        
+         {/* Demo Example Links */}
+         <div className="flex items-center gap-3 mt-4 text-xs">
+           <span className="text-muted-foreground/60 font-medium">try an example:</span>
+           <Link to="/scratchpad?example=calculus" className="px-2.5 py-1 rounded bg-muted/40 text-muted-foreground hover:text-primary border border-border/30 transition-all">
+             calculus
+           </Link>
+           <Link to="/scratchpad?example=linearAlgebra" className="px-2.5 py-1 rounded bg-muted/40 text-muted-foreground hover:text-primary border border-border/30 transition-all">
+             linear algebra
+           </Link>
+         </div>
 
          {/* Recent Projects Minimal List */}
          <div className="w-full max-w-xl mt-10 flex flex-col transition-opacity duration-500">
