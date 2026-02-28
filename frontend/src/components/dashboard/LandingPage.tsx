@@ -116,7 +116,7 @@ export default function LandingPage() {
 
   return (
     <div 
-      className="flex flex-col items-center justify-center w-full h-full relative overflow-hidden bg-background"
+      className="flex flex-col items-center justify-start pt-[25vh] w-full h-full relative overflow-hidden bg-background"
       onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-primary/5'); }}
       onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-primary/5'); }}
       onDrop={(e) => {
@@ -145,7 +145,7 @@ export default function LandingPage() {
       
       <div className="z-10 w-full max-w-2xl px-6 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-1000">
          {/* The Omnibar */}
-         <div className="w-full relative group mt-[-8vh]">
+         <div className="w-full relative group">
            <div className="absolute -inset-1.5 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-[24px] blur-lg opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-300" />
            <div className="relative flex items-center w-full bg-card/60 backdrop-blur-2xl border border-border/40 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.1)] rounded-[20px] overflow-hidden focus-within:ring-1 focus-within:ring-primary/20 focus-within:border-primary/30 transition-all duration-500">
               <div className="pl-6 pr-3 text-muted-foreground group-focus-within:text-primary transition-colors duration-500">
