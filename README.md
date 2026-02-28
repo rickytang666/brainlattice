@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="frontend/public/logo.png" alt="BrainLattice Logo" width="300">
+<img src="assets/logo.png" alt="BrainLattice Logo" width="250">
 
 _Turn any PDF into an interactive conceptual network._
 
@@ -25,7 +25,8 @@ Knowledge isn't linear, but books are. **BrainLattice** breaks this limitation b
 
 - **Frontend**: React + Vite + Force Graph (WebGL)
 - **Backend**: FastAPI
-- **Infra**: AWS Lambda, Cloudflare R2, Upstash Redis, Upstash QStash, Neon PostgreSQL
+- **Database**: Neon PostgreSQL
+- **Infra**: AWS Lambda, Cloudflare R2, Upstash Redis, Upstash QStash
 
 ## Quick Run
 
@@ -33,7 +34,9 @@ _For full technical details, see the `README.md` files inside the `frontend/` an
 
 1. **Clone the repo**
 2. **Configure Backend API Key**
-   Create a `.env` in the `backend/` directory with just your Gemini key (only this key is mandatory for local development):
+   Create a `.env` in the `backend/` directory with just your Gemini key.
+
+   Only `GEMINI_API_KEY` is mandatory for the app (`OPEN_AI_API_KEY` is optional, but better for embedding).
 
    ```bash
    GEMINI_API_KEY=your_key_here
@@ -51,4 +54,8 @@ _For full technical details, see the `README.md` files inside the `frontend/` an
    cd frontend && npm install && npm run dev
    ```
 
-The Graph UI will be waiting for you at `http://localhost:5173`. Feed it a PDF and watch the brain grow.
+The frontend will be available at `http://localhost:5173`.
+
+## Local Development/Self-Hosting
+
+Consult the `README.md` files inside the `frontend/` and `backend/` folders for detailed instructions.
