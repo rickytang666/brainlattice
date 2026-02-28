@@ -1,6 +1,8 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="BrainLattice Logo" width="200">
+<img src="assets/logo.png" alt="BrainLattice Logo" width="250">
+
+<br>
 
 **PDFs → Living Knowledge Graphs**
 
