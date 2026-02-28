@@ -66,7 +66,7 @@ function App() {
           <div className="flex items-center border-l border-border/50 pl-4 ml-2">
             <SignedOut>
               <SignInButton mode="modal">
-                <button className="px-3 py-1.5 text-[13px] font-medium bg-primary hover:bg-primary/90 text-primary-foreground rounded transition-colors shadow-sm">
+                <button className="px-4 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground border border-border/50 hover:border-border hover:bg-muted/30 rounded-full transition-all tracking-wide">
                   Sign In
                 </button>
               </SignInButton>
