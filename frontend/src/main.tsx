@@ -13,6 +13,7 @@ if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Publishable Key")
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 function ThemedClerkProvider({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
   

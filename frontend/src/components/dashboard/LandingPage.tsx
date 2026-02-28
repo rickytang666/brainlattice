@@ -128,7 +128,7 @@ export default function LandingPage() {
           dT.items.add(file);
           if (fileInputRef.current) {
             fileInputRef.current.files = dT.files;
-            handleUpload({ target: { files: dT.files } } as any);
+            handleUpload({ target: { files: dT.files } } as unknown as React.ChangeEvent<HTMLInputElement>);
           }
         }
       }}
