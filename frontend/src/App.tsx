@@ -41,16 +41,9 @@ function App() {
           </div>
         </a>
         
-        <div className="flex items-center gap-6">
-          <NavLink
-            to="/scratchpad"
-            className={({ isActive }) =>
-              `text-[11px] font-medium tracking-wide uppercase transition-colors ${isActive ? "text-primary/70" : "text-muted-foreground/40 hover:text-muted-foreground/65"}`
-            }
-            title="Open Graph Scratchpad"
-          >
-            Scratchpad
-          </NavLink>
+        <div className="flex items-center gap-2">
+
+          <ThemeToggle />
           
           <button
             onClick={() => setIsConfigOpen(true)}
@@ -60,7 +53,15 @@ function App() {
             <Settings className="w-4 h-4" />
           </button>
 
-          <ThemeToggle />
+          <NavLink
+            to="/scratchpad"
+            className={({ isActive }) =>
+              `text-[11px] font-medium tracking-wide uppercase transition-colors ${isActive ? "text-primary/70" : "text-muted-foreground/60 hover:text-muted-foreground"}`
+            }
+            title="Open Graph Scratchpad"
+          >
+            Scratchpad
+          </NavLink>
 
           <div className="flex items-center border-l border-border/50 pl-4 ml-2">
             <SignedOut>

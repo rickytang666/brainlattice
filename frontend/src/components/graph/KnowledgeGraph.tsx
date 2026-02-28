@@ -39,24 +39,6 @@ interface KnowledgeGraphProps {
   onFocusComplete?: () => void;
 }
 
-// Helper: Linear Interpolation for Hex Colors
-const lerpColor = (a: string, b: string, t: number) => {
-  const ah = parseInt(a.replace(/#/g, ""), 16),
-    ar = ah >> 16,
-    ag = (ah >> 8) & 0xff,
-    ab = ah & 0xff,
-    bh = parseInt(b.replace(/#/g, ""), 16),
-    br = bh >> 16,
-    bg = (bh >> 8) & 0xff,
-    bb = bh & 0xff,
-    rr = ar + t * (br - ar),
-    rg = ag + t * (bg - ag),
-    rb = ab + t * (bb - ab);
-  return (
-    "#" + (((1 << 24) + (rr << 16) + (rg << 8) + rb) | 0).toString(16).slice(1)
-  );
-};
-
 // static theme palette
 const THEME_COLORS = {
   light: {
@@ -89,9 +71,6 @@ export default function KnowledgeGraph({
   const [highlightLinks, setHighlightLinks] = useState(new Set<GraphLinkType>());
   const [hoverNode, setHoverNode] = useState<string | null>(null);
 
-  // Transition State (0 = Normal, 1 = Full Hover Effect)
-  const [transitionLevel, setTransitionLevel] = useState(0);
-  const animationRef = useRef<number>(0);
   const { theme } = useTheme();
 
   // determine current active palette (handles "system" preference fallback assuming dark for now - can optimize later)
@@ -137,29 +116,6 @@ export default function KnowledgeGraph({
     setHighlightLinks(highlightLinks);
   };
 
-  // animation loop for smooth transitions
-  useEffect(() => {
-    const targetLevel = hoverNode ? 1 : 0;
-
-    const animate = () => {
-      setTransitionLevel((prev) => {
-        const delta = targetLevel - prev;
-        const speed = 0.1; // adjust for 0.5s feel (depends on frame rate, approx 60fps * 0.1 step)
-
-        if (Math.abs(delta) < 0.01) {
-          return targetLevel;
-        }
-        return prev + delta * speed;
-      });
-
-      if (Math.abs(targetLevel - transitionLevel) > 0.01) {
-        animationRef.current = requestAnimationFrame(animate);
-      }
-    };
-
-    animationRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationRef.current!);
-  }, [hoverNode, transitionLevel]); // Dependency on transitionLevel ensures loop continues
 
   const handleNodeHover = (node: ForceGraphNode | null) => {
     // Instant update, animation handles the fade
@@ -234,7 +190,6 @@ export default function KnowledgeGraph({
         graphData={graphData}
         nodeLabel={() => ""}
         nodeColor={(node: ForceGraphNode) => {
-          // Target Logic
           let targetColor = COL_DEFAULT;
           if (hoverNode) {
             if (node.id === hoverNode) targetColor = COL_HIGHLIGHT;
@@ -243,8 +198,7 @@ export default function KnowledgeGraph({
             else targetColor = COL_DIM; // Others dim
           }
 
-          // Interpolate: Base (Default) -> Target (Focus State)
-          return lerpColor(COL_DEFAULT, targetColor, transitionLevel);
+          return targetColor;
         }}
         linkColor={(link: GraphLinkType) => {
           let targetColor = COL_LINK_DEFAULT;
@@ -252,7 +206,7 @@ export default function KnowledgeGraph({
             if (highlightLinks.has(link)) targetColor = COL_HIGHLIGHT;
             else targetColor = COL_LINK_DIM;
           }
-          return lerpColor(COL_LINK_DEFAULT, targetColor, transitionLevel);
+          return targetColor;
         }}
         backgroundColor={palette.background}
         linkDirectionalArrowLength={4.5}
@@ -277,14 +231,13 @@ export default function KnowledgeGraph({
             ctx.arc(node.x, node.y, nodeR, 0, 2 * Math.PI, false);
           }
           
-          // Use the interpolated color logic
           let targetColor = COL_DEFAULT;
           if (hoverNode) {
             if (node.id === hoverNode) targetColor = COL_HIGHLIGHT;
             else if (highlightNodes.has(node.id)) targetColor = COL_DEFAULT;
             else targetColor = COL_DIM;
           }
-          ctx.fillStyle = lerpColor(COL_DEFAULT, targetColor, transitionLevel);
+          ctx.fillStyle = targetColor;
 
           ctx.fill();
 
@@ -302,7 +255,7 @@ export default function KnowledgeGraph({
 
             // Fade text opacity
             const opacity =
-              node.id === hoverNode || isNeighbor ? transitionLevel : 0.6;
+              node.id === hoverNode || isNeighbor ? 1 : 0.6;
             
             // Text color from palette
             const r = parseInt(palette.foreground.slice(1, 3), 16);
