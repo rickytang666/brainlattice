@@ -3,18 +3,13 @@ import { useState } from "react";
 import { SignInButton, UserButton, SignedIn, SignedOut } from "@clerk/clerk-react";
 import GraphScratchpad from "./components/scratchpad/GraphScratchpad";
 import ProjectDashboard from "./components/dashboard/ProjectDashboard";
+import LandingPage from "./components/dashboard/LandingPage";
 import ConfigModal from "./components/dashboard/ConfigModal";
 import { Settings } from "lucide-react";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { useAuthSync } from "./hooks/useAuthSync";
 import { Logo } from "./components/Logo";
 
-const LAST_PROJECT_KEY = "brainlattice_last_project";
-
-function getDashboardPath(): string {
-  const last = sessionStorage.getItem(LAST_PROJECT_KEY);
-  return last ? `/${last}` : "/";
-}
 
 function App() {
   useAuthSync();
@@ -34,33 +29,28 @@ function App() {
             : "bg-background/80 backdrop-blur-md border-b border-border/50"
         }`}
       >
-        <div className="flex items-center gap-2">
-          <Logo className="w-5 h-5 text-primary" />
-          <div 
-              className="font-bold text-primary text-base mt-0.5" 
-              style={{ fontFamily: '"Space Grotesk", sans-serif' }}
-            >
-            BrainLattice
+        <a href="/">
+          <div className="flex items-center gap-2">
+            <Logo className="w-5 h-5 text-primary" />
+            <div 
+                className="font-bold text-primary text-base mt-0.5" 
+                style={{ fontFamily: '"Space Grotesk", sans-serif' }}
+              >
+              BrainLattice
+            </div>
           </div>
-        </div>
+        </a>
         
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-4 mr-2">
-            <NavLink
-              to={getDashboardPath()}
-              className={`flex items-center gap-1.5 text-[13px] font-medium transition-colors ${isDashboard ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              Dashboard
-            </NavLink>
-            <NavLink
-              to="/scratchpad"
-              className={({ isActive }) =>
-                `flex items-center gap-1.5 text-[13px] font-medium transition-colors ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`
-              }
-            >
-              Scratchpad
-            </NavLink>
-          </div>
+          <NavLink
+            to="/scratchpad"
+            className={({ isActive }) =>
+              `text-[11px] font-medium tracking-wide uppercase transition-colors ${isActive ? "text-primary/70" : "text-muted-foreground/40 hover:text-muted-foreground/65"}`
+            }
+            title="Open Graph Scratchpad"
+          >
+            Scratchpad
+          </NavLink>
           
           <button
             onClick={() => setIsConfigOpen(true)}
@@ -91,7 +81,7 @@ function App() {
       <div className="flex-1 w-full h-full relative">
         <Routes>
           <Route path="/scratchpad" element={<GraphScratchpad />} />
-          <Route path="/" element={<ProjectDashboard />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/:projectId" element={<ProjectDashboard />} />
         </Routes>
       </div>
