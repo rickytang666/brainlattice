@@ -10,7 +10,7 @@ load_dotenv()
 
 BASE_URL = "http://localhost:8000/api"
 
-def run_test(pdf_path: str, gemini_key: str = None, openai_key: str = None):
+def run_test(pdf_path: str, gemini_key: str = None, openai_key: str = None, output_file: str = None):
     path = Path(pdf_path)
     if not path.exists():
         print(f"error: could not find {pdf_path}")
@@ -68,10 +68,33 @@ def run_test(pdf_path: str, gemini_key: str = None, openai_key: str = None):
             if status == "completed":
                 print("\n\n✅ ingestion pipeline complete!")
                 result = status_data.get("result", {})
+                metadata = status_data.get("metadata", {})
+                
                 if isinstance(result, str):
                     result = json.loads(result)
                 print("\n--- results summary ---")
                 print(json.dumps(result, indent=2))
+                
+                # if user wants to save the json, fetch and save it
+                project_id = metadata.get("project_id")
+                if output_file and project_id:
+                    print(f"\nfetching graph json for project {project_id}...")
+                    graph_res = requests.get(
+                        f"{BASE_URL}/project/{project_id}/graph",
+                        headers=headers
+                    )
+                    graph_res.raise_for_status()
+                    graph_data = graph_res.json()
+                    
+                    with open(output_file, "w") as out:
+                        json.dump(graph_data, out, indent=2)
+                    print(f"saved full graph json to {output_file}!")
+                elif output_file:
+                    print(f"\ncould not find project_id, saving graph preview instead...")
+                    with open(output_file, "w") as out:
+                        json.dump(result.get("graph_preview", {}), out, indent=2)
+                    print(f"saved graph preview to {output_file}!")
+                    
                 break
             elif status == "failed":
                 print("\n\n❌ ingestion failed!")
@@ -91,8 +114,9 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Test local PDF ingestion pipeline.")
     parser.add_argument("--file", default="data/math119.pdf", help="Path to PDF file to test.")
-    parser.add_argument("--gemini-key", default=os.getenv("GEMINI_API_KEY"), help="Optional Gemini API key")
-    parser.add_argument("--openai-key", default=os.getenv("OPENAI_API_KEY"), help="Optional OpenAI API key")
+    parser.add_argument("--gemini-key", default=os.getenv("GEMINI_API_KEY"), help="Gemini API key")
+    parser.add_argument("--openai-key", default=os.getenv("OPENAI_API_KEY"), help="OpenAI API key")
+    parser.add_argument("--output", default=None, help="Save the resulting JSON graph to a file (e.g., my_graph.json)")
     args = parser.parse_args()
     
-    run_test(args.file, args.gemini_key, args.openai_key)
+    run_test(args.file, args.gemini_key, args.openai_key, args.output)
