@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { ClerkProvider } from '@clerk/clerk-react'
@@ -31,13 +31,11 @@ function ThemedClerkProvider({ children }: { children: React.ReactNode }) {
 }
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <ThemedClerkProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </ThemedClerkProvider>
-    </ThemeProvider>
-  </StrictMode>,
+  <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemedClerkProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </ThemedClerkProvider>
+  </ThemeProvider>,
 )

@@ -26,7 +26,7 @@ interface Project {
 }
 
 export default function ProjectDashboard() {
-  const { userId } = useSafeAuth();
+  const { userId, isLoaded } = useSafeAuth();
   const { projectId: projectIdFromUrl } = useParams<{ projectId?: string }>();
   const navigate = useNavigate();
 
@@ -186,7 +186,7 @@ export default function ProjectDashboard() {
 
   // fetch single project info for title
   useEffect(() => {
-    if (!projectIdFromUrl) return;
+    if (!isLoaded || !projectIdFromUrl) return;
     apiFetch(`${API_BASE}/projects/list`, undefined, userId)
       .then((res) => res.json())
       .then((data) => {
@@ -198,10 +198,11 @@ export default function ProjectDashboard() {
         }
       })
       .catch((err) => console.error(err));
-  }, [userId, navigate, projectIdFromUrl]);
+  }, [userId, isLoaded, navigate, projectIdFromUrl]);
 
   // when projectId from URL changes, fetch graph and reset selection
   useEffect(() => {
+    if (!isLoaded) return;
     setSelectedNodeId(null);
     setFocusNodeId(null);
     if (!projectIdFromUrl) {
@@ -224,7 +225,7 @@ export default function ProjectDashboard() {
         setProjectGraph(null);
         setGraphLoading(false);
       });
-  }, [projectIdFromUrl, userId]);
+  }, [projectIdFromUrl, userId, isLoaded]);
 
   const handleRename = async () => {
     if (
