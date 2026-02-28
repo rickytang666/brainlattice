@@ -1,23 +1,23 @@
-export interface GraphMetadata {
-  title: string;
-  subject: string;
-  total_concepts: number;
-  depth_levels: number;
+export interface Node {
+  id: string;
+  aliases: string[];
+  outbound_links: string[];
+  inbound_links: string[];
+  description?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface GraphData {
-  nodes: Array<{
-    name: string;
-    ins: string[];
-    outs: string[];
-  }>;
-  graph_metadata: GraphMetadata;
+  nodes: Node[];
 }
 
-export interface ProjectData {
-  graph: GraphData;
-  reference: Record<string, unknown>;
-  created_at: {
-    seconds: number;
-  };
+export interface ForceGraphNode extends Node {
+  x?: number;
+  y?: number;
+  z?: number;
+}
+
+export interface ForceGraphLink {
+  source: string;
+  target: string;
 }

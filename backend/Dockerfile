@@ -1,17 +1,23 @@
-FROM python:3.11-slim
+# aws lambda python 3.13 base image (matches pyproject requires-python)
+FROM public.ecr.aws/lambda/python:3.13
 
-WORKDIR /app
+# install uv package manager
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# set working directory
+WORKDIR ${LAMBDA_TASK_ROOT}
 
-# Copy application code
-COPY . .
+# copy dependency files first for layer caching
+COPY pyproject.toml uv.lock ${LAMBDA_TASK_ROOT}/
 
-# Cloud Run sets PORT env var, default to 8080
-ENV PORT=8080
+# install dependencies into .venv (no project source yet)
+RUN uv sync --frozen --no-install-project
 
-# Run the application (must use $PORT not ${PORT} for shell substitution)
-CMD uvicorn main:app --host 0.0.0.0 --port $PORT
+# add venv to pythonpath so lambda can find packages
+ENV PYTHONPATH="${LAMBDA_TASK_ROOT}/.venv/lib/python3.13/site-packages:${LAMBDA_TASK_ROOT}"
 
+# copy source code
+COPY . ${LAMBDA_TASK_ROOT}/
+
+# default command (can be overridden in serverless.yml)
+CMD [ "handlers.lambda_handler.api_handler" ]

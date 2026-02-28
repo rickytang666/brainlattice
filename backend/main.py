@@ -1,48 +1,40 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import extract, digest, relationships, overview, audio_script, audio, project, concept_insights
-from dotenv import load_dotenv
-import os
+from routers import project, ingest, export
+from core.config import get_settings
+from core.logger import setup_logger
+import logging
 
-# Load environment variables
-load_dotenv()
+# initialize custom ansi lowercase logging
+setup_logger()
+logger = logging.getLogger(__name__)
 
-# Initialize AI services (will fail gracefully if keys not set)
-from services.ai_service import init_ai_services
-try:
-    init_ai_services()
-except Exception as e:
-    print(f"Warning: AI services initialization failed: {e}")
-    print("App will start but AI features may not work until environment variables are set")
+# initialize settings
+settings = get_settings()
 
 app = FastAPI(
     title="BrainLattice API",
-    description="AI-powered PDF to Knowledge Graph conversion",
+    description="pdf to knowledge graph api",
     version="1.0.0"
 )
 
-# CORS middleware for frontend communication
+# cors middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins (tighten after frontend deployment)
-    allow_credentials=False,  # Must be False when allow_origins is "*"
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(extract.router, prefix="/api", tags=["extract"])
-app.include_router(digest.router, prefix="/api", tags=["digest"])
-app.include_router(relationships.router, prefix="/api", tags=["relationships"])
-app.include_router(overview.router, prefix="/api", tags=["overview"])
-app.include_router(audio_script.router, prefix="/api", tags=["audio-script"])
-app.include_router(audio.router, prefix="/api", tags=["audio"])
+# register routers
 app.include_router(project.router, prefix="/api", tags=["project"])
-app.include_router(concept_insights.router, prefix="/api", tags=["concept-insights"])
+app.include_router(ingest.router, prefix="/api", tags=["ingest"])
+app.include_router(export.router, prefix="/api", tags=["export"])
 
 @app.get("/")
 async def root():
-    return {"message": "BrainLattice API is running!"}
+    return {"message": "api running"}
 
 @app.get("/health")
 async def health_check():

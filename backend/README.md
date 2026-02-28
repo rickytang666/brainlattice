@@ -1,18 +1,93 @@
-# brainlattice-backend
+# brainlattice backend
 
-api server.
+fastapi-based extraction engine. ingests pdfs, chunks text, extracts knowledge graphs via gemini 2.5, and stores the topological structures.
 
-## setup
+## local development
+
+**mandatory keys** (`backend/.env`):
+
+- `DATABASE_URL`: required for persistence. choose one of two routes:
+  - **option 1 (local dev):** use a local SQLite file. no external setup required. The file will be created automatically.
+    - `DATABASE_URL=sqlite:///./brainlattice.db`
+  - **option 2 (serverless postgres):** use a managed postgres database like [Neon](https://neon.tech). create a project, grab your pooled connection string, and set it.
+    - `DATABASE_URL=postgres://user:password@host/neondb?sslmode=require`
+
+**note:** no AI API keys are required in the backend environment _for the web app_. the frontend web app strictly uses keys provided by the client in the request headers (BYOK). **however**, if you want to run the local test script (`test_local_pipeline.py`), you must provide `GEMINI_API_KEY` and `OPENAI_API_KEY` in `backend/.env` since the CLI script does not have access to the browser's local storage.
+
+other keys (R2, Upstash) are optional for local dev.
+
+**run local server:**
 
 ```bash
-pip install -r requirements.txt
-uvicorn main:app --reload
+uv sync
+uv run uvicorn main:app --reload
 ```
 
-## env
+**run local pipeline tests:**
 
-copy `.env.example` to `.env`.
+```bash
+uv run python scripts/test_local_pipeline.py
+```
 
-fill out all the required api keys
+## production deployment
 
-requires `secrets/firebase_private.json`.
+taking the backend from 0 to 1 on aws lambda requires setting up the surrounding serverless infrastructure first.
+
+### 1. neon (serverless postgres)
+
+- create a project on [neon.tech](https://neon.tech)
+- copy the pooled connection string
+- add to `.env` as `DATABASE_URL`
+
+### 2. cloudflare r2 (object storage)
+
+- create an r2 bucket on your cloudflare dashboard
+- generate an api token (with admin read/write)
+- add to `.env`:
+  - `R2_BUCKET` (bucket name)
+  - `R2_ACCOUNT_ID`
+  - `R2_ACCESS_KEY_ID`
+  - `R2_SECRET_ACCESS_KEY`
+  - `R2_S3_API_URL` (looks like `https://<account_id>.r2.cloudflarestorage.com`)
+
+### 3. upstash (redis & qstash)
+
+- **redis**: create a database. copy the `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
+- **qstash**: grab your `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY`, and `QSTASH_NEXT_SIGNING_KEY` from the qstash dashboard.
+
+### 4. aws & serverless framework
+
+the backend deploys as a lambda container using `mangum`.
+
+**pre-requisites:**
+
+- `aws configure` set up locally with an iam user that has lambda/ecr permissions.
+- serverless framework installed globally: `npm i -g serverless`
+- docker daemon running locally.
+
+**deploy steps:**
+
+1. create an ecr repository in aws (or let serverless try to create it, but explicit is better).
+2. authenticate your local docker daemon to aws ecr (replace `<region>` and `<aws_account_id>`):
+
+```bash
+aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.<region>.amazonaws.com
+```
+
+3. deploy the stack (this automatically builds the docker image, pushes it to ecr, and wires up lambda/api gateway):
+
+```bash
+BUILDX_NO_DEFAULT_ATTESTATIONS=1 sls deploy
+```
+
+## internal pipeline tracking
+
+1. **api (`ingest.py`)**: takes pdf -> dumps to storage -> enqueues async job.
+2. **processing (`ingestion_processor.py`)**: chunks text -> prompts gemini -> serializes state to job tracker.
+3. **persistence (`persistence_service.py`)**: unwraps LLM models -> commits nodes/links to postgres.
+
+## codebase mapping
+
+- `main.py`: fastapi root
+- `core/config.py`: env var validation
+- `services/`: contains decoupled components (storage, job tracking, queueing) and the core processor logic.

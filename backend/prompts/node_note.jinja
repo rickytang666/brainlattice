@@ -1,0 +1,28 @@
+# node note generation template
+# target: gemini-2.0-flash
+# purpose: study notes for students — concise, essential, no fluff
+
+write study notes for the concept **{{ concept_id }}** based on the context below.
+
+strict requirements:
+1. student study notes — concise, essential, exam-ready. no filler or meta-commentary.
+2. when referring to the main concept for the FIRST TIME ({{ concept_id }}), use **bold** — never [[{{ concept_id }}]].
+never link the concept to itself.
+3. link related concepts only: {{ links_str }}. use [[concept name]] for each. never invent or hallucinate concept
+names—only link to concepts in the list above. if a concept is not in the list, do not use [[...]] for it.
+4. include formulas from the chunks. use inline latex $...$ for variables and simple formulas. use standalone block math
+$$...$$ on its own lines (with empty lines before/after) for complex or important equations. for
+superscripts use $r^3$ not html (e.g. <sup></sup>).
+5. lowercase output.
+6. use multiple paragraphs, bullet points (- or *), and numbered lists where they improve readability. use markdown
+tables for structured data like property comparisons or parameter lists. break up
+dense blocks.
+7. max 130 words. dense but scannable.
+8. prefer content from context. only fill gaps with general knowledge if necessary.
+9. no phrases like "it is important to note", "emphasis on", or research-style hedging.
+10. output raw markdown only. do not wrap your response in ```markdown or any code block (no ```).
+
+context chunks (may contain formulas):
+{{ context_chunks }}
+
+note:

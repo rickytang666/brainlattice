@@ -1,0 +1,1995 @@
+{
+  "nodes": [
+    {
+      "id": "additive inverse",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "matrix",
+        "arithmetic operation"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "adjugate matrix",
+      "aliases": [
+        "adjugate"
+      ],
+      "outbound_links": [
+        "cofactor",
+        "cramer's rule",
+        "determinant"
+      ],
+      "inbound_links": [
+        "matrix"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "algebraic multiplicity",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "eigenvalue"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "angle",
+      "aliases": [],
+      "outbound_links": [
+        "orthogonal"
+      ],
+      "inbound_links": [
+        "dot product",
+        "cross product",
+        "rotation"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "area of parallelogram",
+      "aliases": [],
+      "outbound_links": [
+        "determinant",
+        "cross product",
+        "vector"
+      ],
+      "inbound_links": [
+        "parallelogram"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "arithmetic operation",
+      "aliases": [],
+      "outbound_links": [
+        "matrix",
+        "matrix sum",
+        "additive inverse",
+        "zero matrix",
+        "scalar multiplication"
+      ],
+      "inbound_links": [
+        "matrix"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "associated homogeneous system",
+      "aliases": [],
+      "outbound_links": [
+        "nullspace"
+      ],
+      "inbound_links": [
+        "matrix",
+        "homogeneous and non-homogeneous systems",
+        "solution sets to systems of linear equations"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "augmented matrix",
+      "aliases": [],
+      "outbound_links": [
+        "elementary row operations",
+        "rank"
+      ],
+      "inbound_links": [
+        "matrix",
+        "system of linear equations",
+        "elementary row operations",
+        "coefficient matrix",
+        "rank",
+        "gauss\u2013jordan elimination",
+        "consistent system test"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "basic variable",
+      "aliases": [],
+      "outbound_links": [
+        "free variable"
+      ],
+      "inbound_links": [
+        "matrix",
+        "gauss\u2013jordan elimination"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "basis",
+      "aliases": [],
+      "outbound_links": [
+        "span",
+        "linear independence",
+        "ordered basis"
+      ],
+      "inbound_links": [
+        "vector space",
+        "linear algebra",
+        "subspace"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "c n",
+      "aliases": [],
+      "outbound_links": [
+        "standard inner product"
+      ],
+      "inbound_links": [
+        "standard inner product"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "change of basis",
+      "aliases": [],
+      "outbound_links": [
+        "ordered basis",
+        "standard basis",
+        "matrix inverse"
+      ],
+      "inbound_links": [
+        "coordinate vector",
+        "ordered basis"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "characteristic polynomial",
+      "aliases": [],
+      "outbound_links": [
+        "determinant",
+        "eigenvalue",
+        "eigenspace",
+        "diagonalizable matrix"
+      ],
+      "inbound_links": [
+        "eigenvalue",
+        "matrix",
+        "linear algebra",
+        "eigenvector",
+        "eigenspace",
+        "diagonalizable matrix",
+        "linear operator"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "codomain",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "linear transformation"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "coefficient matrix",
+      "aliases": [],
+      "outbound_links": [
+        "augmented matrix"
+      ],
+      "inbound_links": [
+        "matrix",
+        "projection",
+        "system of linear equations",
+        "rank",
+        "gauss\u2013jordan elimination",
+        "nullspace",
+        "rotation",
+        "reflection"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "cofactor",
+      "aliases": [],
+      "outbound_links": [
+        "determinant"
+      ],
+      "inbound_links": [
+        "determinant",
+        "adjugate matrix"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "column space",
+      "aliases": [],
+      "outbound_links": [
+        "matrix",
+        "span",
+        "linear combination",
+        "field",
+        "consistent system"
+      ],
+      "inbound_links": [
+        "vector space",
+        "matrix",
+        "range of a linear transformation",
+        "consistent system"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "component",
+      "aliases": [
+        "scalar component"
+      ],
+      "outbound_links": [],
+      "inbound_links": [
+        "r^n"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "composition of linear transformations",
+      "aliases": [],
+      "outbound_links": [
+        "standard matrix",
+        "linear transformation",
+        "matrix multiplication",
+        "identity transformation",
+        "matrix"
+      ],
+      "inbound_links": [],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "consistent system",
+      "aliases": [],
+      "outbound_links": [
+        "column space"
+      ],
+      "inbound_links": [
+        "column space"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "consistent system test",
+      "aliases": [],
+      "outbound_links": [
+        "system of linear equations",
+        "augmented matrix"
+      ],
+      "inbound_links": [],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "coordinate vector",
+      "aliases": [],
+      "outbound_links": [
+        "ordered basis",
+        "change of basis"
+      ],
+      "inbound_links": [
+        "dimension"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "cramer's rule",
+      "aliases": [],
+      "outbound_links": [
+        "determinant"
+      ],
+      "inbound_links": [
+        "linear equation",
+        "determinant",
+        "adjugate matrix"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "cross product",
+      "aliases": [],
+      "outbound_links": [
+        "right hand rule",
+        "orthogonal",
+        "angle"
+      ],
+      "inbound_links": [
+        "area of parallelogram"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "determinant",
+      "aliases": [],
+      "outbound_links": [
+        "eigenvalue",
+        "cramer's rule",
+        "matrix",
+        "minor (linear algebra)",
+        "invertible matrix",
+        "elementary row operations",
+        "upper triangular matrix",
+        "identity matrix",
+        "transpose",
+        "matrix multiplication",
+        "matrix inverse",
+        "parallelogram",
+        "cofactor"
+      ],
+      "inbound_links": [
+        "eigenvalue",
+        "matrix",
+        "linear algebra",
+        "cramer's rule",
+        "characteristic polynomial",
+        "standard basis",
+        "power of a linear transformation",
+        "minor (linear algebra)",
+        "invertible matrix",
+        "cofactor",
+        "adjugate matrix",
+        "area of parallelogram"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "diagonalizable matrix",
+      "aliases": [
+        "diagonal matrix"
+      ],
+      "outbound_links": [
+        "characteristic polynomial",
+        "eigenspace",
+        "rank",
+        "matrix",
+        "eigenvalue",
+        "eigenvector",
+        "linear transformation",
+        "similar",
+        "invertible matrix",
+        "field"
+      ],
+      "inbound_links": [
+        "linear transformation",
+        "eigenvalue",
+        "matrix",
+        "linear algebra",
+        "diagonalization",
+        "eigenvector",
+        "eigenspace",
+        "characteristic polynomial",
+        "linear operator",
+        "square matrix",
+        "identity matrix"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "diagonalization",
+      "aliases": [],
+      "outbound_links": [
+        "diagonalizable matrix"
+      ],
+      "inbound_links": [
+        "eigenvalue",
+        "linear algebra"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "dimension",
+      "aliases": [],
+      "outbound_links": [
+        "ordered basis",
+        "coordinate vector"
+      ],
+      "inbound_links": [
+        "vector space",
+        "subspace"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "domain",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "linear transformation"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "dot product",
+      "aliases": [],
+      "outbound_links": [
+        "length",
+        "angle",
+        "orthogonal"
+      ],
+      "inbound_links": [
+        "r^n",
+        "standard inner product"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "eigenpair",
+      "aliases": [],
+      "outbound_links": [
+        "eigenvalue",
+        "eigenvector"
+      ],
+      "inbound_links": [
+        "matrix",
+        "linear operator"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "eigenspace",
+      "aliases": [],
+      "outbound_links": [
+        "eigenvector",
+        "linear combination",
+        "eigenvalue",
+        "characteristic polynomial",
+        "diagonalizable matrix"
+      ],
+      "inbound_links": [
+        "eigenvalue",
+        "matrix",
+        "linear algebra",
+        "eigenvector",
+        "characteristic polynomial",
+        "diagonalizable matrix",
+        "linear operator"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "eigenvalue",
+      "aliases": [],
+      "outbound_links": [
+        "diagonalization",
+        "eigenvector",
+        "eigenspace",
+        "characteristic polynomial",
+        "determinant",
+        "matrix",
+        "field",
+        "diagonalizable matrix",
+        "algebraic multiplicity",
+        "geometric multiplicity"
+      ],
+      "inbound_links": [
+        "vector",
+        "matrix",
+        "linear algebra",
+        "determinant",
+        "eigenvector",
+        "eigenspace",
+        "characteristic polynomial",
+        "diagonalizable matrix",
+        "linear operator",
+        "eigenpair"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "eigenvector",
+      "aliases": [],
+      "outbound_links": [
+        "eigenvalue",
+        "eigenspace",
+        "characteristic polynomial",
+        "diagonalizable matrix"
+      ],
+      "inbound_links": [
+        "eigenvalue",
+        "matrix",
+        "linear algebra",
+        "linear combination",
+        "eigenspace",
+        "diagonalizable matrix",
+        "linear operator",
+        "eigenpair"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "elementary matrix",
+      "aliases": [],
+      "outbound_links": [
+        "matrix",
+        "elementary row operations",
+        "matrix inverse"
+      ],
+      "inbound_links": [
+        "matrix",
+        "matrix inverse"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "elementary operations",
+      "aliases": [],
+      "outbound_links": [
+        "field"
+      ],
+      "inbound_links": [
+        "system of linear equations"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "elementary row operations",
+      "aliases": [
+        "eros",
+        "ero"
+      ],
+      "outbound_links": [
+        "augmented matrix"
+      ],
+      "inbound_links": [
+        "matrix",
+        "determinant",
+        "elementary matrix",
+        "matrix inverse",
+        "system of linear equations",
+        "equivalent systems",
+        "row equivalent",
+        "augmented matrix",
+        "gauss\u2013jordan elimination",
+        "homogeneous and non-homogeneous systems",
+        "row space"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "equivalent systems",
+      "aliases": [],
+      "outbound_links": [
+        "solution set",
+        "elementary row operations"
+      ],
+      "inbound_links": [
+        "matrix",
+        "system of linear equations",
+        "solve"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "example",
+      "aliases": [],
+      "outbound_links": [
+        "r^n"
+      ],
+      "inbound_links": [],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "field",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "eigenvalue",
+        "vector space",
+        "linear algebra",
+        "subspace",
+        "linear combination",
+        "diagonalizable matrix",
+        "standard inner product",
+        "elementary operations",
+        "column space",
+        "row space",
+        "reflection"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "free variable",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "matrix",
+        "basic variable",
+        "gauss\u2013jordan elimination"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "gauss\u2013jordan elimination",
+      "aliases": [],
+      "outbound_links": [
+        "reduced row echelon form",
+        "elementary row operations",
+        "augmented matrix",
+        "coefficient matrix",
+        "rank",
+        "basic variable",
+        "free variable",
+        "row echelon form",
+        "pivot",
+        "leading one",
+        "inconsistent and consistent systems",
+        "system rank theorem"
+      ],
+      "inbound_links": [
+        "matrix",
+        "system of linear equations"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "geometric multiplicity",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "eigenvalue"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "homogeneous and non-homogeneous systems",
+      "aliases": [],
+      "outbound_links": [
+        "solution set",
+        "system of linear equations",
+        "elementary row operations",
+        "trivial solution",
+        "associated homogeneous system",
+        "nullspace",
+        "particular solution",
+        "nullity",
+        "solution sets to systems of linear equations"
+      ],
+      "inbound_links": [
+        "matrix",
+        "system of linear equations",
+        "solve"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "identity matrix",
+      "aliases": [],
+      "outbound_links": [
+        "diagonalizable matrix"
+      ],
+      "inbound_links": [
+        "matrix",
+        "determinant",
+        "square matrix"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "identity transformation",
+      "aliases": [],
+      "outbound_links": [
+        "r^n"
+      ],
+      "inbound_links": [
+        "composition of linear transformations",
+        "power of a linear transformation"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "inconsistent and consistent systems",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "matrix",
+        "projection",
+        "system of linear equations",
+        "solve",
+        "gauss\u2013jordan elimination"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "invertibility criteria \u2013 second version",
+      "aliases": [],
+      "outbound_links": [
+        "reduced row echelon form",
+        "nullity",
+        "trivial solution"
+      ],
+      "inbound_links": [],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "invertible matrix",
+      "aliases": [],
+      "outbound_links": [
+        "determinant",
+        "matrix",
+        "matrix inverse"
+      ],
+      "inbound_links": [
+        "matrix",
+        "determinant",
+        "diagonalizable matrix",
+        "similar"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "kernel",
+      "aliases": [],
+      "outbound_links": [
+        "nullspace"
+      ],
+      "inbound_links": [
+        "linear transformation",
+        "matrix",
+        "projection",
+        "one-to-one test",
+        "rotation",
+        "reflection"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "leading entry",
+      "aliases": [
+        "pivot"
+      ],
+      "outbound_links": [
+        "leading one"
+      ],
+      "inbound_links": [
+        "matrix",
+        "system of linear equations",
+        "row equivalent",
+        "row echelon form"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "leading one",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "matrix",
+        "gauss\u2013jordan elimination",
+        "reduced row echelon form",
+        "leading entry"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "length",
+      "aliases": [
+        "norm",
+        "magnitude"
+      ],
+      "outbound_links": [],
+      "inbound_links": [
+        "dot product",
+        "standard inner product",
+        "rotation"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "line in r 2",
+      "aliases": [
+        "line in r^n"
+      ],
+      "outbound_links": [
+        "span",
+        "parametric equations of a line in r 2",
+        "vector equation of a line in r^n"
+      ],
+      "inbound_links": [],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "linear algebra",
+      "aliases": [],
+      "outbound_links": [
+        "linear equation",
+        "matrix",
+        "linear transformation",
+        "determinant",
+        "eigenvalue",
+        "subspace",
+        "diagonalization",
+        "vector space",
+        "vector",
+        "span",
+        "basis",
+        "system of linear equations",
+        "eigenvector",
+        "field",
+        "characteristic polynomial",
+        "eigenspace",
+        "diagonalizable matrix",
+        "r^n"
+      ],
+      "inbound_links": [],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "linear combination",
+      "aliases": [],
+      "outbound_links": [
+        "eigenvector",
+        "field"
+      ],
+      "inbound_links": [
+        "span",
+        "eigenspace",
+        "column space"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "linear equation",
+      "aliases": [],
+      "outbound_links": [
+        "matrix",
+        "cramer's rule"
+      ],
+      "inbound_links": [
+        "vector",
+        "linear algebra",
+        "system of linear equations",
+        "scalar equation of a plane in r 3"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "linear independence",
+      "aliases": [],
+      "outbound_links": [
+        "span"
+      ],
+      "inbound_links": [
+        "span",
+        "basis"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "linear operator",
+      "aliases": [],
+      "outbound_links": [
+        "ordered basis",
+        "standard basis",
+        "eigenvector",
+        "eigenvalue",
+        "eigenspace",
+        "characteristic polynomial",
+        "diagonalizable matrix",
+        "eigenpair"
+      ],
+      "inbound_links": [
+        "linear transformation",
+        "vector space"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "linear transformation",
+      "aliases": [
+        "linear mapping"
+      ],
+      "outbound_links": [
+        "kernel",
+        "range of a linear transformation",
+        "matrix multiplication",
+        "domain",
+        "codomain",
+        "linearity over addition",
+        "linearity over scalar multiplication",
+        "r^n",
+        "rotation",
+        "reflection",
+        "matrix",
+        "diagonalizable matrix",
+        "standard basis",
+        "onto",
+        "one-to-one",
+        "standard matrix",
+        "linear operator"
+      ],
+      "inbound_links": [
+        "vector",
+        "vector space",
+        "matrix",
+        "linear algebra",
+        "diagonalizable matrix",
+        "rotation",
+        "reflection",
+        "standard matrix",
+        "composition of linear transformations"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "linearity over addition",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "linear transformation"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "linearity over scalar multiplication",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "linear transformation"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "matrix",
+      "aliases": [],
+      "outbound_links": [
+        "determinant",
+        "linear transformation",
+        "elementary matrix",
+        "matrix inverse",
+        "column space",
+        "row space",
+        "transpose",
+        "matrix equality",
+        "matrix multiplication",
+        "arithmetic operation",
+        "square matrix",
+        "row equivalent",
+        "zero row",
+        "elementary row operations",
+        "rank",
+        "matrix sum",
+        "additive inverse",
+        "zero matrix",
+        "scalar multiplication",
+        "upper triangular matrix",
+        "diagonalizable matrix",
+        "identity matrix",
+        "augmented matrix",
+        "coefficient matrix",
+        "similar",
+        "minor (linear algebra)",
+        "invertible matrix",
+        "nullspace",
+        "kernel",
+        "range of a linear transformation",
+        "eigenvector",
+        "eigenvalue",
+        "eigenspace",
+        "basic variable",
+        "free variable",
+        "gauss\u2013jordan elimination",
+        "reduced row echelon form",
+        "row echelon form",
+        "pivot",
+        "leading one",
+        "leading entry",
+        "trivial equation",
+        "solution set",
+        "system of linear equations",
+        "inconsistent and consistent systems",
+        "system rank theorem",
+        "nullity",
+        "homogeneous and non-homogeneous systems",
+        "trivial solution",
+        "associated homogeneous system",
+        "particular solution",
+        "solution sets to systems of linear equations",
+        "solve",
+        "equivalent systems",
+        "characteristic polynomial",
+        "eigenpair",
+        "adjugate matrix"
+      ],
+      "inbound_links": [
+        "linear equation",
+        "linear transformation",
+        "eigenvalue",
+        "linear algebra",
+        "determinant",
+        "elementary matrix",
+        "matrix inverse",
+        "diagonalizable matrix",
+        "column space",
+        "row space",
+        "matrix equality",
+        "matrix multiplication",
+        "arithmetic operation",
+        "square matrix",
+        "standard matrix",
+        "composition of linear transformations",
+        "minor (linear algebra)",
+        "invertible matrix",
+        "similar"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "matrix equality",
+      "aliases": [],
+      "outbound_links": [
+        "matrix"
+      ],
+      "inbound_links": [
+        "matrix"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "matrix inverse",
+      "aliases": [],
+      "outbound_links": [
+        "elementary matrix",
+        "matrix",
+        "elementary row operations"
+      ],
+      "inbound_links": [
+        "matrix",
+        "determinant",
+        "elementary matrix",
+        "invertible matrix",
+        "change of basis"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "matrix multiplication",
+      "aliases": [],
+      "outbound_links": [
+        "matrix"
+      ],
+      "inbound_links": [
+        "linear transformation",
+        "matrix",
+        "determinant",
+        "composition of linear transformations"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "matrix sum",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "matrix",
+        "arithmetic operation"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "matrix\u2013vector multiplication",
+      "aliases": [],
+      "outbound_links": [
+        "system of linear equations"
+      ],
+      "inbound_links": [],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "minor (linear algebra)",
+      "aliases": [],
+      "outbound_links": [
+        "determinant",
+        "matrix"
+      ],
+      "inbound_links": [
+        "matrix",
+        "determinant"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "normal form",
+      "aliases": [],
+      "outbound_links": [
+        "standard matrix"
+      ],
+      "inbound_links": [],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "normal form, scalar equation of a plane in r 3",
+      "aliases": [],
+      "outbound_links": [
+        "system of linear equations"
+      ],
+      "inbound_links": [],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "nullity",
+      "aliases": [],
+      "outbound_links": [
+        "rank"
+      ],
+      "inbound_links": [
+        "matrix",
+        "system rank theorem",
+        "homogeneous and non-homogeneous systems",
+        "invertibility criteria \u2013 second version"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "nullspace",
+      "aliases": [],
+      "outbound_links": [
+        "coefficient matrix",
+        "solution set"
+      ],
+      "inbound_links": [
+        "vector space",
+        "matrix",
+        "kernel",
+        "homogeneous and non-homogeneous systems",
+        "associated homogeneous system"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "one-to-one",
+      "aliases": [
+        "injective"
+      ],
+      "outbound_links": [],
+      "inbound_links": [
+        "linear transformation",
+        "projection",
+        "rotation",
+        "reflection"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "one-to-one test",
+      "aliases": [],
+      "outbound_links": [
+        "kernel"
+      ],
+      "inbound_links": [],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "onto",
+      "aliases": [
+        "surjective"
+      ],
+      "outbound_links": [
+        "range of a linear transformation"
+      ],
+      "inbound_links": [
+        "linear transformation",
+        "range of a linear transformation",
+        "projection",
+        "rotation",
+        "reflection"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "ordered basis",
+      "aliases": [],
+      "outbound_links": [
+        "change of basis"
+      ],
+      "inbound_links": [
+        "basis",
+        "linear operator",
+        "dimension",
+        "coordinate vector",
+        "change of basis"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "orthogonal",
+      "aliases": [
+        "perpendicular"
+      ],
+      "outbound_links": [],
+      "inbound_links": [
+        "r^n",
+        "dot product",
+        "angle",
+        "cross product"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "parallelogram",
+      "aliases": [],
+      "outbound_links": [
+        "area of parallelogram"
+      ],
+      "inbound_links": [
+        "determinant"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "parametric equations of a line in r 2",
+      "aliases": [
+        "parametric equations of a line in r^n"
+      ],
+      "outbound_links": [],
+      "inbound_links": [
+        "line in r 2"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "particular solution",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "matrix",
+        "homogeneous and non-homogeneous systems",
+        "solution sets to systems of linear equations"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "perpendicular",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "r^n"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "pivot",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "matrix",
+        "zero row",
+        "gauss\u2013jordan elimination",
+        "row echelon form"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "plane in r^n",
+      "aliases": [
+        "plane in r^n through the origin"
+      ],
+      "outbound_links": [
+        "span",
+        "vector equation of a plane in r^n through the origin"
+      ],
+      "inbound_links": [
+        "projection",
+        "vector equation of a plane in r^n through the origin"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "power of a linear transformation",
+      "aliases": [],
+      "outbound_links": [
+        "identity transformation",
+        "determinant"
+      ],
+      "inbound_links": [],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "projection",
+      "aliases": [],
+      "outbound_links": [
+        "plane in r^n",
+        "inconsistent and consistent systems",
+        "onto",
+        "one-to-one",
+        "kernel",
+        "rank",
+        "coefficient matrix"
+      ],
+      "inbound_links": [
+        "r^n"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "r^n",
+      "aliases": [],
+      "outbound_links": [
+        "vector",
+        "dot product",
+        "unit vector",
+        "orthogonal",
+        "projection",
+        "component",
+        "perpendicular"
+      ],
+      "inbound_links": [
+        "linear transformation",
+        "linear algebra",
+        "rotation",
+        "reflection",
+        "identity transformation",
+        "example"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "range of a linear transformation",
+      "aliases": [],
+      "outbound_links": [
+        "column space",
+        "onto"
+      ],
+      "inbound_links": [
+        "linear transformation",
+        "matrix",
+        "onto"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "rank",
+      "aliases": [],
+      "outbound_links": [
+        "augmented matrix",
+        "row echelon form",
+        "reduced row echelon form",
+        "coefficient matrix",
+        "system rank theorem"
+      ],
+      "inbound_links": [
+        "matrix",
+        "diagonalizable matrix",
+        "projection",
+        "system of linear equations",
+        "augmented matrix",
+        "gauss\u2013jordan elimination",
+        "system rank theorem",
+        "nullity",
+        "rotation",
+        "reflection",
+        "spanning set"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "reduced row echelon form",
+      "aliases": [
+        "rref"
+      ],
+      "outbound_links": [
+        "leading one"
+      ],
+      "inbound_links": [
+        "matrix",
+        "system of linear equations",
+        "row equivalent",
+        "rank",
+        "gauss\u2013jordan elimination",
+        "row echelon form",
+        "invertibility criteria \u2013 second version"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "reflection",
+      "aliases": [],
+      "outbound_links": [
+        "r^n",
+        "onto",
+        "one-to-one",
+        "kernel",
+        "rank",
+        "coefficient matrix",
+        "standard matrix",
+        "linear transformation",
+        "span",
+        "field"
+      ],
+      "inbound_links": [
+        "linear transformation"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "right hand rule",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "cross product"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "rotation",
+      "aliases": [],
+      "outbound_links": [
+        "r^n",
+        "onto",
+        "one-to-one",
+        "kernel",
+        "rank",
+        "coefficient matrix",
+        "linear transformation",
+        "length",
+        "angle",
+        "standard matrix"
+      ],
+      "inbound_links": [
+        "linear transformation"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "row echelon form",
+      "aliases": [
+        "ref"
+      ],
+      "outbound_links": [
+        "reduced row echelon form",
+        "pivot",
+        "leading entry"
+      ],
+      "inbound_links": [
+        "matrix",
+        "system of linear equations",
+        "row equivalent",
+        "rank",
+        "gauss\u2013jordan elimination"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "row equivalent",
+      "aliases": [],
+      "outbound_links": [
+        "leading entry",
+        "row echelon form",
+        "reduced row echelon form",
+        "elementary row operations",
+        "row space"
+      ],
+      "inbound_links": [
+        "matrix",
+        "system of linear equations",
+        "solve",
+        "row space"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "row space",
+      "aliases": [],
+      "outbound_links": [
+        "matrix",
+        "span",
+        "field",
+        "transpose",
+        "row equivalent",
+        "elementary row operations"
+      ],
+      "inbound_links": [
+        "matrix",
+        "row equivalent"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "scalar equation of a plane in r 3",
+      "aliases": [],
+      "outbound_links": [
+        "linear equation"
+      ],
+      "inbound_links": [],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "scalar multiplication",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "matrix",
+        "arithmetic operation"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "similar",
+      "aliases": [],
+      "outbound_links": [
+        "matrix",
+        "invertible matrix"
+      ],
+      "inbound_links": [
+        "matrix",
+        "diagonalizable matrix"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "solution set",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "matrix",
+        "system of linear equations",
+        "solve",
+        "equivalent systems",
+        "system rank theorem",
+        "homogeneous and non-homogeneous systems",
+        "solution sets to systems of linear equations",
+        "nullspace"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "solution sets to systems of linear equations",
+      "aliases": [],
+      "outbound_links": [
+        "system of linear equations",
+        "associated homogeneous system",
+        "particular solution",
+        "solution set"
+      ],
+      "inbound_links": [
+        "matrix",
+        "homogeneous and non-homogeneous systems"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "solve",
+      "aliases": [],
+      "outbound_links": [
+        "solution set",
+        "inconsistent and consistent systems",
+        "homogeneous and non-homogeneous systems",
+        "row equivalent",
+        "equivalent systems"
+      ],
+      "inbound_links": [
+        "matrix",
+        "system of linear equations"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "span",
+      "aliases": [],
+      "outbound_links": [
+        "linear combination",
+        "linear independence"
+      ],
+      "inbound_links": [
+        "vector",
+        "vector space",
+        "linear algebra",
+        "basis",
+        "line in r 2",
+        "plane in r^n",
+        "column space",
+        "row space",
+        "reflection",
+        "linear independence",
+        "spanning set"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "spanning set",
+      "aliases": [],
+      "outbound_links": [
+        "span",
+        "rank"
+      ],
+      "inbound_links": [],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "square matrix",
+      "aliases": [],
+      "outbound_links": [
+        "matrix",
+        "upper triangular matrix",
+        "diagonalizable matrix",
+        "identity matrix"
+      ],
+      "inbound_links": [
+        "matrix"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "standard basis",
+      "aliases": [],
+      "outbound_links": [
+        "determinant"
+      ],
+      "inbound_links": [
+        "linear transformation",
+        "linear operator",
+        "change of basis"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "standard inner product",
+      "aliases": [],
+      "outbound_links": [
+        "length",
+        "field",
+        "c n",
+        "dot product"
+      ],
+      "inbound_links": [
+        "c n"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "standard matrix",
+      "aliases": [],
+      "outbound_links": [
+        "matrix",
+        "linear transformation"
+      ],
+      "inbound_links": [
+        "linear transformation",
+        "rotation",
+        "reflection",
+        "composition of linear transformations",
+        "normal form"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "subspace",
+      "aliases": [],
+      "outbound_links": [
+        "basis",
+        "field",
+        "dimension"
+      ],
+      "inbound_links": [
+        "vector space",
+        "linear algebra"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "system of linear equations",
+      "aliases": [],
+      "outbound_links": [
+        "linear equation",
+        "solve",
+        "solution set",
+        "inconsistent and consistent systems",
+        "equivalent systems",
+        "elementary operations",
+        "coefficient matrix",
+        "augmented matrix",
+        "homogeneous and non-homogeneous systems",
+        "row equivalent",
+        "elementary row operations",
+        "gauss\u2013jordan elimination",
+        "leading entry",
+        "row echelon form",
+        "reduced row echelon form",
+        "rank"
+      ],
+      "inbound_links": [
+        "matrix",
+        "linear algebra",
+        "homogeneous and non-homogeneous systems",
+        "consistent system test",
+        "matrix\u2013vector multiplication",
+        "solution sets to systems of linear equations",
+        "normal form, scalar equation of a plane in r 3"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "system rank theorem",
+      "aliases": [],
+      "outbound_links": [
+        "solution set",
+        "rank",
+        "nullity"
+      ],
+      "inbound_links": [
+        "matrix",
+        "rank",
+        "gauss\u2013jordan elimination"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "transpose",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "matrix",
+        "determinant",
+        "row space"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "trivial equation",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "matrix"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "trivial solution",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "matrix",
+        "homogeneous and non-homogeneous systems",
+        "invertibility criteria \u2013 second version"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "unit vector",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "r^n"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "upper triangular matrix",
+      "aliases": [
+        "lower triangular matrix"
+      ],
+      "outbound_links": [],
+      "inbound_links": [
+        "matrix",
+        "determinant",
+        "square matrix"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "vector",
+      "aliases": [],
+      "outbound_links": [
+        "span",
+        "linear equation",
+        "linear transformation",
+        "eigenvalue",
+        "vector space"
+      ],
+      "inbound_links": [
+        "vector space",
+        "linear algebra",
+        "r^n",
+        "area of parallelogram"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "vector equation of a line in r^n",
+      "aliases": [
+        "vector equation of a line in r 2"
+      ],
+      "outbound_links": [],
+      "inbound_links": [
+        "line in r 2"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "vector equation of a plane in r^n through the origin",
+      "aliases": [
+        "vector equation of a plane"
+      ],
+      "outbound_links": [
+        "plane in r^n"
+      ],
+      "inbound_links": [
+        "plane in r^n"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "vector space",
+      "aliases": [],
+      "outbound_links": [
+        "span",
+        "linear transformation",
+        "subspace",
+        "basis",
+        "vector",
+        "linear operator",
+        "field",
+        "column space",
+        "nullspace",
+        "dimension"
+      ],
+      "inbound_links": [
+        "vector",
+        "linear algebra"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "zero matrix",
+      "aliases": [],
+      "outbound_links": [],
+      "inbound_links": [
+        "matrix",
+        "arithmetic operation"
+      ],
+      "content": null,
+      "metadata": {}
+    },
+    {
+      "id": "zero row",
+      "aliases": [],
+      "outbound_links": [
+        "pivot"
+      ],
+      "inbound_links": [
+        "matrix"
+      ],
+      "content": null,
+      "metadata": {}
+    }
+  ]
+}

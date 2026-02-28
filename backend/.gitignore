@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Environment variables
+.env
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+test/
+
+# Serverless & Cloudflare
+.serverless/
+.wrangler/
+
+# Application data & outputs
+output/
+data/
+*.pdf
+uploads/
+temp-uploads/
+.python-version
