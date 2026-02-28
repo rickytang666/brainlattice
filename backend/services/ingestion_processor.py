@@ -83,9 +83,10 @@ class IngestionProcessor:
                     project_id = existing_proj.id
                 else:
                     new_proj = models.Project(
-                        title=f"upload_{self.job_id[:8]}", 
+                        title=filename, 
                         status="processing",
-                        user_id=user_id
+                        user_id=user_id,
+                        project_metadata={"job_id": self.job_id}
                     )
                     db.add(new_proj)
                     db.flush()

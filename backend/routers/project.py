@@ -7,6 +7,7 @@ from db import models
 from schemas.project import ProjectSaveRequest, ProjectSaveResponse, ProjectGetResponse, UpdateTitleRequest, ProjectTransferRequest, ProjectTransferResponse
 from fastapi import Header
 import uuid
+from services.job_service import get_job_service
 
 router = APIRouter()
 
@@ -38,13 +39,35 @@ async def list_all_projects(
     db: Session = Depends(get_db),
     context: UserContext = Depends(get_user_context)
 ):
-    """list all projects from postgres filtered by user_id"""
+    """list all projects from postgres filtered by user_id, with live redis progress"""
     try:
         projects = db.query(models.Project).filter(models.Project.user_id == context.user_id).all()
-        return [
-            {"id": str(p.id), "title": p.title, "status": p.status, "created_at": p.created_at} 
-            for p in projects
-        ]
+        formatted = []
+        jobs = get_job_service()
+        
+        for p in projects:
+            base_p = {
+                "id": str(p.id), 
+                "title": p.title, 
+                "status": p.status, 
+                "created_at": p.created_at
+            }
+            
+            if p.status == "processing":
+                metadata = p.project_metadata or {}
+                job_id = metadata.get("job_id")
+                if job_id:
+                    job = jobs.get_job(job_id)
+                    if job:
+                        base_p["progress"] = job.get("progress", 0)
+                        
+                        # handle edge case where job failed in redis but db hasn't updated
+                        if job.get("status") == "failed":
+                            base_p["status"] = "failed"
+            
+            formatted.append(base_p)
+            
+        return formatted
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"list error: {str(e)}")
 
