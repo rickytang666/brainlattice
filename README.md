@@ -1,25 +1,29 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="BrainLattice Logo" width="250">
+<img src="assets/logo.png" alt="BrainLattice Logo" width="200">
 
-_Turn any PDF into an interactive conceptual network._
+**PDFs → Living Knowledge Graphs**
 
-**BrainLattice** is an AI-powered extraction engine that reads entire textbooks or research papers and reconstructs them as an explorable WebGL knowledge graph. Stop reading linearly. Start exploring spatially.
+![Obsidian Support](https://img.shields.io/badge/Obsidian-Support-101010?logo=obsidian&logoColor=7C3AED&labelColor=101010)
+
+**BrainLattice** is an AI-powered extraction engine that turns dense PDFs (textbooks, research papers, course notes) into interactive, explorable WebGL knowledge networks.
 
 </div>
 
 ---
 
-## What it does
+## The Problem
 
-Knowledge isn't linear, but books are. **BrainLattice** breaks this limitation by parsing dense documents and using LLM to automatically discover core concepts, map their relationships, and plot them on an interactive 2D canvas. You get the 10,000-foot view of a subject instantly, with the ability to dive deep on command.
+Human knowledge is a high-dimensional network, but PDFs are linear streams of characters. When you read a 200-page textbook, you lose the "map" of how concepts actually connect. Mentally mapping these relationships is the hardest part of learning.
 
-## Core Features
+## The Solution
 
-- **Spatial Discovery**: Navigate complex subjects visually. See how concepts, formulas, and theorems connect before you even start reading.
-- **Instant Context**: Click any node on the graph to instantly pull up an AI-synthesized summary of that specific entity, sourced directly from the original text.
-- **Universal Ingestion**: Feed it 200-page textbooks, messy lecture notes, or dense research papers.
-- **Effortless Synthesis**: Skip the tedious note-taking. BrainLattice distills hours of reading into an explorable, high-yield conceptual network so you can focus entirely on understanding.
+BrainLattice automates the learning process. It parses the document, discovers the core conceptual nodes, and plots their relationships on an interactive canvas.
+
+- **Graph-First Synthesis**: Automatically identifies entities, theorems, and definitions using LLM-driven entity extraction.
+- **Deep Contextual Retrieval**: Click any node to instantly pull up an AI-synthesized summary sourced directly from the original text chunks.
+- **Native Obsidian Export**: One-click export to a full Obsidian Vault. Includes all markdown notes and a pre-configured Canvas file.
+- **High-Performance WebGL**: Real-time force-directed graphs that stay snappy even with thousands of conceptual links.
 
 ## Tech Stack
 
@@ -28,34 +32,37 @@ Knowledge isn't linear, but books are. **BrainLattice** breaks this limitation b
 - **Database**: Neon PostgreSQL
 - **Infra**: AWS Lambda, Cloudflare R2, Upstash Redis, Upstash QStash
 
-## Quick Run
+## Quick Start
 
-_For full technical details, see the `README.md` files inside the `frontend/` and `backend/` folders._
+_For full setup details, see the specific READMEs in `/frontend` and `/backend`._
 
-1. **Clone the repo**
-2. **Configure Backend API Key**
-   Create a `.env` in the `backend/` directory with just your Gemini key.
+### 1. Configure Keys
 
-   Only `GEMINI_API_KEY` is mandatory for the app (`OPEN_AI_API_KEY` is optional, but better for embedding).
+Create a `.env` in `backend/` with your Gemini API key and DB URL (either local SQLite or Neon PostgreSQL):
 
-   ```bash
-   GEMINI_API_KEY=your_key_here
-   ```
+```bash
+GEMINI_API_KEY=your_key_here
+DATABASE_URL=your_db_url_here
+```
 
-3. **Start Backend**
+### 2. Start Backend
 
-   ```bash
-   cd backend && uv sync && uv run uvicorn main:app
-   ```
+```bash
+cd backend
+uv sync
+uv run uvicorn main:app --reload
+```
 
-4. **Start Frontend**
+### 3. Start Frontend
 
-   ```bash
-   cd frontend && npm install && npm run dev
-   ```
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-The frontend will be available at `http://localhost:5173`.
+The app will be live at `http://localhost:5173`.
 
-## Local Development/Self-Hosting
+## More Info on Local Development/Self-Hosting
 
 Consult the `README.md` files inside the `frontend/` and `backend/` folders for detailed instructions.
