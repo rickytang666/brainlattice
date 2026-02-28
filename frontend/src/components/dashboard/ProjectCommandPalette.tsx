@@ -8,6 +8,13 @@ import {
 } from "@tabler/icons-react";
 import { ObsidianLogo } from "../Logo";
 
+interface ExportStatus {
+  status: string;
+  progress: number;
+  message: string;
+  download_url?: string;
+}
+
 interface ProjectCommandPaletteProps {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -15,7 +22,7 @@ interface ProjectCommandPaletteProps {
   onRename: () => void;
   onExport: () => void;
   onDownload: () => void;
-  exportStatus: any;
+  exportStatus: ExportStatus | null;
   exportLoading: boolean;
 }
 
@@ -35,8 +42,10 @@ export function ProjectCommandPalette({
   // focus input and clear search when open
   useEffect(() => {
     if (open) {
-      setSearchValue("");
-      setTimeout(() => inputRef.current?.focus(), 50);
+      setTimeout(() => {
+        setSearchValue("");
+        inputRef.current?.focus();
+      }, 50);
     }
   }, [open]);
 

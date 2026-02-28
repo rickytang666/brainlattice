@@ -55,7 +55,7 @@ export default function LandingPage() {
     }, 35); // typing speed
     
     return () => clearInterval(intervalId);
-  }, []);
+  }, [isFirstLoad, fullText]);
 
   // Cmd+K shortcut listener
   useEffect(() => {
