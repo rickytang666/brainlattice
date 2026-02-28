@@ -57,7 +57,7 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
         </div>
         <input
           type="text"
-          className="block w-full pl-9 pr-9 py-1.5 bg-card border border-border/50 shadow-sm rounded-full text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-foreground focus:ring-1 focus:ring-foreground transition-all"
+          className="block w-full pl-9 pr-9 py-1.5 bg-card border border-border/50 shadow-sm rounded-full text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground/65 transition-all"
           placeholder="search graph..."
           value={query}
           onChange={(e) => {

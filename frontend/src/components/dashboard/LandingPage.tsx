@@ -146,8 +146,11 @@ export default function LandingPage() {
       <div className="z-10 w-full max-w-2xl px-6 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-1000">
          {/* The Omnibar */}
          <div className="w-full relative group">
-           <div className="absolute -inset-1.5 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-[24px] blur-lg opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-300" />
-           <div className="relative flex items-center w-full bg-card/60 backdrop-blur-2xl border border-border/40 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.1)] rounded-[20px] overflow-hidden focus-within:ring-1 focus-within:ring-primary/20 focus-within:border-primary/30 transition-all duration-500">
+           {/* Static ambient glow that intensifies on focus */}
+           <div className="absolute -inset-1.5 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-[24px] blur-lg opacity-0 group-hover:opacity-60 group-focus-within:opacity-100 transition duration-1000" />
+           
+           {/* The actual input container */}
+           <div className="relative flex items-center w-full bg-card/60 backdrop-blur-2xl border border-border/40 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.1)] rounded-[20px] overflow-hidden transition-all duration-500 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:bg-primary/50 after:-translate-x-full after:transition-transform after:duration-500 after:ease-out group-focus-within:after:translate-x-0 group-focus-within:bg-card/80">
               <div className="pl-6 pr-3 text-muted-foreground group-focus-within:text-primary transition-colors duration-500">
                 {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5 opacity-70" />}
               </div>

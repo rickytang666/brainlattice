@@ -259,7 +259,7 @@ export default function ProjectDashboard() {
   };
 
   return (
-    <div className="flex h-full w-full bg-background overflow-hidden text-foreground font-sans relative">
+    <div className="flex h-full w-full bg-background overflow-hidden text-foreground font-sans relative pt-[60px]">
       {error && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-xl px-4 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-4">
@@ -295,7 +295,7 @@ export default function ProjectDashboard() {
             style={{ width: `${graphWidthPercent}%` }}
           >
              {/* Header overlay - scoped to graph panel only */}
-            <div className="absolute top-[76px] left-4 z-10 flex flex-wrap items-center gap-2">
+            <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-2">
               <button
                 onClick={() => navigate("/")}
                 className="shrink-0 p-2 bg-card border border-border/50 shadow-sm rounded-full hover:bg-muted transition-colors"
