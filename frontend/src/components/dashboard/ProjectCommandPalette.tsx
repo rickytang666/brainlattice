@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Command } from "cmdk";
 import { 
   IconArrowLeft, 
@@ -29,6 +29,17 @@ export function ProjectCommandPalette({
   exportStatus,
   exportLoading
 }: ProjectCommandPaletteProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [searchValue, setSearchValue] = useState("");
+
+  // focus input and clear search when open
+  useEffect(() => {
+    if (open) {
+      setSearchValue("");
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [open]);
+
   // toggle state of the menu
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -36,16 +47,18 @@ export function ProjectCommandPalette({
         e.preventDefault();
         setOpen(!open);
       }
+      if (e.key === "Escape" && open) {
+        e.preventDefault();
+        setOpen(false);
+      }
     };
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, [open, setOpen]);
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <div className={`fixed inset-0 z-[200] flex items-center justify-center p-4 transition-all duration-300 ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
       {/* backdrop */}
       <div 
         className="absolute inset-0 bg-background/50 backdrop-blur-sm"
@@ -53,10 +66,12 @@ export function ProjectCommandPalette({
       />
       
       {/* command palette */}
-      <div className="relative w-full max-w-lg overflow-hidden rounded-xl border border-border shadow-2xl bg-popover animate-in fade-in zoom-in-95 duration-200">
+      <div className={`relative w-full max-w-lg overflow-hidden rounded-xl border border-border shadow-2xl bg-popover transition-all duration-300 ${open ? "translate-y-0 scale-100" : "-translate-y-8 scale-95"}`}>
         <Command label="Command Menu" className="w-full flex flex-col">
           <Command.Input 
-            autoFocus 
+            ref={inputRef}
+            value={searchValue}
+            onValueChange={setSearchValue}
             placeholder="type a command or search..." 
             className="w-full px-4 py-4 text-base bg-transparent border-b border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0"
           />
@@ -78,7 +93,7 @@ export function ProjectCommandPalette({
               <Command.Item 
                 onSelect={() => { 
                   setOpen(false); 
-                  // Slight delay to allow palette to close before focusing another input
+                  // slight delay to allow palette to close before focusing another input
                   setTimeout(() => {
                     const searchInput = document.querySelector('input[placeholder="search graph..."]') as HTMLInputElement;
                     searchInput?.focus();
