@@ -14,6 +14,7 @@ import {
 } from "@tabler/icons-react";
 import { ObsidianLogo } from "../Logo";
 import { useSafeAuth } from "../../hooks/useSafeAuth";
+import { ProjectCommandPalette } from "./ProjectCommandPalette";
 
 import { API_BASE, apiFetch } from "../../config";
 
@@ -38,6 +39,7 @@ export default function ProjectDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
+  const [cmdOpen, setCmdOpen] = useState(false);
 
   // Project data for the header title
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
@@ -360,7 +362,7 @@ export default function ProjectDashboard() {
                   <div className="shrink-0 px-2 py-1 bg-card border border-border/50 shadow-sm rounded-full flex items-center gap-3">
                     {/* Obsidian Export Actions */}
                     <div className="flex items-center gap-1.5">
-                      {exportStatus && (
+                      {exportStatus?.download_url && (
                         <button
                           onClick={handleDownloadVault}
                           disabled={exportLoading || exportStatus?.status === "generating"}
@@ -391,8 +393,8 @@ export default function ProjectDashboard() {
                     </div>
                   </div>
                   
-                  {/* Search Bar */}
-                  <div className="shrink-0">
+                  {/* Search Bar & Cmd Menu */}
+                  <div className="shrink-0 flex items-center gap-2">
                     <SearchBar 
                       data={projectGraph} 
                       onSelectNode={(id) => {
@@ -400,6 +402,13 @@ export default function ProjectDashboard() {
                         setFocusNodeId(id);
                       }}
                     />
+                    <button
+                      onClick={() => setCmdOpen(true)}
+                      className="px-3 py-1.5 bg-card border border-border/50 shadow-sm rounded-full text-xs font-mono font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors hidden sm:block"
+                      title="Open Command Palette"
+                    >
+                      cmd + k
+                    </button>
                   </div>
                 </>
               )}
@@ -474,6 +483,21 @@ export default function ProjectDashboard() {
           </div>
         </div>
       )}
+
+      {/* Command Palette Overlay */}
+      <ProjectCommandPalette
+        open={cmdOpen}
+        setOpen={setCmdOpen}
+        onHome={() => navigate("/")}
+        onRename={() => {
+          setNewTitle(currentProject?.title || "");
+          setEditingTitle(true);
+        }}
+        onExport={handleExport}
+        onDownload={handleDownloadVault}
+        exportStatus={exportStatus}
+        exportLoading={exportLoading}
+      />
     </div>
   );
 }
