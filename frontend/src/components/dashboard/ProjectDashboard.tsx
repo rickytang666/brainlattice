@@ -5,7 +5,6 @@ import NoteSidebar from "./NoteSidebar";
 import SearchBar from "./SearchBar";
 import type { GraphData } from "../../types/graph";
 import {
-  Database,
   Loader2,
   ArrowLeft,
   Upload,
@@ -16,6 +15,7 @@ import {
   Trash2,
   FileDown,
   Sparkles,
+  Search,
 } from "lucide-react";
 import { useAuth } from "@clerk/clerk-react";
 
@@ -37,7 +37,9 @@ export default function ProjectDashboard() {
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const selectedProjectId = projectIdFromUrl ?? null;
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [projectGraph, setProjectGraph] = useState<GraphData | null>(null);
   const [graphLoading, setGraphLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -156,6 +158,19 @@ export default function ProjectDashboard() {
   const panelsContainerRef = useRef<HTMLDivElement>(null);
   const [graphWidthPercent, setGraphWidthPercent] = useState(60);
   const [isResizing, setIsResizing] = useState(false);
+
+  // Cmd+K shortcut listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+K on Mac, Ctrl+K on Windows/Linux
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const clearFocusNodeId = useCallback(() => setFocusNodeId(null), []);
 
@@ -379,146 +394,177 @@ export default function ProjectDashboard() {
         </div>
       )}
 
-      {/* Homepage: Project List */}
+      {/* Homepage: Elegant Omnibar Layout */}
       {!selectedProjectId && (
-        <div className="flex flex-col w-full max-w-4xl mx-auto px-6 py-16">
-          {/* Hero Section */}
-          <div className="text-center mb-16">
-            <h1 className="text-4xl font-bold text-foreground mb-3 tracking-tight">
-              Your Knowledge Graph
-            </h1>
-            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-              Transform PDFs into interactive study notes. Upload a document to get started.
-            </p>
-          </div>
-
-          {/* Upload Section */}
-          <div className="mb-12">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleUpload}
-              accept=".pdf"
-              className="hidden"
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="w-full max-w-md mx-auto flex items-center justify-center gap-3 bg-primary hover:bg-primary/80 disabled:bg-muted disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground font-semibold py-4 px-6 rounded-xl transition-all text-base disabled:shadow-none"
-            >
-              {uploading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Processing...</span>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-5 h-5" />
-                  <span>Upload PDF Document</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Projects List */}
-          {loading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : projects.length === 0 ? (
-            <div className="text-center py-20">
-              <Database className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground text-lg mb-1">No projects yet</p>
-              <p className="text-muted-foreground/70 text-sm">Upload your first PDF to create a knowledge graph</p>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-foreground">
-                  Recent Projects
-                </h2>
-                <button
-                  onClick={fetchProjects}
-                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-                  title="Refresh"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="flex flex-col">
-                {projects.map((p) => (
-                  <div
-                    key={p.id}
-                    className="group relative flex items-center justify-between border-b border-border/30 py-4 hover:bg-muted/20 transition-all cursor-pointer px-4 -mx-4 rounded-xl"
-                    onClick={() => selectProject(p.id)}
-                  >
-                    <div className="flex flex-col gap-1.5">
-                      <h3 className="font-medium text-foreground text-base">
-                        {p.title}
-                      </h3>
-                      <div className="flex items-center gap-3">
-                        <span className="text-muted-foreground text-xs">
-                          {new Date(p.created_at).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </span>
-                        <span
-                          className={`text-[10px] uppercase tracking-wider font-semibold ${
-                            p.status === "complete"
-                              ? "text-muted-foreground"
-                              : p.status === "failed"
-                              ? "text-destructive"
-                              : "text-amber-500/80"
-                          }`}
-                        >
-                          {p.status}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeletingId(p.id);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all shrink-0"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-
-                    {deletingId === p.id && (
-                      <div className="absolute inset-y-0 right-0 bg-background/95 flex items-center justify-end gap-3 z-10 px-4 rounded-xl">
-                        <span className="text-sm font-medium text-destructive">
-                          Delete this project?
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteProject(p.id);
-                          }}
-                          className="px-3 py-1.5 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg text-sm font-medium transition-colors"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeletingId(null);
-                          }}
-                          className="px-3 py-1.5 bg-muted hover:bg-accent hover:text-accent-foreground text-muted-foreground rounded-lg text-sm font-medium transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
+        <div 
+          className="flex flex-col items-center justify-center w-full h-full relative overflow-hidden bg-background"
+          onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-primary/5'); }}
+          onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-primary/5'); }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('bg-primary/5');
+            const file = e.dataTransfer.files?.[0];
+            if (file && file.type === "application/pdf") {
+              const dT = new DataTransfer();
+              dT.items.add(file);
+              if (fileInputRef.current) {
+                fileInputRef.current.files = dT.files;
+                handleUpload({ target: { files: dT.files } } as any);
+              }
+            }
+          }}
+        >
+          {/* Subtle Ambient Background */}
+          <div className="absolute inset-0 pointer-events-none opacity-[0.3]" 
+               style={{ 
+                 background: 'radial-gradient(circle at 50% -20%, hsl(var(--primary)/0.15), transparent 60%), radial-gradient(circle at 50% 120%, hsl(var(--primary)/0.05), transparent 50%)' 
+               }} 
+          />
+          <div className="absolute inset-0 pointer-events-none opacity-[0.015]"
+               style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '48px 48px' }}
+          />
+          
+          <div className="z-10 w-full max-w-2xl px-6 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-1000">
+             
+             {/* The Omnibar */}
+             <div className="w-full relative group mt-[-8vh]">
+               <div className="absolute -inset-1.5 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-[24px] blur-lg opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-300" />
+               <div className="relative flex items-center w-full bg-card/60 backdrop-blur-2xl border border-border/40 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.1)] rounded-[20px] overflow-hidden focus-within:ring-1 focus-within:ring-primary/20 focus-within:border-primary/30 transition-all duration-500">
+                  <div className="pl-6 pr-3 text-muted-foreground group-focus-within:text-primary transition-colors duration-500">
+                    {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5 opacity-70" />}
                   </div>
-                ))}
-              </div>
-            </>
-          )}
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const q = searchQuery.toLowerCase();
+                        if (q.includes('upload') || q.includes('new') || q.includes('create')) {
+                          fileInputRef.current?.click();
+                          setSearchQuery('');
+                        }
+                      }
+                    }}
+                    placeholder="Search past projects, or type 'upload' and hit enter..."
+                    className="w-full bg-transparent border-none py-4 text-base tracking-wide text-foreground placeholder-muted-foreground/40 focus:outline-none focus:ring-0 font-sans"
+                    autoFocus
+                  />
+                  <div className="pr-4 flex items-center gap-3">
+                     <button 
+                       onClick={() => fileInputRef.current?.click()}
+                       disabled={uploading}
+                       className="p-2 rounded-xl bg-primary/5 text-primary/80 hover:text-primary hover:bg-primary/10 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                       title="Upload PDF"
+                     >
+                        <Upload className="w-4 h-4" />
+                     </button>
+                     <div className="h-5 w-px bg-border/40 max-sm:hidden" />
+                     <kbd className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded bg-muted/40 text-xs font-medium tracking-widest text-muted-foreground border border-border/30">
+                       <span className="text-base">⌘</span>K
+                     </kbd>
+                  </div>
+               </div>
+             </div>
+
+             <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleUpload}
+                accept=".pdf"
+                className="hidden"
+             />
+
+             {/* Recent Projects Minimal List */}
+             <div className="w-full max-w-xl mt-10 flex flex-col transition-opacity duration-500">
+                <div className="flex items-center justify-between mb-2 px-3">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Recent History</span>
+                  <button
+                    onClick={fetchProjects}
+                    className="p-1 text-muted-foreground/40 hover:text-foreground transition-colors"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                  </button>
+                </div>
+                
+                {loading ? (
+                  <div className="py-4 flex flex-col gap-2 px-3">
+                    <div className="h-8 bg-muted/20 rounded-lg w-full animate-pulse" />
+                    <div className="h-8 bg-muted/10 rounded-lg w-3/4 animate-pulse" />
+                  </div>
+                ) : projects.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground/30 text-sm font-medium">
+                    No vectors stored.
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-0.5">
+                    {projects
+                      .filter((p) => p.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                      .map((p) => (
+                      <div
+                        key={p.id}
+                        className="group relative flex items-center justify-between py-2 px-3 hover:bg-muted/30 rounded-lg transition-all cursor-pointer"
+                        onClick={() => selectProject(p.id)}
+                      >
+                        <div className="flex items-center gap-4 overflow-hidden pr-4 w-full">
+                          <span className="text-muted-foreground/60 text-[11px] w-12 shrink-0 tabular-nums">
+                            {new Date(p.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </span>
+                          <h3 className="font-medium text-sm text-foreground/70 group-hover:text-foreground transition-colors truncate">
+                            {p.title}
+                          </h3>
+                        </div>
+                        
+                        <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                           {p.status !== "complete" && (
+                              <span className={`text-[9px] uppercase font-bold tracking-widest ${p.status === "failed" ? "text-destructive" : "text-amber-500/80"}`}>
+                                {p.status}
+                              </span>
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeletingId(p.id);
+                              }}
+                              className="text-muted-foreground/40 hover:text-destructive transition-colors shrink-0"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                        
+                        {/* Inline Delete Confirmation */}
+                        {deletingId === p.id && (
+                          <div className="absolute inset-0 bg-card/95 backdrop-blur-sm flex items-center justify-end gap-4 z-10 px-4 rounded-lg border border-border/20">
+                            <span className="text-xs font-medium text-muted-foreground">Delete forever?</span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeletingId(null);
+                                }}
+                                className="text-xs px-2 py-1 text-muted-foreground hover:text-foreground font-medium transition-colors"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteProject(p.id);
+                                }}
+                                className="text-xs px-2 py-1 bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground rounded font-semibold transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+             </div>
+          </div>
         </div>
       )}
 
@@ -534,7 +580,7 @@ export default function ProjectDashboard() {
             style={{ width: `${graphWidthPercent}%` }}
           >
              {/* Header overlay - scoped to graph panel only */}
-            <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-2">
+            <div className="absolute top-[76px] left-4 z-10 flex flex-wrap items-center gap-2">
               <button
                 onClick={() => navigate("/")}
                 className="shrink-0 p-2 bg-card border border-border/50 shadow-sm rounded-full hover:bg-muted transition-colors"
