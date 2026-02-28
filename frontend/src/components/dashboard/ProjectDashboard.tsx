@@ -445,51 +445,52 @@ export default function ProjectDashboard() {
                   <RefreshCw className="w-4 h-4" />
                 </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col">
                 {projects.map((p) => (
                   <div
                     key={p.id}
-                    className="group relative bg-card/50 border border-border rounded-xl p-5 hover:border-border/80 hover:bg-card transition-all cursor-pointer"
+                    className="group relative flex items-center justify-between border-b border-border/30 py-4 hover:bg-muted/20 transition-all cursor-pointer px-4 -mx-4 rounded-xl"
                     onClick={() => selectProject(p.id)}
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-semibold text-foreground text-base pr-8 line-clamp-2">
+                    <div className="flex flex-col gap-1.5">
+                      <h3 className="font-medium text-foreground text-base">
                         {p.title}
                       </h3>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeletingId(p.id);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 text-neutral-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all shrink-0"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <span className="text-muted-foreground text-xs">
+                          {new Date(p.created_at).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                        <span
+                          className={`text-[10px] uppercase tracking-wider font-semibold ${
+                            p.status === "complete"
+                              ? "text-muted-foreground"
+                              : p.status === "failed"
+                              ? "text-destructive"
+                              : "text-amber-500/80"
+                          }`}
+                        >
+                          {p.status}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span
-                        className={`px-2.5 py-1 rounded-md text-xs font-medium ${
-                          p.status === "complete"
-                            ? "bg-muted text-foreground"
-                            : p.status === "failed"
-                            ? "bg-destructive/10 text-destructive"
-                            : "bg-amber-500/10 text-amber-500/80"
-                        }`}
-                      >
-                        {p.status}
-                      </span>
-                      <span className="text-muted-foreground text-xs">
-                        {new Date(p.created_at).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </span>
-                    </div>
+                    
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeletingId(p.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all shrink-0"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
 
                     {deletingId === p.id && (
-                      <div className="absolute inset-0 bg-background/95 rounded-xl flex items-center justify-center gap-3 z-10 border border-border/50">
+                      <div className="absolute inset-y-0 right-0 bg-background/95 flex items-center justify-end gap-3 z-10 px-4 rounded-xl">
                         <span className="text-sm font-medium text-destructive">
                           Delete this project?
                         </span>
@@ -498,9 +499,9 @@ export default function ProjectDashboard() {
                             e.stopPropagation();
                             handleDeleteProject(p.id);
                           }}
-                          className="px-3 py-1.5 bg-destructive/20 hover:bg-destructive/30 text-destructive rounded-lg text-sm font-medium transition-colors"
+                          className="px-3 py-1.5 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg text-sm font-medium transition-colors"
                         >
-                          Delete
+                          Confirm
                         </button>
                         <button
                           onClick={(e) => {
@@ -533,21 +534,23 @@ export default function ProjectDashboard() {
             style={{ width: `${graphWidthPercent}%` }}
           >
              {/* Header overlay - scoped to graph panel only */}
-            <div className="absolute top-6 left-6 z-10 flex items-center gap-4">
+            <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-2">
               <button
                 onClick={() => navigate("/")}
-                className="p-2 bg-card border border-border/50 rounded-full hover:bg-muted transition-colors"
+                className="shrink-0 p-2 bg-card border border-border/50 shadow-sm rounded-full hover:bg-muted transition-colors"
+                title="Back to Dashboard"
               >
                 <ArrowLeft className="w-4 h-4 text-muted-foreground" />
               </button>
-              <div className="px-4 py-2 bg-card border border-border/50 rounded-full flex items-center gap-3">
+              
+              <div className="shrink-0 px-3 py-1.5 bg-card border border-border/50 shadow-sm rounded-full flex items-center gap-2">
                 {editingTitle ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <input
                       type="text"
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
-                      className="bg-muted border border-border rounded px-2 py-0.5 text-xs text-foreground outline-none focus:border-foreground font-sans normal-case"
+                      className="w-32 bg-muted border border-border rounded px-2 py-0.5 text-xs text-foreground outline-none focus:border-foreground font-sans normal-case"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleRename();
@@ -569,7 +572,7 @@ export default function ProjectDashboard() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 group">
-                    <span className="text-xs font-bold text-foreground tracking-wider">
+                    <span className="text-xs font-semibold text-foreground tracking-wide">
                       {currentProject?.title}
                     </span>
                     <button
@@ -583,59 +586,62 @@ export default function ProjectDashboard() {
                     </button>
                   </div>
                 )}
-                {projectGraph && (
-                  <>
-                    <span className="w-1 h-1 bg-border rounded-full" />
-                    <span className="text-xs text-muted-foreground">
-                      {projectGraph.nodes.length} Nodes
+              </div>
+
+              {projectGraph && (
+                <>
+                  <div className="shrink-0 px-3 py-1 bg-card border border-border/50 shadow-sm rounded-full flex items-center gap-3">
+                    <span className="text-[11px] font-medium text-muted-foreground">
+                      {projectGraph.nodes.length} nodes
                     </span>
-                    <span className="w-1 h-1 bg-border rounded-full" />
                     
                     {/* Obsidian Export Actions */}
-                    <div className="flex items-center gap-2">
-                       {exportStatus?.status === "complete" && (
-                         <button
-                           onClick={handleDownloadVault}
-                           className="flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 text-foreground text-xs font-medium rounded-lg border border-border/50 transition-all animate-pulse"
-                         >
-                           <FileDown className="w-3 h-3" />
-                           Download .Zip
-                         </button>
-                       )}
-                       
-                       <button
-                         onClick={handleExport}
-                         disabled={exportLoading && (!exportStatus || exportStatus.status === "pending")}
-                         className="flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground text-xs font-medium rounded-lg border border-border transition-all"
-                         title={exportStatus?.status === "generating" ? "Click to force retry if stuck" : "Export this graph to Obsidian"}
-                       >
-                         <Sparkles className={`w-3 h-3 ${exportLoading ? "animate-spin text-muted-foreground" : "text-foreground"}`} />
-                         {exportStatus?.status === "generating" 
-                           ? `Exporting ${exportStatus.progress || 0}%`
-                           : exportStatus?.status === "complete"
-                             ? "Update Vault"
-                             : exportStatus?.status === "failed"
-                               ? "Retry Export"
-                               : "Export to Obsidian"}
-                       </button>
+                    <div className="flex items-center gap-1.5 pl-3 border-l border-border/50">
+                      {exportStatus?.status === "complete" && (
+                        <button
+                          onClick={handleDownloadVault}
+                          className="flex items-center gap-1.5 px-2.5 py-1 bg-muted hover:bg-muted/80 text-foreground text-[11px] font-medium rounded-md border border-border/50 transition-all"
+                        >
+                          <FileDown className="w-3 h-3" />
+                          download
+                        </button>
+                      )}
+                      
+                      <button
+                        onClick={handleExport}
+                        disabled={exportLoading && (!exportStatus || exportStatus.status === "pending")}
+                        className="flex items-center gap-1.5 px-2.5 py-1 bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground text-[11px] font-medium rounded-md border border-border transition-all"
+                        title={exportStatus?.status === "generating" ? "Click to force retry if stuck" : "Export this graph to Obsidian"}
+                      >
+                        <Sparkles className={`w-3 h-3 ${exportLoading ? "animate-spin text-muted-foreground" : "text-foreground"}`} />
+                        {exportStatus?.status === "generating" 
+                          ? `exporting ${exportStatus.progress || 0}%`
+                          : exportStatus?.status === "complete"
+                            ? "update"
+                            : exportStatus?.status === "failed"
+                              ? "retry"
+                              : "export"}
+                      </button>
                     </div>
-                  </>
-                )}
-              </div>
+                  </div>
+                  
+                  {/* Search Bar */}
+                  <div className="shrink-0">
+                    <SearchBar 
+                      data={projectGraph} 
+                      onSelectNode={(id) => {
+                        setSelectedNodeId(id);
+                        setFocusNodeId(id);
+                      }}
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Graph Section - fills panel, explicit bounds for canvas */}
-            <div className="flex-1 min-h-0 relative w-full overflow-hidden">
-              {projectGraph && (
-                <SearchBar 
-                  data={projectGraph} 
-                  onSelectNode={(id) => {
-                    setSelectedNodeId(id);
-                    setFocusNodeId(id);
-                  }}
-                />
-              )}
-              {graphLoading ? (
+             {/* Graph Section - fills panel, explicit bounds for canvas */}
+             <div className="flex-1 min-h-0 relative w-full overflow-hidden">
+               {graphLoading ? (
                 <div className="w-full h-full flex items-center justify-center">
                   <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                 </div>

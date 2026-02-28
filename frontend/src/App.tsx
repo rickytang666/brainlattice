@@ -4,7 +4,7 @@ import { SignInButton, UserButton, SignedIn, SignedOut } from "@clerk/clerk-reac
 import GraphScratchpad from "./components/scratchpad/GraphScratchpad";
 import ProjectDashboard from "./components/dashboard/ProjectDashboard";
 import ConfigModal from "./components/dashboard/ConfigModal";
-import { LayoutDashboard, TestTube, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { useAuthSync } from "./hooks/useAuthSync";
 import { Logo } from "./components/Logo";
@@ -37,22 +37,20 @@ function App() {
             BrainLattice
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 bg-muted border border-border rounded-lg p-1 mr-2">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 mr-2">
             <NavLink
               to={getDashboardPath()}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded text-sm font-medium transition-colors ${isDashboard ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${isDashboard ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
-              <LayoutDashboard className="w-3.5 h-3.5" />
               Dashboard
             </NavLink>
             <NavLink
               to="/scratchpad"
               className={({ isActive }) =>
-                `flex items-center gap-2 px-3 py-1.5 rounded text-sm font-medium transition-colors ${isActive ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"}`
+                `flex items-center gap-1.5 text-sm font-medium transition-colors ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`
               }
             >
-              <TestTube className="w-3.5 h-3.5" />
               Scratchpad
             </NavLink>
           </div>

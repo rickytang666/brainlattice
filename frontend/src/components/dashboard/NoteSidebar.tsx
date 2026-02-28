@@ -14,7 +14,6 @@ import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import { Loader2, X, BookOpen, Hash, RefreshCw } from "lucide-react";
 import { useAuth } from "@clerk/clerk-react";
-import { motion } from "framer-motion";
 import "katex/dist/katex.min.css";
 import { API_BASE, apiFetch } from "../../config";
 
@@ -164,77 +163,24 @@ export default function NoteSidebar({
       <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-muted">
         {!conceptId ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-6">
-            <BookOpen className="w-10 h-10 text-muted-foreground mb-4" />
-            <p className="text-sm font-medium text-muted-foreground mb-1">
-              Select a node
+            <p className="text-sm font-medium text-foreground mb-1">
+              Select a concept
             </p>
-            <p className="text-xs text-muted-foreground/70 leading-relaxed">
-              Click a node in the graph or cmd+click a concept link to view and
-              focus.
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Click a node in the graph to view its note.
             </p>
           </div>
         ) : loading ? (
-          <div className="h-full flex flex-col p-2 space-y-6">
-            <div className="space-y-3">
-              <motion.div
-                initial={{ opacity: 0.3 }}
-                animate={{ opacity: 1 }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 1.2,
-                  repeatType: "reverse",
-                }}
-                className="h-6 bg-muted/50 rounded w-3/4"
-              />
-              <motion.div
-                initial={{ opacity: 0.3 }}
-                animate={{ opacity: 1 }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 1.2,
-                  delay: 0.2,
-                  repeatType: "reverse",
-                }}
-                className="h-4 bg-muted/30 rounded w-1/2"
-              />
-            </div>
-
-            <div className="space-y-2 pt-4">
-              {[...Array(6)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0.2 }}
-                  animate={{ opacity: 0.7 }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 1.5,
-                    delay: i * 0.1,
-                    repeatType: "reverse",
-                  }}
-                  className="h-3 bg-muted/40 rounded w-full"
-                  style={{ width: `${100 - (i % 3) * 10}%` }}
-                />
-              ))}
-            </div>
-
-            <div className="space-y-2 pt-6">
-              {[...Array(4)].map((_, i) => (
-                <motion.div
-                  key={`block2-${i}`}
-                  initial={{ opacity: 0.2 }}
-                  animate={{ opacity: 0.7 }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 1.5,
-                    delay: 0.5 + i * 0.1,
-                    repeatType: "reverse",
-                  }}
-                  className="h-3 bg-muted/40 rounded w-full"
-                  style={{ width: `${95 - (i % 2) * 15}%` }}
-                />
-              ))}
-            </div>
-
+          <div className="h-full flex flex-col p-6 space-y-4 animate-pulse">
+            <div className="h-5 bg-muted/50 rounded w-1/3 mb-4" />
+            <div className="h-3 bg-muted/40 rounded w-full" />
+            <div className="h-3 bg-muted/30 rounded w-[95%]" />
+            <div className="h-3 bg-muted/30 rounded w-[90%]" />
+            <div className="h-3 bg-muted/30 rounded w-[85%]" />
+            <div className="h-3 bg-muted/40 rounded w-full mt-6" />
+            <div className="h-3 bg-muted/30 rounded w-[95%]" />
+            <div className="h-3 bg-muted/30 rounded w-[80%]" />
+            
             <div className="flex-1 flex flex-col justify-end pb-8">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Loader2 className="w-4 h-4 animate-spin" />
