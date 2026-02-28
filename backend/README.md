@@ -12,7 +12,7 @@ fastapi-based extraction engine. ingests pdfs, chunks text, extracts knowledge g
   - **option 2 (serverless postgres):** use a managed postgres database like [Neon](https://neon.tech). create a project, grab your pooled connection string, and set it.
     - `DATABASE_URL=postgres://user:password@host/neondb?sslmode=require`
 
-**note:** no AI API keys are required in the backend environment. all generation services strictly use the keys provided by the client in the request headers (BYOK).
+**note:** no AI API keys are required in the backend environment _for the web app_. the frontend web app strictly uses keys provided by the client in the request headers (BYOK). **however**, if you want to run the local test script (`test_local_pipeline.py`), you must provide `GEMINI_API_KEY` and `OPENAI_API_KEY` in `backend/.env` since the CLI script does not have access to the browser's local storage.
 
 other keys (R2, Upstash) are optional for local dev.
 

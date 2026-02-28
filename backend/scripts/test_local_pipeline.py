@@ -3,10 +3,14 @@ import time
 import sys
 import json
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_URL = "http://localhost:8000/api"
 
-def run_test(pdf_path: str):
+def run_test(pdf_path: str, gemini_key: str = None, openai_key: str = None):
     path = Path(pdf_path)
     if not path.exists():
         print(f"error: could not find {pdf_path}")
@@ -14,10 +18,20 @@ def run_test(pdf_path: str):
 
     print(f"uploading {path.name} to local backend...")
     
+    headers = {
+        "X-User-Id": "local-test-user"
+    }
+    if gemini_key:
+        headers["X-Gemini-API-Key"] = gemini_key
+    if openai_key:
+        headers["X-OpenAI-API-Key"] = openai_key
+        
     with open(path, "rb") as f:
         files = {"file": (path.name, f, "application/pdf")}
         try:
-            res = requests.post(f"{BASE_URL}/ingest/upload", files=files)
+            res = requests.post(f"{BASE_URL}/ingest/upload", files=files, headers=headers)
+            if res.status_code == 422:
+                print(f"validation error: {res.text}")
             res.raise_for_status()
         except requests.exceptions.ConnectionError:
             print("error: is the backend running? run `uvicorn main:app` in another terminal.")
@@ -77,6 +91,8 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Test local PDF ingestion pipeline.")
     parser.add_argument("--file", default="data/math119.pdf", help="Path to PDF file to test.")
+    parser.add_argument("--gemini-key", default=os.getenv("GEMINI_API_KEY"), help="Optional Gemini API key")
+    parser.add_argument("--openai-key", default=os.getenv("OPENAI_API_KEY"), help="Optional OpenAI API key")
     args = parser.parse_args()
     
-    run_test(args.file)
+    run_test(args.file, args.gemini_key, args.openai_key)
