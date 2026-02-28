@@ -357,13 +357,9 @@ export default function ProjectDashboard() {
 
               {projectGraph && (
                 <>
-                  <div className="shrink-0 px-3 py-1 bg-card border border-border/50 shadow-sm rounded-full flex items-center gap-3">
-                    <span className="text-[11px] font-medium text-muted-foreground">
-                      {projectGraph.nodes.length} nodes
-                    </span>
-                    
+                  <div className="shrink-0 px-2 py-1 bg-card border border-border/50 shadow-sm rounded-full flex items-center gap-3">
                     {/* Obsidian Export Actions */}
-                    <div className="flex items-center gap-1.5 pl-3 border-l border-border/50">
+                    <div className="flex items-center gap-1.5">
                       {exportStatus && (
                         <button
                           onClick={handleDownloadVault}
@@ -428,6 +424,13 @@ export default function ProjectDashboard() {
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                   Failed to load graph.
+                </div>
+              )}
+
+              {/* overlay info */}
+              {projectGraph && (
+                <div className="absolute bottom-6 right-6 flex items-center gap-4 text-xs font-medium text-muted-foreground bg-popover px-4 py-2 rounded-full border border-border shadow-sm z-10 pointer-events-none">
+                  <span>{projectGraph.nodes.length} concepts</span>
                 </div>
               )}
             </div>

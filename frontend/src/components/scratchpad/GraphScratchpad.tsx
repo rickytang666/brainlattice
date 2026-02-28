@@ -210,9 +210,7 @@ Example:
         {/* Overlay Info */}
         {graphData && (
           <div className="absolute bottom-6 right-6 flex items-center gap-4 text-xs font-medium text-muted-foreground bg-popover px-4 py-2 rounded-full border border-border shadow-sm">
-            <span>{graphData.nodes.length} Concepts</span>
-            <span className="w-1 h-1 bg-muted-foreground rounded-full" />
-            <span>Interactive Node Focus Active</span>
+            <span>{graphData.nodes.length} concepts</span>
           </div>
         )}
 

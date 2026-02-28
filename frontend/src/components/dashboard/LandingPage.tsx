@@ -28,10 +28,19 @@ export default function LandingPage() {
 
   // typewritter effect
   const [heroText, setHeroText] = useState("");
-  const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const [isTypingComplete, setIsTypingComplete] = useState(() => {
+    return !!sessionStorage.getItem("heroTyped");
+  });
+  const [isFirstLoad] = useState(() => !sessionStorage.getItem("heroTyped"));
   const fullText = "turn pdfs into living knowledge networks.";
   
   useEffect(() => {
+    if (!isFirstLoad) {
+      setHeroText(fullText);
+      setIsTypingComplete(true);
+      return;
+    }
+
     let index = 0;
     setHeroText(""); // Reset on mount
     setIsTypingComplete(false);
@@ -40,9 +49,10 @@ export default function LandingPage() {
       index++;
       if (index === fullText.length) {
         clearInterval(intervalId);
-        setTimeout(() => setIsTypingComplete(true), 300); // Slight pause before dropping the badge
+        sessionStorage.setItem("heroTyped", "true");
+        setTimeout(() => setIsTypingComplete(true), 300); // slight pause before dropping the badge
       }
-    }, 35); // Typing speed
+    }, 35); // typing speed
     
     return () => clearInterval(intervalId);
   }, []);
@@ -169,7 +179,7 @@ export default function LandingPage() {
            style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '48px 48px' }}
       />
       
-      <div className="z-10 w-full max-w-2xl px-6 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-1000">
+      <div className={`z-10 w-full max-w-2xl px-6 flex flex-col items-center ${isFirstLoad ? "animate-in fade-in slide-in-from-bottom-4 duration-1000" : ""}`}>
          {/* Hero Typewriter & Badge */}
          <div className="mb-8 flex flex-col items-center justify-center min-h-[60px]">
             <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground/90 font-serif lowercase text-center">
@@ -177,15 +187,15 @@ export default function LandingPage() {
             </h1>
             
             <div 
-              className={`mt-3 flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/50 bg-muted/30 transition-all duration-700 ${
+              className={`mt-3 flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/50 bg-muted/30 ${isFirstLoad ? "transition-all duration-700" : ""} ${
                 isTypingComplete ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"
               }`}
             >
-              <div className={`w-3.5 h-3.5 transition-colors duration-1000 delay-300 ${isTypingComplete ? "text-obsidian" : "text-muted-foreground"}`}>
+              <div className={`w-4 h-4 ${isFirstLoad ? "transition-colors duration-1000 delay-300" : ""} ${isTypingComplete ? "text-obsidian" : "text-muted-foreground"}`}>
                 <ObsidianLogo />
               </div>
-              <span className="text-[10px] font-medium tracking-wide text-muted-foreground/80">
-                Native Obsidian Vault Export
+              <span className="text-xs font-medium tracking-wide text-muted-foreground/80">
+                native obsidian vault export
               </span>
             </div>
          </div>
