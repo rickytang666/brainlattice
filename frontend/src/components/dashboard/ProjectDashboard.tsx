@@ -13,7 +13,7 @@ import {
   FileDown,
   Sparkles,
 } from "lucide-react";
-import { useAuth } from "@clerk/clerk-react";
+import { useSafeAuth } from "../../hooks/useSafeAuth";
 
 import { API_BASE, apiFetch } from "../../config";
 
@@ -26,7 +26,7 @@ interface Project {
 }
 
 export default function ProjectDashboard() {
-  const { userId } = useAuth();
+  const { userId } = useSafeAuth();
   const { projectId: projectIdFromUrl } = useParams<{ projectId?: string }>();
   const navigate = useNavigate();
 

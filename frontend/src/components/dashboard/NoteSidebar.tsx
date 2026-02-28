@@ -13,7 +13,7 @@ import remarkMath from "remark-math";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import { Loader2, X, BookOpen, Hash, RefreshCw } from "lucide-react";
-import { useAuth } from "@clerk/clerk-react";
+import { useSafeAuth } from "../../hooks/useSafeAuth";
 import "katex/dist/katex.min.css";
 import { API_BASE, apiFetch } from "../../config";
 
@@ -34,7 +34,7 @@ export default function NoteSidebar({
   onClose,
   onNodeSelect,
 }: NoteSidebarProps) {
-  const { userId } = useAuth();
+  const { userId } = useSafeAuth();
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

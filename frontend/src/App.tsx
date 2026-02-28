@@ -63,18 +63,20 @@ function App() {
             Scratchpad
           </NavLink>
 
-          <div className="flex items-center border-l border-border/50 pl-4 ml-2">
-            <SignedOut>
-              <SignInButton mode="modal">
-                <button className="px-4 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground border border-border/50 hover:border-border hover:bg-muted/30 rounded-full transition-all tracking-wide">
-                  Sign In
-                </button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <UserButton appearance={{ elements: { avatarBox: "w-7 h-7 rounded border border-border/50 hover:border-primary/50 transition-colors" } }} />
-            </SignedIn>
-          </div>
+          {import.meta.env.VITE_CLERK_PUBLISHABLE_KEY && (
+            <div className="flex items-center border-l border-border/50 pl-4 ml-2">
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button className="px-4 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground border border-border/50 hover:border-border hover:bg-muted/30 rounded-full transition-all tracking-wide">
+                    Sign In
+                  </button>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <UserButton appearance={{ elements: { avatarBox: "w-7 h-7 rounded border border-border/50 hover:border-primary/50 transition-colors" } }} />
+              </SignedIn>
+            </div>
+          )}
         </div>
       </div>
 

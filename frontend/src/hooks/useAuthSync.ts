@@ -1,9 +1,9 @@
 import { useEffect } from "react";
-import { useAuth } from "@clerk/clerk-react";
+import { useSafeAuth } from "./useSafeAuth";
 import { API_BASE, SESSION_ID_KEY, apiFetch } from "../config";
 
 export function useAuthSync() {
-  const { userId, isLoaded } = useAuth();
+  const { userId, isLoaded } = useSafeAuth();
 
   useEffect(() => {
     if (!isLoaded || !userId) return;

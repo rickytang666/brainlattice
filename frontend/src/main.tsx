@@ -9,15 +9,12 @@ import { dark } from '@clerk/themes'
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Missing Publishable Key")
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
 function ThemedClerkProvider({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
   
   const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  if (!PUBLISHABLE_KEY) return <>{children}</>;
 
   return (
     <ClerkProvider 

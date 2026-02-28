@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Upload, RefreshCw, Trash2, Search } from "lucide-react";
-import { useAuth } from "@clerk/clerk-react";
+import { useSafeAuth } from "../../hooks/useSafeAuth";
 import { API_BASE, apiFetch } from "../../config";
 
 interface Project {
@@ -12,7 +12,7 @@ interface Project {
 }
 
 export default function LandingPage() {
-  const { userId } = useAuth();
+  const { userId } = useSafeAuth();
   const navigate = useNavigate();
 
   const [projects, setProjects] = useState<Project[]>([]);
@@ -216,7 +216,7 @@ export default function LandingPage() {
               </div>
             ) : projects.length === 0 ? (
               <div className="py-8 text-center text-muted-foreground/30 text-sm font-medium">
-                No vectors stored.
+                No projects yet.
               </div>
             ) : (
               <div className="flex flex-col gap-0.5">
