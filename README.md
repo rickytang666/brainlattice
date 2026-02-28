@@ -4,7 +4,7 @@
 
 <br>
 
-**PDFs → Living Knowledge Graphs**
+**PDFs → Living Knowledge Networks**
 
 ![Obsidian Support](https://img.shields.io/badge/Obsidian-Support-101010?logo=obsidian&logoColor=7C3AED&labelColor=101010)
 
