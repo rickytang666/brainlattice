@@ -5,14 +5,14 @@ import NoteSidebar from "./NoteSidebar";
 import SearchBar from "./SearchBar";
 import type { GraphData } from "../../types/graph";
 import {
-  Loader2,
-  ArrowLeft,
-  Edit2,
-  Check,
-  X,
-  FileDown,
-  Sparkles,
-} from "lucide-react";
+  IconLoader2,
+  IconArrowLeft,
+  IconPencil,
+  IconCheck,
+  IconX,
+  IconDownload,
+} from "@tabler/icons-react";
+import { ObsidianLogo } from "../Logo";
 import { useSafeAuth } from "../../hooks/useSafeAuth";
 
 import { API_BASE, apiFetch } from "../../config";
@@ -78,7 +78,12 @@ export default function ProjectDashboard() {
   const handleExport = async () => {
     if (!projectIdFromUrl) return;
     setExportLoading(true);
-    setExportStatus({ status: "pending", progress: 0, message: "Exporting..." });
+    setExportStatus(prev => ({ 
+      status: "pending", 
+      progress: 0, 
+      message: "Exporting...",
+      download_url: prev?.download_url 
+    }));
 
     try {
       const res = await apiFetch(
@@ -265,7 +270,7 @@ export default function ProjectDashboard() {
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-xl px-4 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-4">
             <div className="bg-red-500/20 p-2 rounded-lg">
-              <X className="w-5 h-5 text-red-400" />
+              <IconX className="w-5 h-5 text-red-400" />
             </div>
             <div className="flex-1 pt-0.5">
               <h4 className="text-sm font-semibold text-red-200 mb-1">Attention Required</h4>
@@ -277,7 +282,7 @@ export default function ProjectDashboard() {
               onClick={() => setError(null)}
               className="p-1 text-red-400/50 hover:text-red-200 hover:bg-red-500/20 rounded transition-colors"
             >
-              <X className="w-4 h-4" />
+              <IconX className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -302,7 +307,7 @@ export default function ProjectDashboard() {
                 className="shrink-0 p-2 bg-card border border-border/50 shadow-sm rounded-full hover:bg-muted transition-colors"
                 title="Back to Dashboard"
               >
-                <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+                <IconArrowLeft className="w-4 h-4 text-muted-foreground" />
               </button>
               
               <div className="shrink-0 px-3 py-1.5 bg-card border border-border/50 shadow-sm rounded-full flex items-center gap-2">
@@ -323,13 +328,13 @@ export default function ProjectDashboard() {
                       onClick={handleRename}
                       className="text-foreground hover:text-muted-foreground"
                     >
-                      <Check className="w-3.5 h-3.5" />
+                      <IconCheck className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => setEditingTitle(false)}
                       className="text-muted-foreground hover:text-destructive"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <IconX className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ) : (
@@ -344,7 +349,7 @@ export default function ProjectDashboard() {
                       }}
                       className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
                     >
-                      <Edit2 className="w-3 h-3" />
+                      <IconPencil className="w-3 h-3" />
                     </button>
                   </div>
                 )}
@@ -359,12 +364,13 @@ export default function ProjectDashboard() {
                     
                     {/* Obsidian Export Actions */}
                     <div className="flex items-center gap-1.5 pl-3 border-l border-border/50">
-                      {exportStatus?.status === "complete" && (
+                      {exportStatus && (
                         <button
                           onClick={handleDownloadVault}
-                          className="flex items-center gap-1.5 px-2.5 py-1 bg-muted hover:bg-muted/80 text-foreground text-[11px] font-medium rounded-md border border-border/50 transition-all"
+                          disabled={exportLoading || exportStatus?.status === "generating"}
+                          className="flex items-center gap-1.5 px-2.5 py-1 bg-muted text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed text-[11px] font-medium rounded-md border border-border/50 transition-all"
                         >
-                          <FileDown className="w-3 h-3" />
+                          <IconDownload className="w-3 h-3" />
                           download
                         </button>
                       )}
@@ -372,12 +378,14 @@ export default function ProjectDashboard() {
                       <button
                         onClick={handleExport}
                         disabled={exportLoading && (!exportStatus || exportStatus.status === "pending")}
-                        className="flex items-center gap-1.5 px-2.5 py-1 bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground text-[11px] font-medium rounded-md border border-border transition-all"
+                        className={`flex items-center gap-1.5 px-2.5 py-1 bg-muted text-muted-foreground hover:text-obsidian text-[11px] font-medium rounded-md border border-border transition-all group ${
+                          (exportLoading || exportStatus?.status === "generating") ? "animate-pulse border-obsidian/30 text-obsidian" : ""
+                        }`}
                         title={exportStatus?.status === "generating" ? "Click to force retry if stuck" : "Export this graph to Obsidian"}
                       >
-                        <Sparkles className={`w-3 h-3 ${exportLoading ? "animate-spin text-muted-foreground" : "text-foreground"}`} />
-                        {exportStatus?.status === "generating" 
-                          ? `exporting ${exportStatus.progress || 0}%`
+                        <ObsidianLogo className="w-3.5 h-3.5" />
+                        {(exportStatus?.status === "generating" || exportStatus?.status === "pending")
+                          ? (exportStatus?.download_url ? "updating" : `generating ${exportStatus?.progress || 0}%`)
                           : exportStatus?.status === "complete"
                             ? "update"
                             : exportStatus?.status === "failed"
@@ -405,7 +413,7 @@ export default function ProjectDashboard() {
              <div className="flex-1 min-h-0 relative w-full overflow-hidden">
                {graphLoading ? (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                  <IconLoader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                 </div>
               ) : projectGraph ? (
                 <KnowledgeGraph

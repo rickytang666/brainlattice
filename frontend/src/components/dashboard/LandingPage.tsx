@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Upload, RefreshCw, Trash2, Search } from "lucide-react";
+import { IconLoader2, IconUpload, IconRefresh, IconTrash, IconSearch } from "@tabler/icons-react";
 import { useSafeAuth } from "../../hooks/useSafeAuth";
 import { API_BASE, apiFetch } from "../../config";
 
@@ -156,7 +156,7 @@ export default function LandingPage() {
            {/* The actual input container */}
            <div className="relative flex items-center w-full bg-card/60 backdrop-blur-2xl border border-border/40 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.1)] rounded-[20px] overflow-hidden transition-all duration-500 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:bg-primary/50 after:-translate-x-full after:transition-transform after:duration-500 after:ease-out group-focus-within:after:translate-x-0 group-focus-within:bg-card/80">
               <div className="pl-6 pr-3 text-muted-foreground group-focus-within:text-primary transition-colors duration-500">
-                {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5 opacity-70" />}
+                {uploading ? <IconLoader2 className="w-5 h-5 animate-spin" /> : <IconSearch className="w-5 h-5 opacity-70" />}
               </div>
               <input
                 ref={searchInputRef}
@@ -183,7 +183,7 @@ export default function LandingPage() {
                    className="p-2 rounded-xl bg-primary/5 text-primary/80 hover:text-primary hover:bg-primary/10 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                    title="Upload PDF"
                  >
-                    <Upload className="w-4 h-4" />
+                     <IconUpload className="w-4 h-4" />
                  </button>
                  <div className="h-5 w-px bg-border/40 max-sm:hidden" />
                  <kbd className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded bg-muted/40 text-xs font-medium tracking-widest text-muted-foreground border border-border/30">
@@ -209,7 +209,7 @@ export default function LandingPage() {
                 onClick={fetchProjects}
                 className="p-1 text-muted-foreground/40 hover:text-foreground transition-colors"
               >
-                <RefreshCw className="w-3 h-3" />
+                <IconRefresh className="w-3 h-3" />
               </button>
             </div>
             
@@ -251,7 +251,7 @@ export default function LandingPage() {
                               </>
                             ) : (
                               <>
-                                <Loader2 className="w-3 h-3 animate-spin text-muted-foreground/50" />
+                                <IconLoader2 className="w-3 h-3 animate-spin text-muted-foreground/50" />
                                 <div className="flex flex-col min-w-[120px] justify-center ml-1">
                                   <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground/80 mb-1.5">
                                     <span>{p.status === "processing" ? "synthesizing" : p.status}</span>
@@ -277,7 +277,7 @@ export default function LandingPage() {
                             }}
                             className="text-muted-foreground/30 hover:text-destructive transition-colors shrink-0 opacity-0 group-hover:opacity-100"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <IconTrash className="w-3.5 h-3.5" />
                           </button>
                         )}
                     </div>

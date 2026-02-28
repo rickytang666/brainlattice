@@ -12,7 +12,7 @@ import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
-import { Loader2, X, BookOpen, Hash, RefreshCw } from "lucide-react";
+import { IconLoader2, IconX, IconBook, IconHash, IconRefresh } from "@tabler/icons-react";
 import { useSafeAuth } from "../../hooks/useSafeAuth";
 import "katex/dist/katex.min.css";
 import { API_BASE, apiFetch } from "../../config";
@@ -131,9 +131,9 @@ export default function NoteSidebar({
       {/* Header */}
       <div className="p-4 border-b border-border bg-card flex items-center justify-between">
         <div className="flex items-center gap-2 text-foreground">
-          <BookOpen className="w-4 h-4 flex-shrink-0" />
+          <IconBook className="w-4 h-4 flex-shrink-0" />
           <h3 className="text-sm font-bold truncate max-w-[300px]">
-            {decodeConceptId(conceptId) || "Note"}
+            {decodeConceptId(conceptId) || "note"}
           </h3>
         </div>
         <div className="flex items-center gap-1">
@@ -144,7 +144,7 @@ export default function NoteSidebar({
               title="Regenerate note"
               className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <RefreshCw
+              <IconRefresh
                 className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
               />
             </button>
@@ -154,7 +154,7 @@ export default function NoteSidebar({
             className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
             title="Clear selection"
           >
-            <X className="w-4 h-4" />
+            <IconX className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -164,10 +164,10 @@ export default function NoteSidebar({
         {!conceptId ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-6">
             <p className="text-sm font-medium text-foreground mb-1">
-              Select a concept
+              select a concept
             </p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Click a node in the graph to view its note.
+              click a node in the graph to view its note.
             </p>
           </div>
         ) : loading ? (
@@ -183,7 +183,7 @@ export default function NoteSidebar({
             
             <div className="flex-1 flex flex-col justify-end pb-8">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <IconLoader2 className="w-4 h-4 animate-spin" />
                 <span className="text-xs font-medium">
                   synthesizing notes...
                 </span>
@@ -298,9 +298,9 @@ export default function NoteSidebar({
             {aliases.length > 0 && (
               <div className="mt-8 pt-6 border-t border-border">
                 <div className="flex items-center gap-2 text-muted-foreground mb-3">
-                  <Hash className="w-3 h-3" />
+                  <IconHash className="w-3 h-3" />
                   <span className="text-xs font-medium">
-                    Aliases
+                    aliases
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">

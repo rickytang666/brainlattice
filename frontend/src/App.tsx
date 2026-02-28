@@ -5,7 +5,7 @@ import GraphScratchpad from "./components/scratchpad/GraphScratchpad";
 import ProjectDashboard from "./components/dashboard/ProjectDashboard";
 import LandingPage from "./components/dashboard/LandingPage";
 import ConfigModal from "./components/dashboard/ConfigModal";
-import { Settings } from "lucide-react";
+import { IconSettings } from "@tabler/icons-react";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { useAuthSync } from "./hooks/useAuthSync";
 import { Logo } from "./components/Logo";
@@ -50,7 +50,7 @@ function App() {
             className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors"
             title="API Settings"
           >
-            <Settings className="w-4 h-4" />
+            <IconSettings className="w-5 h-5" />
           </button>
 
           <NavLink

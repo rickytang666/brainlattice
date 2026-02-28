@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import Fuse from "fuse.js";
-import { Search, X } from "lucide-react";
+import { IconSearch, IconX } from "@tabler/icons-react";
 import type { GraphData } from "../../types/graph";
 
 interface SearchBarProps {
@@ -53,7 +53,7 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
     >
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <Search className="h-4 w-4 text-muted-foreground" />
+          <IconSearch className="h-4 w-4 text-muted-foreground" />
         </div>
         <input
           type="text"
@@ -104,7 +104,7 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
             }}
             className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
           >
-            <X className="h-4 w-4" />
+            <IconX className="h-4 w-4" />
           </button>
         )}
       </div>
