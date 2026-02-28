@@ -8,11 +8,12 @@ interface Project {
   id: string;
   title: string;
   status: string;
+  progress?: number;
   created_at: string;
 }
 
 export default function LandingPage() {
-  const { userId } = useSafeAuth();
+  const { userId, isLoaded } = useSafeAuth();
   const navigate = useNavigate();
 
   const [projects, setProjects] = useState<Project[]>([]);
@@ -37,6 +38,7 @@ export default function LandingPage() {
   }, []);
 
   const fetchProjects = useCallback(() => {
+    if (!isLoaded) return;
     apiFetch(`${API_BASE}/projects/list`, undefined, userId)
       .then((res) => res.json())
       .then((data) => {
@@ -47,20 +49,22 @@ export default function LandingPage() {
         console.error(err);
         setLoading(false);
       });
-  }, [userId]);
+  }, [userId, isLoaded]);
 
   useEffect(() => {
+    if (!isLoaded) return;
     fetchProjects();
     const interval = setInterval(() => {
       setProjects((prev) => {
-        if (prev.some((p) => p.status === "processing")) {
+        // also fetch if we are actively uploading, in case the backend hasn't saved the project yet
+        if (uploading || prev.some((p) => p.status === "processing")) {
           fetchProjects();
         }
         return prev;
       });
     }, 2000);
     return () => clearInterval(interval);
-  }, [fetchProjects]);
+  }, [fetchProjects, isLoaded, uploading]);
 
   const selectProject = (id: string) => {
     navigate(`/${id}`);
@@ -237,21 +241,45 @@ export default function LandingPage() {
                       </h3>
                     </div>
                     
-                    <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                       {p.status !== "complete" && (
-                          <span className={`text-[9px] uppercase font-bold tracking-widest ${p.status === "failed" ? "text-destructive" : "text-amber-500/80"}`}>
-                            {p.status}
-                          </span>
+                    <div className="flex items-center gap-4">
+                       {p.status !== "complete" ? (
+                          <div className="flex items-center gap-2.5 px-3 py-1 bg-muted/20 rounded-full border border-border/10">
+                            {p.status === "failed" ? (
+                              <>
+                                <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+                                <span className="text-[10px] uppercase font-bold tracking-widest text-destructive">Failed</span>
+                              </>
+                            ) : (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin text-muted-foreground/50" />
+                                <div className="flex flex-col min-w-[120px] justify-center ml-1">
+                                  <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground/80 mb-1.5">
+                                    <span>{p.status === "processing" ? "synthesizing" : p.status}</span>
+                                    {p.progress !== undefined && <span className="tabular-nums">{p.progress}%</span>}
+                                  </div>
+                                  {p.progress !== undefined && (
+                                    <div className="h-[2px] w-full bg-border/50 overflow-hidden rounded-full">
+                                      <div 
+                                        className="h-full bg-foreground/40 transition-all duration-500 ease-out rounded-full" 
+                                        style={{ width: `${p.progress}%` }} 
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingId(p.id);
+                            }}
+                            className="text-muted-foreground/30 hover:text-destructive transition-colors shrink-0 opacity-0 group-hover:opacity-100"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeletingId(p.id);
-                          }}
-                          className="text-muted-foreground/40 hover:text-destructive transition-colors shrink-0"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
                     </div>
                     
                     {/* Inline Delete Confirmation */}
