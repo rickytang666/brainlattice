@@ -1,6 +1,7 @@
 import { NavLink, Routes, Route, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { SignInButton, UserButton, SignedIn, SignedOut } from "@clerk/clerk-react";
+import { Analytics } from '@vercel/analytics/react';
 import GraphScratchpad from "./components/scratchpad/GraphScratchpad";
 import ProjectDashboard from "./components/dashboard/ProjectDashboard";
 import LandingPage from "./components/dashboard/LandingPage";
@@ -88,6 +89,8 @@ function App() {
           <Route path="/:projectId" element={<ProjectDashboard />} />
         </Routes>
       </div>
+
+      <Analytics />
     </div>
   );
 }

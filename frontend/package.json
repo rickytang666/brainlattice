@@ -13,6 +13,7 @@
     "@clerk/clerk-react": "^5.61.1",
     "@clerk/themes": "^2.4.57",
     "@tabler/icons-react": "^3.37.1",
+    "@vercel/analytics": "^1.6.1",
     "axios": "^1.13.5",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
