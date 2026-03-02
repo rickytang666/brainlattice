@@ -1,0 +1,29 @@
+{
+  "name": "cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^8.3.0",
+    "axios": "^1.13.6",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3",
+    "import-meta-resolve": "^4.2.0",
+    "inquirer": "^13.3.0",
+    "ora": "^9.3.0"
+  }
+}
