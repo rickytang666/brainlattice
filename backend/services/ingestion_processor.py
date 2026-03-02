@@ -124,7 +124,8 @@ class IngestionProcessor:
             self.jobs.update_progress(self.job_id, "processing", 40)
             await asyncio.sleep(0.1) # yield after heavy pdf parsing
 
-            # cache full document with context caching
+            # cache full document with Gemini Context Caching
+            cache_name = None
             try:
                 from services.llm.cache_service import CacheService
                 from sqlalchemy.orm.attributes import flag_modified
@@ -172,7 +173,7 @@ class IngestionProcessor:
                 from schemas.graph import GraphData
                 graph_data = [GraphData(**g) for g in cached_extraction]
             else:
-                graph_data = await self._run_graph_extraction(markdown_content)
+                graph_data = await self._run_graph_extraction(markdown_content, cache_name=cache_name)
                 # cache the results for potential retries
                 self.jobs.set_extraction_cache(self.job_id, [g.model_dump() for g in graph_data])
                 
@@ -236,8 +237,33 @@ class IngestionProcessor:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
 
-    async def _run_graph_extraction(self, text: str) -> List[Any]:
-        """runs stateful windowing extraction logic"""
+    async def _run_graph_extraction(self, text: str, cache_name: str = None) -> List[Any]:
+        """runs stateful windowing extraction logic OR paginated full-cache extraction"""
+        if cache_name:
+            logger.info(f"using full-context cache {cache_name} for paginated graph extraction")
+            
+            # Step 1: Global Seed
+            logger.info("identifying all root concepts from document cache...")
+            global_ids = await self.extractor.extract_global_seed(cache_name)
+            logger.info(f"extracted {len(global_ids)} global concept IDs")
+            
+            if global_ids:
+                # Step 2: Paginated extraction
+                batch_size = 50
+                batches = [global_ids[i:i + batch_size] for i in range(0, len(global_ids), batch_size)]
+                
+                async def process_batch(batch, batch_index):
+                    logger.info(f"extracting paginated batch {batch_index+1}/{len(batches)}...")
+                    return await self.extractor.extract_paginated_nodes(cache_name, batch, global_ids)
+                
+                extracted_graphs = await asyncio.gather(*(
+                    process_batch(batch, i) for i, batch in enumerate(batches)
+                ))
+                return [g for g in extracted_graphs if g and g.nodes]
+            else:
+                logger.warning("failed to extract global seed, falling back to windowed extraction")
+
+        logger.info("falling back to standard windowed graph extraction...")
         window_size = 50000
         overlap = 5000
         text_len = len(text)

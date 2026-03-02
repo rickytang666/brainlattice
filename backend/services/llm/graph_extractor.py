@@ -43,12 +43,59 @@ class GraphExtractor:
         )
         return await self._call_llm(prompt)
 
+    async def extract_global_seed(self, cache_name: str) -> List[str]:
+        """
+        extracts the master list of concept ids using the full-context cache
+        """
+        prompt = self.prompts.render("global_seed.jinja")
+        try:
+            response = await self.client.aio.models.generate_content(
+                model=self.model_id,
+                contents=prompt,
+                config={
+                    "cached_content": cache_name,
+                    "response_mime_type": "application/json",
+                    "temperature": 0.0
+                }
+            )
+            raw_json = response.text
+            return json.loads(raw_json)
+        except Exception as e:
+            self.logger.error(f"global seed extraction failed: {e}")
+            return []
+
+    async def extract_paginated_nodes(self, cache_name: str, batch_ids: List[str], global_ids: List[str]) -> GraphData:
+        """
+        extracts graph node objects for a specific batch of ids using the full-context cache
+        """
+        prompt = self.prompts.render(
+            "paginated_graph_extraction.jinja",
+            batch_ids=batch_ids,
+            global_ids=global_ids
+        )
+        try:
+            response = await self.client.aio.models.generate_content(
+                model=self.model_id,
+                contents=prompt,
+                config={
+                    "cached_content": cache_name,
+                    "response_mime_type": "application/json",
+                    "temperature": 0.0
+                }
+            )
+            raw_json = response.text
+            data = json.loads(raw_json)
+            return GraphData(**data)
+        except Exception as e:
+            self.logger.error(f"paginated node extraction failed: {e}")
+            return GraphData()
+
     async def _call_llm(self, prompt: str) -> GraphData:
         """
         Internal method to call the LLM and parse the response.
         """
         try:
-            response = self.client.models.generate_content(
+            response = await self.client.aio.models.generate_content(
                 model=self.model_id,
                 contents=prompt,
                 config={
