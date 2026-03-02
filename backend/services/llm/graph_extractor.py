@@ -55,13 +55,20 @@ class GraphExtractor:
                 config={
                     "cached_content": cache_name,
                     "response_mime_type": "application/json",
+                    "response_schema": list[str],
                     "temperature": 0.0
                 }
             )
-            raw_json = response.text
+            raw_json = response.text.strip()
+            if raw_json.startswith("```json"):
+                raw_json = raw_json[7:-3].strip()
+            elif raw_json.startswith("```"):
+                raw_json = raw_json[3:-3].strip()
+                
             return json.loads(raw_json)
         except Exception as e:
             self.logger.error(f"global seed extraction failed: {e}")
+            self.logger.error(f"raw response was: {response.text if 'response' in locals() else 'None'}")
             return []
 
     async def extract_paginated_nodes(self, cache_name: str, batch_ids: List[str], global_ids: List[str]) -> GraphData:
@@ -80,14 +87,21 @@ class GraphExtractor:
                 config={
                     "cached_content": cache_name,
                     "response_mime_type": "application/json",
+                    "response_schema": GraphData,
                     "temperature": 0.0
                 }
             )
-            raw_json = response.text
+            raw_json = response.text.strip()
+            if raw_json.startswith("```json"):
+                raw_json = raw_json[7:-3].strip()
+            elif raw_json.startswith("```"):
+                raw_json = raw_json[3:-3].strip()
+                
             data = json.loads(raw_json)
             return GraphData(**data)
         except Exception as e:
             self.logger.error(f"paginated node extraction failed: {e}")
+            self.logger.error(f"raw response was: {response.text if 'response' in locals() else 'None'}")
             return GraphData()
 
     async def _call_llm(self, prompt: str) -> GraphData:
@@ -100,15 +114,22 @@ class GraphExtractor:
                 contents=prompt,
                 config={
                     "response_mime_type": "application/json",
+                    "response_schema": GraphData,
                     "temperature": 0.0
                 }
             )
             
-            raw_json = response.text
+            raw_json = response.text.strip()
+            if raw_json.startswith("```json"):
+                raw_json = raw_json[7:-3].strip()
+            elif raw_json.startswith("```"):
+                raw_json = raw_json[3:-3].strip()
+                
             data = json.loads(raw_json)
             
             return GraphData(**data)
             
         except Exception as e:
             self.logger.error(f"graph extraction failed: {e}")
+            self.logger.error(f"raw response was: {response.text if 'response' in locals() else 'None'}")
             return GraphData()
