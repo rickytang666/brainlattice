@@ -37,6 +37,27 @@ class TaskOrchestrator:
         returns job details
         """
         try:
+            # instantiate postgres project if not provided
+            if not project_id:
+                from db.session import SessionLocal
+                from db import models
+                db = SessionLocal()
+                try:
+                    new_proj = models.Project(
+                        title=filename, 
+                        status="processing",
+                        user_id=user_id
+                    )
+                    db.add(new_proj)
+                    db.flush()
+                    project_id = str(new_proj.id)
+                    db.commit()
+                except Exception as e:
+                    db.rollback()
+                    raise e
+                finally:
+                    db.close()
+            
             # prepare storage key
             file_id = str(uuid.uuid4())
             ext = os.path.splitext(filename)[1]

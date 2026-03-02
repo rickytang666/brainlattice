@@ -80,23 +80,7 @@ class IngestionProcessor:
                 self.builder.resolver._embedder = self.embedder
             
             if not project_id:
-                # check if we already have a project for this job id (failsafe)
-                existing_proj = db.query(models.Project).filter(models.Project.title == f"upload_{self.job_id[:8]}").first()
-                if existing_proj:
-                    project_id = existing_proj.id
-                else:
-                    new_proj = models.Project(
-                        title=filename, 
-                        status="processing",
-                        user_id=user_id,
-                        project_metadata={"job_id": self.job_id}
-                    )
-                    db.add(new_proj)
-                    db.flush()
-                    project_id = new_proj.id
-                
-                # persist project_id back to job metadata for future retries
-                self.jobs.update_metadata(self.job_id, {"project_id": str(project_id)})
+                raise ValueError(f"No project_id found in metadata for job {self.job_id}. Cannot process file without a parent project.")
             
             # check if file already exists in this project to avoid duplicates on retry
             db_file = db.query(models.File).filter(
