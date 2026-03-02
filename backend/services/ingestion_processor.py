@@ -115,6 +115,7 @@ class IngestionProcessor:
 
             # cache full document with Gemini Context Caching
             cache_name = None
+            cache_svc = None
             cache_start = time.time()
             try:
                 from services.llm.cache_service import CacheService
@@ -231,6 +232,14 @@ class IngestionProcessor:
                 
             raise e
         finally:
+            # immediately terminate the Gemini Context Cache to stop hourly billing
+            if 'cache_name' in locals() and cache_name and 'cache_svc' in locals() and cache_svc:
+                try:
+                    logger.info(f"cleaning up gemini context cache {cache_name}...")
+                    cache_svc.delete_cache(cache_name)
+                except Exception as cache_cleanup_err:
+                    logger.error(f"failed to clean up context cache: {cache_cleanup_err}")
+
             db.close()
             if os.path.exists(temp_path):
                 os.remove(temp_path)
