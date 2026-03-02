@@ -20,8 +20,8 @@ class CacheService:
             
             cached_content = self.client.caches.create(
                 model=self.model_id,
-                contents=[document_text],
                 config=types.CreateCachedContentConfig(
+                    contents=[document_text],
                     ttl=f"{ttl_seconds}s",
                     display_name=f"project_{project_id}_cache"
                 )

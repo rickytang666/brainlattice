@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 import logging
+import time
 from typing import Dict, Any, List
 
 from services.storage_service import get_storage_service
@@ -42,6 +43,8 @@ class IngestionProcessor:
         """runs the full pipeline asynchronously"""
         db = SessionLocal()
         temp_path = f"/tmp/{self.job_id}.pdf"
+        self.timings = {}
+        pipeline_start = time.time()
         
         try:
             self.jobs.update_progress(self.job_id, "processing", 10)
@@ -115,17 +118,20 @@ class IngestionProcessor:
 
             # parse pdf to markdown
             logger.info("parsing pdf...")
+            parse_start = time.time()
             with open(temp_path, "wb") as f:
                 f.write(file_bytes)
             
             markdown_content = self.pdf_service.extract_content(temp_path)
             db_file.content = markdown_content
             db.commit()
+            self.timings['pdf_parsing'] = time.time() - parse_start
             self.jobs.update_progress(self.job_id, "processing", 40)
             await asyncio.sleep(0.1) # yield after heavy pdf parsing
 
             # cache full document with Gemini Context Caching
             cache_name = None
+            cache_start = time.time()
             try:
                 from services.llm.cache_service import CacheService
                 from sqlalchemy.orm.attributes import flag_modified
@@ -142,9 +148,11 @@ class IngestionProcessor:
                         logger.info(f"saved cache_name {cache_name} to project metadata")
             except Exception as e:
                 logger.error(f"failed to setup document cache: {e}")
+            self.timings['cache_creation'] = time.time() - cache_start
 
             # chunk text and generate embeddings
             logger.info("chunking and embedding...")
+            embed_start = time.time()
             chunks = self.splitter.split_text(markdown_content)
             chunk_texts = [c.page_content for c in chunks]
             vectors = self.embedder.get_embeddings(chunk_texts)
@@ -159,11 +167,13 @@ class IngestionProcessor:
             ]
             db.add_all(db_chunks)
             db.commit()
+            self.timings['chunking_and_embedding'] = time.time() - embed_start
             self.jobs.update_progress(self.job_id, "processing", 60)
             await asyncio.sleep(0.1) # yield after heavy embeddings
 
             # extract conceptual graph (stateful windowing)
             logger.info("extracting conceptual graph...")
+            extract_start = time.time()
             
             # check for cached results first (checkpointing phase)
             cached_extraction = self.jobs.get_extraction_cache(self.job_id)
@@ -177,6 +187,7 @@ class IngestionProcessor:
                 # cache the results for potential retries
                 self.jobs.set_extraction_cache(self.job_id, [g.model_dump() for g in graph_data])
                 
+            self.timings['total_extraction'] = time.time() - extract_start
             self.jobs.update_progress(self.job_id, "processing", 80)
             await asyncio.sleep(0.1)
             
@@ -196,11 +207,14 @@ class IngestionProcessor:
             persistence = GraphPersistenceService(db)
             persistence.save_graph(str(project_id), connected_graph)
 
+            self.timings['total_pipeline'] = time.time() - pipeline_start
+
             # finalize job
             self.jobs.update_progress(self.job_id, "completed", 100, {
                 "chunks_count": len(chunks),
                 "graph_nodes": len(resolved_graph.nodes),
-                "graph_preview": graph_dump
+                "graph_preview": graph_dump,
+                "timings": self.timings
             })
             
             # update project status to complete
@@ -244,7 +258,9 @@ class IngestionProcessor:
             
             # Step 1: Global Seed
             logger.info("identifying all root concepts from document cache...")
+            seed_start = time.time()
             global_ids = await self.extractor.extract_global_seed(cache_name)
+            if hasattr(self, 'timings'): self.timings['global_seed'] = time.time() - seed_start
             logger.info(f"extracted {len(global_ids)} global concept IDs")
             
             if global_ids:
@@ -252,6 +268,7 @@ class IngestionProcessor:
                 batch_size = 50
                 batches = [global_ids[i:i + batch_size] for i in range(0, len(global_ids), batch_size)]
                 
+                pag_start = time.time()
                 async def process_batch(batch, batch_index):
                     logger.info(f"extracting paginated batch {batch_index+1}/{len(batches)}...")
                     return await self.extractor.extract_paginated_nodes(cache_name, batch, global_ids)
@@ -259,6 +276,7 @@ class IngestionProcessor:
                 extracted_graphs = await asyncio.gather(*(
                     process_batch(batch, i) for i, batch in enumerate(batches)
                 ))
+                if hasattr(self, 'timings'): self.timings['paginated_generation'] = time.time() - pag_start
                 return [g for g in extracted_graphs if g and g.nodes]
             else:
                 logger.warning("failed to extract global seed, falling back to windowed extraction")
