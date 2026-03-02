@@ -113,6 +113,18 @@ export default function LandingPage() {
     if (!file) return;
 
     setUploading(true);
+    
+    // immediately add a temporary project to the list
+    const tempId = `temp-${Date.now()}`;
+    const tempProject = {
+      id: tempId,
+      title: file.name,
+      status: "uploading",
+      created_at: new Date().toISOString(),
+    };
+    
+    setProjects((prev) => [tempProject, ...prev]);
+
     const formData = new FormData();
     formData.append("file", file);
 
@@ -129,6 +141,8 @@ export default function LandingPage() {
       if (res.ok) {
         fetchProjects();
       } else {
+        // remove the temporary project if it failed
+        setProjects((prev) => prev.filter((p) => p.id !== tempId));
         const data = await res.json().catch(() => ({}));
         if (
           res.status === 401 ||
@@ -144,7 +158,9 @@ export default function LandingPage() {
       }
     } catch (err) {
       console.error(err);
-      alert("Network error. Could not connect to the processing engine.");
+      // remove the temporary project if it failed
+      setProjects((prev) => prev.filter((p) => p.id !== tempId));
+      alert("network error. could not connect to the processing engine.");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -391,17 +407,19 @@ export default function LandingPage() {
                               <div className="flex flex-col min-w-[120px] justify-center ml-1">
                                 <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground/80 mb-1.5">
                                   <span>
-                                    {p.status === "processing"
+                                    {p.status === "uploading"
+                                      ? "uploading"
+                                    : p.status === "processing"
                                       ? "synthesizing"
                                       : p.status}
                                   </span>
-                                  {p.progress !== undefined && (
+                                  {p.progress !== undefined && p.status !== "uploading" && (
                                     <span className="tabular-nums">
                                       {p.progress}%
                                     </span>
                                   )}
                                 </div>
-                                {p.progress !== undefined && (
+                                {p.progress !== undefined && p.status !== "uploading" && (
                                   <div className="h-[2px] w-full bg-border/50 overflow-hidden rounded-full">
                                     <div
                                       className="h-full bg-foreground/40 transition-all duration-500 ease-out rounded-full"
@@ -414,7 +432,7 @@ export default function LandingPage() {
                           )}
                         </div>
                       )}
-                      {p.status !== "processing" && (
+                      {p.status !== "processing" && p.status !== "uploading" && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
