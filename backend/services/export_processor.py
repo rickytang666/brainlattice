@@ -36,15 +36,56 @@ class ExportProcessor:
         """
         db = SessionLocal()
         try:
-            # 1. find nodes missing content (check for None or empty string)
+            # manage cache lifecycle
+            project = db.query(models.Project).filter(models.Project.id == self.project_id).first()
+            if not project:
+                raise ValueError("project not found")
+                
+            meta = project.project_metadata or {}
+            cache_name = meta.get("gemini_cache_name")
+            
+            from services.llm.cache_service import CacheService
+            from sqlalchemy.orm.attributes import flag_modified
+            cache_svc = CacheService(gemini_key=self.gemini_key)
+            
             from sqlalchemy import or_
+            missing_count = db.query(models.GraphNode).filter(
+                models.GraphNode.project_id == self.project_id,
+                or_(models.GraphNode.content == None, models.GraphNode.content == "")
+            ).count()
+
+            CACHE_RECREATION_THRESHOLD = 20
+
+            if cache_name:
+                try:
+                    if not cache_svc.get_cache(cache_name):
+                        logger.warning(f"cache {cache_name} expired.")
+                        cache_name = None
+                except Exception:
+                    logger.warning(f"cache {cache_name} expired or not found.")
+                    cache_name = None
+                    
+            if not cache_name and missing_count >= CACHE_RECREATION_THRESHOLD:
+                logger.info(f"{missing_count} nodes missing content. threshold met. creating context cache...")
+                db_file = db.query(models.File).filter(models.File.project_id == self.project_id).first()
+                if db_file and db_file.content:
+                    cache_name = cache_svc.create_document_cache(db_file.content, str(self.project_id))
+                    if cache_name:
+                        meta["gemini_cache_name"] = cache_name
+                        project.project_metadata = meta
+                        flag_modified(project, "project_metadata")
+                        db.commit()
+            elif not cache_name and missing_count < CACHE_RECREATION_THRESHOLD:
+                logger.info(f"only {missing_count} nodes missing content. skipping cache creation to save costs, using RAG.")
+
+            # 1. find nodes missing content (batch processing)
             missing_nodes = db.query(models.GraphNode).filter(
                 models.GraphNode.project_id == self.project_id,
                 or_(models.GraphNode.content == None, models.GraphNode.content == "")
             ).limit(10).all() # process in batches of 10
 
             if missing_nodes:
-                await self._process_batch(db, missing_nodes)
+                await self._process_batch(db, missing_nodes, cache_name)
                 # self-enqueue to continue
                 await self._enqueue_next_step()
                 return {"export_status": "batch_partial", "nodes_processed": len(missing_nodes)}
@@ -61,7 +102,7 @@ class ExportProcessor:
         finally:
             db.close()
 
-    async def _process_batch(self, db: Session, nodes: List[models.GraphNode]):
+    async def _process_batch(self, db: Session, nodes: List[models.GraphNode], cache_name: Optional[str] = None):
         """generates notes for a batch of nodes"""
         from sqlalchemy import or_
         total_missing = db.query(models.GraphNode).filter(
@@ -83,20 +124,31 @@ class ExportProcessor:
             "message": f"generating notes: {total_nodes - total_missing}/{total_nodes}"
         })
 
-        for node in nodes:
+        async def process_node(node: models.GraphNode):
             try:
                 note_content = await self.note_service.generate_note(
                     db, 
                     str(self.project_id), 
                     node.concept_id, 
-                    outbound_links=node.outbound_links
+                    outbound_links=node.outbound_links,
+                    cache_name=cache_name
                 )
-                node.content = note_content
-                db.commit()
-                logger.info(f"generated note for {node.concept_id}")
+                return node, note_content, None
             except Exception as e:
-                logger.error(f"failed to generate note for {node.concept_id}: {e}")
-                # continue with next node in batch
+                return node, None, e
+
+        # generate notes concurrently
+        results = await asyncio.gather(*(process_node(node) for node in nodes))
+
+        for node, note_content, error in results:
+            if error:
+                logger.error(f"failed to generate note for {node.concept_id}: {error}")
+            elif note_content:
+                node.content = note_content
+                logger.info(f"generated note for {node.concept_id}")
+                
+        # save all completed generation contents
+        db.commit()
 
     async def _enqueue_next_step(self):
         """re-publishes the same export task to the queue"""
@@ -146,6 +198,26 @@ class ExportProcessor:
         except Exception as e:
             logger.exception(f"vault assembly failed for project {self.project_id}")
             self._update_metadata(db, {"status": "failed", "error": f"assembly failed: {str(e)}"})
+        finally:
+            # explicitly delete the context cache after assembly to save costs
+            try:
+                project = db.query(models.Project).filter(models.Project.id == self.project_id).first()
+                if project:
+                    meta = project.project_metadata or {}
+                    cache_name = meta.get("gemini_cache_name")
+                    if cache_name:
+                        from services.llm.cache_service import CacheService
+                        cache_svc = CacheService(gemini_key=self.gemini_key)
+                        cache_svc.delete_cache(cache_name)
+                        
+                        del meta["gemini_cache_name"]
+                        project.project_metadata = meta
+                        from sqlalchemy.orm.attributes import flag_modified
+                        flag_modified(project, "project_metadata")
+                        db.commit()
+                        logger.info(f"cleaned up cache {cache_name} for project {self.project_id}")
+            except Exception as e:
+                logger.error(f"failed to cleanup cache during vault assembly: {e}")
 
     def _format_node_as_markdown(self, node: models.GraphNode) -> str:
         """formats a graph node as an obsidian-style markdown file"""

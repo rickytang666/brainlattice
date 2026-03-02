@@ -25,16 +25,18 @@ class NodeNoteService:
         self.embedder = EmbeddingService(gemini_key=gemini_key, openai_key=openai_key)
         self.prompts = get_prompt_service()
 
-    async def generate_note(self, db: Session, project_id: str, concept_id: str, outbound_links: List[str] = None) -> str:
+    async def generate_note(self, db: Session, project_id: str, concept_id: str, outbound_links: List[str] = None, cache_name: Optional[str] = None) -> str:
         """
-        generates a short, study-focused note for a concept using retrieved context chunks.
-        includes formulas from chunks when relevant (e.g. math notes).
+        generates a short, study-focused note for a concept.
+        uses gemini context caching when available, otherwise falls back to rag chunks.
         """
-        # 1. retrieve context via RAG
-        context_chunks = self._get_context(db, project_id, concept_id)
-        logger.info(f"retrieved {len(context_chunks.split('\n\n')) if context_chunks else 0} chunks for {concept_id}")
-        
-        # 2. prepare prompt using jinja
+        if cache_name:
+            context_chunks = "document context is cached natively in the model."
+            logger.info(f"attempting to use context cache {cache_name} for {concept_id}")
+        else:
+            context_chunks = self._get_context(db, project_id, concept_id)
+            logger.info(f"no cache provided, retrieved {len(context_chunks.split(chr(10)*2)) if context_chunks else 0} fallback chunks for {concept_id}")
+            
         links_str = ", ".join([f"[[{link}]]" for link in (outbound_links or [])])
         
         prompt = self.prompts.render(
@@ -45,13 +47,40 @@ class NodeNoteService:
         )
 
         try:
-            response = self.client.models.generate_content(
-                model=self.model_id,
-                contents=prompt,
-                config={
-                    "temperature": 0.0
-                }
-            )
+            config = {"temperature": 0.0}
+            if cache_name:
+                config["cached_content"] = cache_name
+
+            try:
+                response = await self.client.aio.models.generate_content(
+                    model=self.model_id,
+                    contents=prompt,
+                    config=config
+                )
+            except Exception as cache_err:
+                if cache_name:
+                    logger.warning(f"cache {cache_name} failed or expired for {concept_id}, falling back to RAG: {cache_err}")
+                    # dynamically switch to RAG fallback
+                    context_chunks = self._get_context(db, project_id, concept_id)
+                    logger.info(f"retrieved {len(context_chunks.split(chr(10)*2)) if context_chunks else 0} fallback chunks for {concept_id}")
+                    
+                    # re-render prompt with text chunks instead of cache stub
+                    prompt = self.prompts.render(
+                        "node_note.jinja",
+                        concept_id=concept_id,
+                        links_str=links_str,
+                        context_chunks=context_chunks
+                    )
+                    
+                    # retry without cached_content
+                    del config["cached_content"]
+                    response = await self.client.aio.models.generate_content(
+                        model=self.model_id,
+                        contents=prompt,
+                        config=config
+                    )
+                else:
+                    raise cache_err
             
             note_content = response.text.strip().lower()
             valid_ids = {n.concept_id for n in db.query(models.GraphNode).filter(

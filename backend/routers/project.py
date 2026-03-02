@@ -216,11 +216,16 @@ async def get_node_note(
         from services.llm.note_service import NodeNoteService
         note_service = NodeNoteService(gemini_key=context.gemini_key, openai_key=context.openai_key)
         
+        # pass cache if it exists
+        meta = project.project_metadata or {}
+        cache_name = meta.get("gemini_cache_name")
+        
         note_content = await note_service.generate_note(
             db, 
             project_id, 
             concept_id, 
-            outbound_links=node.outbound_links
+            outbound_links=node.outbound_links,
+            cache_name=cache_name
         )
         
         # persist the generated note

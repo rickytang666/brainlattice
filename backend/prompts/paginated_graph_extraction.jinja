@@ -1,0 +1,32 @@
+analyze the attached document and extract the knowledge graph data for a SPECIFIC subset of concept IDs.
+
+you are provided with a batch of concept IDs below. your strictly limited task is to extract the directional links ONLY
+for these specific concepts based on the attached document.
+
+target concept IDs (extract ONLY these):
+{{ batch_ids | join(', ') }}
+
+strict output rules:
+1. return only a valid json object with key "nodes".
+2. nodes format:
+{
+"nodes": [
+{
+"id": "concept name lowercase",
+"aliases": ["alias1", "alias2"],
+"outbound_links": ["child concept 1", "dependency 2"],
+"inbound_links": ["parent concept", "broader category"]
+}
+]
+}
+3. scopes: the "nodes" array MUST ONLY contain objects whose "id" exactly matches one of the target concept IDs listed
+above. do not create nodes for any other concepts.
+4. ids: must be exactly identical to the provided target concept IDs.
+5. outbound_links & inbound_links: concepts this node points to or is pointed by.
+6. **cross-linking**: when adding concepts to "outbound_links" or "inbound_links", you are STRONGLY encouraged to use
+IDs from the global master list of concepts provided below whenever possible, to ensure the graph connects properly.
+
+global master list of concept IDs (use these for linking):
+{{ global_ids | join(', ') }}
+
+7. return raw json only. do not wrap your response in ```json or any code block.

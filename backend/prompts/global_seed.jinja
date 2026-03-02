@@ -1,0 +1,18 @@
+analyze the attached document and identify the core concepts.
+
+your goal is to generate a comprehensive, deduplicated master list of all fundamental theoretical concepts, recurring
+entities, and core methodologies discussed in the entire text. this list will serve as the global ontology for a
+knowledge graph.
+
+strict output rules:
+1. return a valid json array of strings. do NOT wrap the array in an object (e.g. `["concept1", "concept2"]`).
+2. ids: must be lowercase, singular, and use spaces instead of underscores (e.g. "deep learning", not "deep_learning").
+3. **encyclopedic standard**: every id must be a valid potential wikipedia page title.
+- bad: "discussion of integrals", "understanding limits", "chapter 1", "solving equations"
+- good: "integral", "limit", "linear equation"
+4. **exhaustive but deduplicated**: ensure you extract all meaningful concepts across the entire document. if the
+document uses synonyms (e.g., "gradient descent" and "steepest descent"), pick the most canonical term and only output
+that one ID.
+5. do not include meta-discourse phrases like "discussion of", "overview of", "types of", "introduction to". extract the
+core concept only.
+6. return raw json only. do not wrap your response in ```json or any code block.

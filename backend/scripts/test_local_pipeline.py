@@ -72,6 +72,16 @@ def run_test(pdf_path: str, gemini_key: str = None, openai_key: str = None, outp
                 
                 if isinstance(result, str):
                     result = json.loads(result)
+                    
+                timings = result.get("timings", {})
+                if timings:
+                    print("\n⏱️  --- Pipeline Timings ---")
+                    for k, v in timings.items():
+                        print(f"  - {k.replace('_', ' ').title()}: {v:.2f}s")
+                
+                if "timings" in result:
+                    del result["timings"]
+                    
                 print("\n--- results summary ---")
                 print(json.dumps(result, indent=2))
                 
@@ -113,7 +123,7 @@ def run_test(pdf_path: str, gemini_key: str = None, openai_key: str = None, outp
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Test local PDF ingestion pipeline.")
-    parser.add_argument("--file", default="data/math119.pdf", help="Path to PDF file to test.")
+    parser.add_argument("--file", required=True, help="Path to PDF file to test.")
     parser.add_argument("--gemini-key", default=os.getenv("GEMINI_API_KEY"), help="Gemini API key")
     parser.add_argument("--openai-key", default=os.getenv("OPENAI_API_KEY"), help="OpenAI API key")
     parser.add_argument("--output", default=None, help="Save the resulting JSON graph to a file (e.g., my_graph.json)")
