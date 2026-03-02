@@ -98,6 +98,25 @@ class ExportProcessor:
         except Exception as e:
             logger.exception(f"export processing failed for project {self.project_id}")
             self._update_metadata(db, {"status": "failed", "error": str(e)})
+            
+            # forcefully tear down the context cache on abort to prevent hourly billing leaks!
+            try:
+                if 'cache_name' in locals() and cache_name and 'cache_svc' in locals() and cache_svc:
+                    logger.info(f"cleaning up gemini context cache {cache_name} after worker crash...")
+                    cache_svc.delete_cache(cache_name)
+                    
+                    project = db.query(models.Project).filter(models.Project.id == self.project_id).first()
+                    if project:
+                        meta = project.project_metadata or {}
+                        if "gemini_cache_name" in meta:
+                            del meta["gemini_cache_name"]
+                            project.project_metadata = meta
+                            from sqlalchemy.orm.attributes import flag_modified
+                            flag_modified(project, "project_metadata")
+                            db.commit()
+            except Exception as cache_cleanup_err:
+                logger.error(f"failed to clean up context cache after worker crash: {cache_cleanup_err}")
+
             return {"export_status": "failed", "error": str(e)}
         finally:
             db.close()
@@ -124,18 +143,21 @@ class ExportProcessor:
             "message": f"generating notes: {total_nodes - total_missing}/{total_nodes}"
         })
 
+        sem = asyncio.Semaphore(10)
+
         async def process_node(node: models.GraphNode):
-            try:
-                note_content = await self.note_service.generate_note(
-                    db, 
-                    str(self.project_id), 
-                    node.concept_id, 
-                    outbound_links=node.outbound_links,
-                    cache_name=cache_name
-                )
-                return node, note_content, None
-            except Exception as e:
-                return node, None, e
+            async with sem:
+                try:
+                    note_content = await self.note_service.generate_note(
+                        db, 
+                        str(self.project_id), 
+                        node.concept_id, 
+                        outbound_links=node.outbound_links,
+                        cache_name=cache_name
+                    )
+                    return node, note_content, None
+                except Exception as e:
+                    return node, None, e
 
         # generate notes concurrently
         results = await asyncio.gather(*(process_node(node) for node in nodes))

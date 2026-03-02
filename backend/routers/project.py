@@ -41,7 +41,9 @@ async def list_all_projects(
 ):
     """list all projects from postgres filtered by user_id, with live redis progress"""
     try:
-        projects = db.query(models.Project).filter(models.Project.user_id == context.user_id).all()
+        projects = db.query(models.Project).filter(
+            models.Project.user_id == context.user_id
+        ).order_by(models.Project.created_at.desc()).all()
         formatted = []
         jobs = get_job_service()
         
@@ -137,6 +139,8 @@ async def delete_project(
             models.Project.user_id == context.user_id
         ).first()
         if project:
+            if project.status == "processing":
+                raise HTTPException(status_code=400, detail="cannot delete a project that is currently processing.")
             db.delete(project)
             db.commit()
             return {"success": True, "message": "deleted"}
