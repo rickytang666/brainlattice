@@ -188,7 +188,7 @@ export default function LandingPage() {
 
   return (
     <div
-      className="flex flex-col items-center justify-start pt-[25vh] w-full h-full relative overflow-hidden bg-background"
+      className="flex flex-col items-center justify-start pt-[20vh] w-full h-full relative overflow-hidden bg-background"
       onDragOver={(e) => {
         e.preventDefault();
         e.currentTarget.classList.add("bg-primary/5");
@@ -362,7 +362,7 @@ export default function LandingPage() {
               No projects yet.
             </div>
           ) : (
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-0.5 max-h-[320px] overflow-y-auto pr-1 hover:pr-1 transition-all custom-scrollbar">
               {projects
                 .filter((p) =>
                   p.title.toLowerCase().includes(searchQuery.toLowerCase()),
