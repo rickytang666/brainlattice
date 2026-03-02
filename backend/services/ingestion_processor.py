@@ -253,9 +253,12 @@ class IngestionProcessor:
                 batches = [global_ids[i:i + batch_size] for i in range(0, len(global_ids), batch_size)]
                 
                 pag_start = time.time()
+                sem = asyncio.Semaphore(10)
+                
                 async def process_batch(batch, batch_index):
-                    logger.info(f"extracting paginated batch {batch_index+1}/{len(batches)}...")
-                    return await self.extractor.extract_paginated_nodes(cache_name, batch, global_ids)
+                    async with sem:
+                        logger.info(f"extracting paginated batch {batch_index+1}/{len(batches)}...")
+                        return await self.extractor.extract_paginated_nodes(cache_name, batch, global_ids)
                 
                 extracted_graphs = await asyncio.gather(*(
                     process_batch(batch, i) for i, batch in enumerate(batches)

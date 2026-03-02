@@ -124,18 +124,21 @@ class ExportProcessor:
             "message": f"generating notes: {total_nodes - total_missing}/{total_nodes}"
         })
 
+        sem = asyncio.Semaphore(10)
+
         async def process_node(node: models.GraphNode):
-            try:
-                note_content = await self.note_service.generate_note(
-                    db, 
-                    str(self.project_id), 
-                    node.concept_id, 
-                    outbound_links=node.outbound_links,
-                    cache_name=cache_name
-                )
-                return node, note_content, None
-            except Exception as e:
-                return node, None, e
+            async with sem:
+                try:
+                    note_content = await self.note_service.generate_note(
+                        db, 
+                        str(self.project_id), 
+                        node.concept_id, 
+                        outbound_links=node.outbound_links,
+                        cache_name=cache_name
+                    )
+                    return node, note_content, None
+                except Exception as e:
+                    return node, None, e
 
         # generate notes concurrently
         results = await asyncio.gather(*(process_node(node) for node in nodes))
