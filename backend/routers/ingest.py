@@ -24,6 +24,14 @@ async def upload_file(
         orchestrator = TaskOrchestrator()
         
         content = await file.read()
+        
+        MAX_FILE_SIZE = 25 * 1024 * 1024
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400, 
+                detail="file too large. please split pdfs over 25mb to prevent processing timeouts."
+            )
+            
         result = await orchestrator.init_ingestion(
             file.filename, 
             content, 
