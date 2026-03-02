@@ -36,6 +36,33 @@ class ExportProcessor:
         """
         db = SessionLocal()
         try:
+            # manage cache lifecycle
+            project = db.query(models.Project).filter(models.Project.id == self.project_id).first()
+            if not project:
+                raise ValueError("project not found")
+                
+            meta = project.project_metadata or {}
+            cache_name = meta.get("gemini_cache_name")
+            
+            from services.llm.cache_service import CacheService
+            from sqlalchemy.orm.attributes import flag_modified
+            cache_svc = CacheService(gemini_key=self.gemini_key)
+            
+            if cache_name:
+                if not cache_svc.get_cache(cache_name):
+                    logger.warning(f"cache {cache_name} expired. recreating...")
+                    cache_name = None
+                    
+            if not cache_name:
+                db_file = db.query(models.File).filter(models.File.project_id == self.project_id).first()
+                if db_file and db_file.content:
+                    cache_name = cache_svc.create_document_cache(db_file.content, str(self.project_id))
+                    if cache_name:
+                        meta["gemini_cache_name"] = cache_name
+                        project.project_metadata = meta
+                        flag_modified(project, "project_metadata")
+                        db.commit()
+
             # 1. find nodes missing content (check for None or empty string)
             from sqlalchemy import or_
             missing_nodes = db.query(models.GraphNode).filter(
@@ -44,7 +71,7 @@ class ExportProcessor:
             ).limit(10).all() # process in batches of 10
 
             if missing_nodes:
-                await self._process_batch(db, missing_nodes)
+                await self._process_batch(db, missing_nodes, cache_name)
                 # self-enqueue to continue
                 await self._enqueue_next_step()
                 return {"export_status": "batch_partial", "nodes_processed": len(missing_nodes)}
@@ -61,7 +88,7 @@ class ExportProcessor:
         finally:
             db.close()
 
-    async def _process_batch(self, db: Session, nodes: List[models.GraphNode]):
+    async def _process_batch(self, db: Session, nodes: List[models.GraphNode], cache_name: Optional[str] = None):
         """generates notes for a batch of nodes"""
         from sqlalchemy import or_
         total_missing = db.query(models.GraphNode).filter(
@@ -89,7 +116,8 @@ class ExportProcessor:
                     db, 
                     str(self.project_id), 
                     node.concept_id, 
-                    outbound_links=node.outbound_links
+                    outbound_links=node.outbound_links,
+                    cache_name=cache_name
                 )
                 return node, note_content, None
             except Exception as e:
@@ -156,6 +184,26 @@ class ExportProcessor:
         except Exception as e:
             logger.exception(f"vault assembly failed for project {self.project_id}")
             self._update_metadata(db, {"status": "failed", "error": f"assembly failed: {str(e)}"})
+        finally:
+            # explicitly delete the context cache after assembly to save costs
+            try:
+                project = db.query(models.Project).filter(models.Project.id == self.project_id).first()
+                if project:
+                    meta = project.project_metadata or {}
+                    cache_name = meta.get("gemini_cache_name")
+                    if cache_name:
+                        from services.llm.cache_service import CacheService
+                        cache_svc = CacheService(gemini_key=self.gemini_key)
+                        cache_svc.delete_cache(cache_name)
+                        
+                        del meta["gemini_cache_name"]
+                        project.project_metadata = meta
+                        from sqlalchemy.orm.attributes import flag_modified
+                        flag_modified(project, "project_metadata")
+                        db.commit()
+                        logger.info(f"cleaned up cache {cache_name} for project {self.project_id}")
+            except Exception as e:
+                logger.error(f"failed to cleanup cache during vault assembly: {e}")
 
     def _format_node_as_markdown(self, node: models.GraphNode) -> str:
         """formats a graph node as an obsidian-style markdown file"""

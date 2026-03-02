@@ -124,6 +124,24 @@ class IngestionProcessor:
             self.jobs.update_progress(self.job_id, "processing", 40)
             await asyncio.sleep(0.1) # yield after heavy pdf parsing
 
+            # cache full document with context caching
+            try:
+                from services.llm.cache_service import CacheService
+                from sqlalchemy.orm.attributes import flag_modified
+                cache_svc = CacheService(gemini_key=gemini_key)
+                cache_name = cache_svc.create_document_cache(markdown_content, str(project_id))
+                if cache_name:
+                    project = db.query(models.Project).filter(models.Project.id == project_id).first()
+                    if project:
+                        meta = project.project_metadata or {}
+                        meta["gemini_cache_name"] = cache_name
+                        project.project_metadata = meta
+                        flag_modified(project, "project_metadata")
+                        db.commit()
+                        logger.info(f"saved cache_name {cache_name} to project metadata")
+            except Exception as e:
+                logger.error(f"failed to setup document cache: {e}")
+
             # chunk text and generate embeddings
             logger.info("chunking and embedding...")
             chunks = self.splitter.split_text(markdown_content)
