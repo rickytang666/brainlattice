@@ -6,15 +6,21 @@ fastapi-based extraction engine. ingests pdfs, natively caches massive documents
 
 **mandatory keys** (`backend/.env`):
 
-- `DATABASE_URL`: required for persistence. choose one of two routes:
-  - **option 1 (local dev):** use a local SQLite file. no external setup required. The file will be created automatically.
-    - `DATABASE_URL=sqlite:///./brainlattice.db`
-  - **option 2 (serverless postgres):** use a managed postgres database like [Neon](https://neon.tech). create a project, grab your pooled connection string, and set it.
+- `DATABASE_URL`: required for persistence. The application heavily utilizes `pgvector` and `JSONB` for storing text embeddings and complex extraction logic. **SQLite is completely unsupported.**
+  - **Local Development / Serverless Postgres:** Use a managed postgres database like [Neon](https://neon.tech) or a local Postgres instance. Create a database, configure `pgvector`, and set your connection string.
     - `DATABASE_URL=postgres://user:password@host/neondb?sslmode=require`
 
 **note:** no AI API keys are required in the backend environment _for the web app_. the frontend web app strictly uses keys provided by the client in the request headers (BYOK). **however**, if you want to run the local test script (`test_local_pipeline.py`), you must provide `GEMINI_API_KEY` and `OPENAI_API_KEY` in `backend/.env` since the CLI script does not have access to the browser's local storage.
 
 other keys (R2, Upstash) are optional for local dev.
+
+**run database migrations (if using postgres):**
+
+```bash
+# install the base schema and the critical pgvector hnsw indices
+psql $DATABASE_URL -f migrations/001_initial_schema.sql
+psql $DATABASE_URL -f migrations/006_add_hnsw_index.sql
+```
 
 **run local server:**
 
@@ -85,6 +91,7 @@ BUILDX_NO_DEFAULT_ATTESTATIONS=1 sls deploy
 1. **api (`ingest.py`)**: takes pdf -> dumps to storage -> enqueues async job.
 2. **processing (`ingestion_processor.py`)**: natively caches full document -> extracts global concept seeds -> extracts paginated parallel graphs -> serializes state to job tracker.
 3. **persistence (`persistence_service.py`)**: unwraps LLM models -> connects orphan graphs -> commits nodes/links to postgres.
+4. **dead-letter sweeper (`internal.py`)**: manually sweep and kill stuck processing jobs by sending a POST request to `/api/internal/sweep-jobs` with header `x-internal-key: <INTERNAL_SECRET_KEY>`.
 
 ## codebase mapping
 
