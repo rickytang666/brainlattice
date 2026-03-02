@@ -354,8 +354,14 @@ export default function LandingPage() {
                 .map((p) => (
                   <div
                     key={p.id}
-                    className="group relative flex items-center justify-between py-2 px-3 hover:bg-muted/30 rounded-lg transition-all cursor-pointer"
-                    onClick={() => selectProject(p.id)}
+                    className={`group relative flex items-center justify-between py-2 px-3 rounded-lg transition-all ${
+                      p.status === "complete" ? "hover:bg-muted/30 cursor-pointer" : "cursor-default"
+                    }`}
+                    onClick={() => {
+                      if (p.status === "complete") {
+                        selectProject(p.id);
+                      }
+                    }}
                   >
                     <div className="flex items-center gap-4 overflow-hidden pr-4 w-full">
                       <span className="text-muted-foreground/60 text-[11px] w-12 shrink-0 tabular-nums">
