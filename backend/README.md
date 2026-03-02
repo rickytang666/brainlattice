@@ -1,6 +1,6 @@
 # brainlattice backend
 
-fastapi-based extraction engine. ingests pdfs, chunks text, extracts knowledge graphs via gemini 2.5, and stores the topological structures.
+fastapi-based extraction engine. ingests pdfs, natively caches massive documents via Gemini 2.0 Flash Context Caching, extracts unified knowledge graphs, and stores the topological structures.
 
 ## local development
 
@@ -83,11 +83,12 @@ BUILDX_NO_DEFAULT_ATTESTATIONS=1 sls deploy
 ## internal pipeline tracking
 
 1. **api (`ingest.py`)**: takes pdf -> dumps to storage -> enqueues async job.
-2. **processing (`ingestion_processor.py`)**: chunks text -> prompts gemini -> serializes state to job tracker.
-3. **persistence (`persistence_service.py`)**: unwraps LLM models -> commits nodes/links to postgres.
+2. **processing (`ingestion_processor.py`)**: natively caches full document -> extracts global concept seeds -> extracts paginated parallel graphs -> serializes state to job tracker.
+3. **persistence (`persistence_service.py`)**: unwraps LLM models -> connects orphan graphs -> commits nodes/links to postgres.
 
 ## codebase mapping
 
 - `main.py`: fastapi root
 - `core/config.py`: env var validation
+- `services/llm/`: encapsulates Gemini SDK caching lifecycle, parallelized note generation, and paginated graph extraction algorithms.
 - `services/`: contains decoupled components (storage, job tracking, queueing) and the core processor logic.
