@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from db import models
 from typing import List, Optional
 import logging
+from tenacity import retry, wait_exponential, stop_after_attempt
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -52,11 +53,7 @@ class NodeNoteService:
                 config["cached_content"] = cache_name
 
             try:
-                response = await self.client.aio.models.generate_content(
-                    model=self.model_id,
-                    contents=prompt,
-                    config=config
-                )
+                response = await self._generate_content_with_retry(prompt, config)
             except Exception as cache_err:
                 if cache_name:
                     logger.warning(f"cache {cache_name} failed or expired for {concept_id}, falling back to RAG: {cache_err}")
@@ -74,11 +71,7 @@ class NodeNoteService:
                     
                     # retry without cached_content
                     del config["cached_content"]
-                    response = await self.client.aio.models.generate_content(
-                        model=self.model_id,
-                        contents=prompt,
-                        config=config
-                    )
+                    response = await self._generate_content_with_retry(prompt, config)
                 else:
                     raise cache_err
             
@@ -102,6 +95,14 @@ class NodeNoteService:
         except Exception as e:
             logger.error(f"failed to generate note for {concept_id}: {e}")
             return f"failed to generate note for {concept_id}."
+
+    @retry(wait=wait_exponential(multiplier=1, max=10), stop=stop_after_attempt(3))
+    async def _generate_content_with_retry(self, prompt: str, config: dict):
+        return await self.client.aio.models.generate_content(
+            model=self.model_id,
+            contents=prompt,
+            config=config
+        )
 
     def _get_context(self, db: Session, project_id: str, concept_id: str) -> str:
         """performs vector search to find relevant context for the concept"""

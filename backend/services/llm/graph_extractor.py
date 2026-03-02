@@ -5,6 +5,7 @@ from services.llm.prompt_service import get_prompt_service
 from typing import List
 import json
 import logging
+from tenacity import retry, wait_exponential, stop_after_attempt
 
 settings = get_settings()
 
@@ -49,16 +50,13 @@ class GraphExtractor:
         """
         prompt = self.prompts.render("global_seed.jinja")
         try:
-            response = await self.client.aio.models.generate_content(
-                model=self.model_id,
-                contents=prompt,
-                config={
-                    "cached_content": cache_name,
-                    "response_mime_type": "application/json",
-                    "response_schema": list[str],
-                    "temperature": 0.0
-                }
-            )
+            config = {
+                "cached_content": cache_name,
+                "response_mime_type": "application/json",
+                "response_schema": list[str],
+                "temperature": 0.0
+            }
+            response = await self._generate_content_with_retry(prompt, config)
             raw_json = response.text.strip()
             if raw_json.startswith("```json"):
                 raw_json = raw_json[7:-3].strip()
@@ -81,16 +79,13 @@ class GraphExtractor:
             global_ids=global_ids
         )
         try:
-            response = await self.client.aio.models.generate_content(
-                model=self.model_id,
-                contents=prompt,
-                config={
-                    "cached_content": cache_name,
-                    "response_mime_type": "application/json",
-                    "response_schema": GraphData,
-                    "temperature": 0.0
-                }
-            )
+            config = {
+                "cached_content": cache_name,
+                "response_mime_type": "application/json",
+                "response_schema": GraphData,
+                "temperature": 0.0
+            }
+            response = await self._generate_content_with_retry(prompt, config)
             raw_json = response.text.strip()
             if raw_json.startswith("```json"):
                 raw_json = raw_json[7:-3].strip()
@@ -104,20 +99,25 @@ class GraphExtractor:
             self.logger.error(f"raw response was: {response.text if 'response' in locals() else 'None'}")
             return GraphData()
 
+    @retry(wait=wait_exponential(multiplier=1, max=10), stop=stop_after_attempt(3))
+    async def _generate_content_with_retry(self, prompt: str, config: dict):
+        return await self.client.aio.models.generate_content(
+            model=self.model_id,
+            contents=prompt,
+            config=config
+        )
+
     async def _call_llm(self, prompt: str) -> GraphData:
         """
         Internal method to call the LLM and parse the response.
         """
         try:
-            response = await self.client.aio.models.generate_content(
-                model=self.model_id,
-                contents=prompt,
-                config={
-                    "response_mime_type": "application/json",
-                    "response_schema": GraphData,
-                    "temperature": 0.0
-                }
-            )
+            config = {
+                "response_mime_type": "application/json",
+                "response_schema": GraphData,
+                "temperature": 0.0
+            }
+            response = await self._generate_content_with_retry(prompt, config)
             
             raw_json = response.text.strip()
             if raw_json.startswith("```json"):
