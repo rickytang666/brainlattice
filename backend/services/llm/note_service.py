@@ -45,7 +45,7 @@ class NodeNoteService:
         )
 
         try:
-            response = self.client.models.generate_content(
+            response = await self.client.aio.models.generate_content(
                 model=self.model_id,
                 contents=prompt,
                 config={

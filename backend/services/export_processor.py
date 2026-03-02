@@ -83,7 +83,7 @@ class ExportProcessor:
             "message": f"generating notes: {total_nodes - total_missing}/{total_nodes}"
         })
 
-        for node in nodes:
+        async def process_node(node: models.GraphNode):
             try:
                 note_content = await self.note_service.generate_note(
                     db, 
@@ -91,12 +91,22 @@ class ExportProcessor:
                     node.concept_id, 
                     outbound_links=node.outbound_links
                 )
-                node.content = note_content
-                db.commit()
-                logger.info(f"generated note for {node.concept_id}")
+                return node, note_content, None
             except Exception as e:
-                logger.error(f"failed to generate note for {node.concept_id}: {e}")
-                # continue with next node in batch
+                return node, None, e
+
+        # generate notes concurrently
+        results = await asyncio.gather(*(process_node(node) for node in nodes))
+
+        for node, note_content, error in results:
+            if error:
+                logger.error(f"failed to generate note for {node.concept_id}: {error}")
+            elif note_content:
+                node.content = note_content
+                logger.info(f"generated note for {node.concept_id}")
+                
+        # save all completed generation contents
+        db.commit()
 
     async def _enqueue_next_step(self):
         """re-publishes the same export task to the queue"""
