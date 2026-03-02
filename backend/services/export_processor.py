@@ -48,12 +48,25 @@ class ExportProcessor:
             from sqlalchemy.orm.attributes import flag_modified
             cache_svc = CacheService(gemini_key=self.gemini_key)
             
+            from sqlalchemy import or_
+            missing_count = db.query(models.GraphNode).filter(
+                models.GraphNode.project_id == self.project_id,
+                or_(models.GraphNode.content == None, models.GraphNode.content == "")
+            ).count()
+
+            CACHE_RECREATION_THRESHOLD = 20
+
             if cache_name:
-                if not cache_svc.get_cache(cache_name):
-                    logger.warning(f"cache {cache_name} expired. recreating...")
+                try:
+                    if not cache_svc.get_cache(cache_name):
+                        logger.warning(f"cache {cache_name} expired.")
+                        cache_name = None
+                except Exception:
+                    logger.warning(f"cache {cache_name} expired or not found.")
                     cache_name = None
                     
-            if not cache_name:
+            if not cache_name and missing_count >= CACHE_RECREATION_THRESHOLD:
+                logger.info(f"{missing_count} nodes missing content. threshold met. creating context cache...")
                 db_file = db.query(models.File).filter(models.File.project_id == self.project_id).first()
                 if db_file and db_file.content:
                     cache_name = cache_svc.create_document_cache(db_file.content, str(self.project_id))
@@ -62,9 +75,10 @@ class ExportProcessor:
                         project.project_metadata = meta
                         flag_modified(project, "project_metadata")
                         db.commit()
+            elif not cache_name and missing_count < CACHE_RECREATION_THRESHOLD:
+                logger.info(f"only {missing_count} nodes missing content. skipping cache creation to save costs, using RAG.")
 
-            # 1. find nodes missing content (check for None or empty string)
-            from sqlalchemy import or_
+            # 1. find nodes missing content (batch processing)
             missing_nodes = db.query(models.GraphNode).filter(
                 models.GraphNode.project_id == self.project_id,
                 or_(models.GraphNode.content == None, models.GraphNode.content == "")
