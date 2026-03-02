@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     # app config
     APP_NAME: str = "BrainLattice API"
     DEBUG: bool = False
+    INTERNAL_SECRET_KEY: Optional[str] = None
     
     # database (neon postgres)
     DATABASE_URL: str

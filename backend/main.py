@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import project, ingest, export
+from routers import project, ingest, export, internal
 from core.config import get_settings
 from core.logger import setup_logger
 import logging
@@ -31,6 +31,7 @@ app.add_middleware(
 app.include_router(project.router, prefix="/api", tags=["project"])
 app.include_router(ingest.router, prefix="/api", tags=["ingest"])
 app.include_router(export.router, prefix="/api", tags=["export"])
+app.include_router(internal.router, prefix="/api/internal", tags=["internal"])
 
 @app.get("/")
 async def root():
