@@ -10,7 +10,7 @@ from services.embedding_service import EmbeddingService
 
 @pytest.fixture
 def mock_openai():
-    with patch("services.embedding_service.OpenAI") as mock:
+    with patch("openai.OpenAI") as mock:
         yield mock
 
 def test_get_embedding(mock_openai):
@@ -25,7 +25,7 @@ def test_get_embedding(mock_openai):
     mock_response.data = [mock_data]
     mock_client.embeddings.create.return_value = mock_response
     
-    service = EmbeddingService()
+    service = EmbeddingService(openai_key="test_key")
     
     # act
     embedding = service.get_embedding("test text")
@@ -49,7 +49,7 @@ def test_get_embeddings_batch(mock_openai):
     mock_response.data = [d1, d2]
     mock_client.embeddings.create.return_value = mock_response
     
-    service = EmbeddingService()
+    service = EmbeddingService(openai_key="test_key")
     
     # act
     embeddings = service.get_embeddings(["text 1", "text 2"])
