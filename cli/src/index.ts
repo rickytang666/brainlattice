@@ -2,6 +2,8 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 
+import { configCommand } from './commands/config.js';
+
 const program = new Command();
 
 program
@@ -9,12 +11,7 @@ program
   .description('CLI to extract PDFs into Obsidian vaults')
   .version('1.0.0');
 
-program
-  .command('config')
-  .description('configure your api keys and default vaults')
-  .action(() => {
-    console.log(chalk.gray('config command coming soon'));
-  });
+program.addCommand(configCommand);
 
 program
   .command('gen <pdf_path>')
