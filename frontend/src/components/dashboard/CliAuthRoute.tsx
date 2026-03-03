@@ -35,9 +35,11 @@ export default function CliAuthRoute() {
         if (token) {
           callbackUrl.searchParams.set("token", token);
         }
+
+        // ping the cli in the background
+        await fetch(callbackUrl.toString(), { mode: 'no-cors' });
         
-        // redirect to the cli server to show the custom success page
-        window.location.assign(callbackUrl.toString());
+        setStatus("success");
       } catch (e: unknown) {
         setStatus("error");
         setErrorMessage(e instanceof Error ? e.message : "failed to handoff credentials to the cli");
@@ -83,6 +85,25 @@ export default function CliAuthRoute() {
             <h2 className="text-2xl font-serif font-medium">linking your account...</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               please wait while we securely transmit your credentials to your local terminal session.
+            </p>
+          </>
+        )}
+
+        {status === "success" && (
+          <>
+            <div className="flex items-center justify-center mb-4">
+              <div className="relative">
+                <div className="absolute inset-0 blur-xl bg-emerald-500/20 rounded-full animate-pulse" />
+                <div className="relative p-3 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                </div>
+              </div>
+            </div>
+            <h2 className="text-3xl font-serif font-medium">authentication successful</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-[320px]">
+              your session has been securely linked to your terminal. 
+              <br/><br/>
+              <b>you can now close this tab.</b>
             </p>
           </>
         )}

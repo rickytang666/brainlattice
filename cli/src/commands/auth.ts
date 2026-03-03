@@ -67,41 +67,8 @@ export const authCommand = new Command('login')
       const token = url.searchParams.get('token');
 
       if (!userId) {
-        res.writeHead(400, { 
-          'Content-Type': 'text/html',
-          'Access-Control-Allow-Origin': '*'
-        });
-        res.end(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <title>Authentication Failed | BrainLattice</title>
-              <style>
-                :root { --bg: #09090b; --fg: #fafafa; --muted: #71717a; --error: #ef4444; }
-                body { 
-                  background-color: var(--bg); color: var(--fg); 
-                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                  display: flex; flex-direction: column; align-items: center; justify-content: center;
-                  height: 100vh; margin: 0; text-align: center;
-                }
-                .container { 
-                  max-width: 400px; padding: 2rem; 
-                  animation: fade-in 0.8s ease-out;
-                }
-                h1 { font-family: "Big Caslon", "Book Antiqua", "Palatino Linotype", Georgia, serif; font-weight: 500; font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--error); }
-                p { color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
-                @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <h1>authentication failed</h1>
-                <p>Missing user credentials in callback. <br/> Please close this window and try running <code>brainlattice login</code> again.</p>
-              </div>
-            </body>
-          </html>
-        `);
+        res.writeHead(400, { 'Access-Control-Allow-Origin': '*' });
+        res.end('Missing user_id');
         console.log(chalk.red('\n✖ authentication failed.'));
         server.close();
         process.exit(1);
@@ -114,55 +81,9 @@ export const authCommand = new Command('login')
         session_token: token || undefined
       });
 
-      // send success html to browser
-      res.writeHead(200, { 
-        'Content-Type': 'text/html',
-        'Access-Control-Allow-Origin': '*'
-      });
-      res.end(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <title>Authenticated | BrainLattice</title>
-            <style>
-              :root { --bg: #09090b; --fg: #fafafa; --muted: #a1a1aa; --accent: #7c3aed; --success: #10b981; }
-              body { 
-                background-color: var(--bg); color: var(--fg); 
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                display: flex; flex-direction: column; align-items: center; justify-content: center;
-                height: 100vh; margin: 0; text-align: center;
-              }
-              .container { 
-                max-width: 440px; padding: 2rem; 
-                animation: fade-in 1s cubic-bezier(0.16, 1, 0.3, 1);
-              }
-              .logo { font-family: Georgia, serif; font-style: italic; font-size: 1.25rem; color: var(--muted); margin-bottom: 2rem; }
-              h1 { font-family: "Big Caslon", "Book Antiqua", "Palatino Linotype", Georgia, serif; font-weight: 500; font-size: 1.75rem; margin-bottom: 1rem; color: var(--fg); }
-              p { color: var(--muted); font-size: 0.95rem; line-height: 1.6; letter-spacing: -0.01em; }
-              .badge { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--success); font-weight: 600; font-size: 0.85rem; text-transform: lowercase; margin-bottom: 1rem; }
-              .dot { width: 6px; height: 6px; background-color: var(--success); border-radius: 50%; box-shadow: 0 0 10px var(--success); }
-              code { background: #18181b; padding: 0.2rem 0.4rem; border-radius: 4px; color: var(--accent); }
-              @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="logo">brainlattice</div>
-              <div class="badge"><span class="dot"></span> linked</div>
-              <h1>successfully authenticated</h1>
-              <p>
-                Your CLI has been authorized. <br/>
-                You can now return to your terminal and close this tab.
-              </p>
-            </div>
-            <script>
-              // auto-close the tab after 4 seconds
-              setTimeout(() => { window.close(); }, 4000);
-            </script>
-          </body>
-        </html>
-      `);
+      // send success (no body needed as web UI handles the visual)
+      res.writeHead(200, { 'Access-Control-Allow-Origin': '*' });
+      res.end('OK');
 
       // shutdown server and exit cleanly
       console.log(chalk.green('\n✔ successfully authenticated!'));
