@@ -5,6 +5,7 @@ import GraphScratchpad from "./components/scratchpad/GraphScratchpad";
 import ProjectDashboard from "./components/dashboard/ProjectDashboard";
 import LandingPage from "./components/dashboard/LandingPage";
 import ConfigModal from "./components/dashboard/ConfigModal";
+import CliAuthRoute from "./components/dashboard/CliAuthRoute";
 import { useAuthSync } from "./hooks/useAuthSync";
 import { Navbar } from "./components/layout/Navbar";
 import { Footer } from "./components/layout/Footer";
@@ -25,6 +26,7 @@ function App() {
       <main className="flex-1 w-full relative">
         <Routes>
           <Route path="/scratchpad" element={<GraphScratchpad />} />
+          <Route path="/cli-auth" element={<CliAuthRoute />} />
           <Route path="/" element={<LandingPage />} />
           <Route path="/:projectId" element={<ProjectDashboard />} />
         </Routes>
