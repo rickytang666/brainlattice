@@ -65,6 +65,8 @@ export const genCommand = new Command('gen')
         }
         extractionBar.stop();
         console.log(chalk.green('✔ [mock] graph extraction complete!'));
+        console.log(chalk.gray(`  └─ nodes:   ${chalk.white(142)}`));
+        console.log(chalk.gray(`  └─ links:   ${chalk.white(489)}\n`));
 
         if (options.graphOnly) {
           const outPath = path.resolve(process.cwd(), `${filename.replace('.pdf', '')}_graph_mock.json`);
@@ -147,6 +149,18 @@ export const genCommand = new Command('gen')
           extractionBar.update(100, { step: 'done' });
           extractionBar.stop();
           console.log(chalk.green('✔ graph extraction complete!'));
+          
+          const result = statusRes.data.result || {};
+          const nodesCount = result.graph_nodes || 0;
+          let linksCount = 0;
+          
+          if (result.graph_preview && result.graph_preview.nodes) {
+            linksCount = result.graph_preview.nodes.reduce((acc: number, node: any) => acc + (node.outbound_links?.length || 0), 0);
+          }
+
+          console.log(chalk.gray(`  └─ nodes:   ${chalk.white(nodesCount)}`));
+          console.log(chalk.gray(`  └─ links:   ${chalk.white(linksCount)}\n`));
+
           projectId = statusRes.data.metadata?.project_id || statusRes.data.details?.project_id || statusRes.data.result?.project_id;
           
           if (!projectId) {
