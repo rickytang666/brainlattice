@@ -1,7 +1,7 @@
 import { useUser, useAuth, SignIn } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, XCircle } from "lucide-react";
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -36,13 +36,9 @@ export default function CliAuthRoute() {
           callbackUrl.searchParams.set("token", token);
         }
         
-        // console.log(`[debug] pinging cli: ${callbackUrl.toString()}`);
-        await fetch(callbackUrl.toString(), { mode: 'no-cors' });
-        // console.log(`[debug] ping successful`);
-        
-        setStatus("success");
+        // redirect to the cli server to show the custom success page
+        window.location.assign(callbackUrl.toString());
       } catch (e: unknown) {
-        // console.error(`[debug] ping failed:`, e);
         setStatus("error");
         setErrorMessage(e instanceof Error ? e.message : "failed to handoff credentials to the cli");
       }
@@ -54,20 +50,20 @@ export default function CliAuthRoute() {
   if (!isLoaded) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   // if user is not logged in, show the clerk sign in box. 
-  // after they sign in, this component will re-render with `user` populated.
   if (!user) {
     return (
-      <div className="flex flex-col h-screen w-full items-center justify-center bg-background p-4">
-        <div className="mb-8 text-center space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight">cli authentication</h1>
-          <p className="text-muted-foreground text-sm max-w-[400px]">
-            please sign in to your brainlattice account to authorize the command line interface.
+      <div className="flex flex-col h-screen w-full items-center justify-center bg-background p-4 animate-in fade-in duration-500">
+        <div className="mb-10 text-center space-y-3">
+          <div className="text-muted-foreground font-serif italic text-lg mb-4">brainlattice</div>
+          <h1 className="text-3xl font-serif font-medium tracking-tight">cli authentication</h1>
+          <p className="text-muted-foreground text-sm max-w-[380px] leading-relaxed">
+            please sign in to your account to authorize the command line interface.
           </p>
         </div>
         <SignIn routing="hash" />
@@ -76,43 +72,34 @@ export default function CliAuthRoute() {
   }
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-background p-4">
+    <div className="flex h-screen w-full items-center justify-center bg-background p-4 font-sans">
       <div className={cn(
-        "flex flex-col items-center justify-center p-8 rounded-xl border max-w-md w-full text-center space-y-4 shadow-sm",
-        status === "success" ? "border-emerald-500/20 bg-emerald-500/5" : "",
-        status === "error" ? "border-destructive/20 bg-destructive/5" : "",
-        status === "processing" ? "border-border bg-card" : ""
+        "flex flex-col items-center justify-center p-10 rounded-2xl border max-w-md w-full text-center space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700",
+        status === "success" ? "border-emerald-500/10 bg-emerald-500/5" : "border-border bg-card shadow-sm"
       )}>
         {status === "processing" && (
           <>
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-2" />
-            <h2 className="text-xl font-semibold">authenticating your cli...</h2>
-            <p className="text-sm text-muted-foreground">
-              please wait while we hand off your credentials to your local terminal.
+            <Loader2 className="h-10 w-10 animate-spin text-muted-foreground mb-2" />
+            <h2 className="text-2xl font-serif font-medium">linking your account...</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              please wait while we securely transmit your credentials to your local terminal session.
             </p>
-          </>
-        )}
-
-        {status === "success" && (
-          <>
-            <CheckCircle2 className="h-16 w-16 text-emerald-500 mb-2" />
-            <h2 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">auth successful!</h2>
-            <p className="text-muted-foreground">
-              your browser has successfully securely shared your session with the brainlattice cli.
-            </p>
-            <div className="mt-4 px-4 py-2 bg-background border rounded-lg text-sm font-mono text-foreground">
-              you can now safely close this tab and return to your terminal.
-            </div>
           </>
         )}
 
         {status === "error" && (
           <>
-            <XCircle className="h-16 w-16 text-destructive mb-2" />
-            <h2 className="text-2xl font-bold text-destructive">authentication failed</h2>
-            <p className="text-muted-foreground">
+            <XCircle className="h-16 w-16 text-destructive/80 mb-2" />
+            <h2 className="text-2xl font-serif font-medium text-destructive/90">authentication failed</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
               {errorMessage}
             </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+            >
+              retry link
+            </button>
           </>
         )}
       </div>
