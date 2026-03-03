@@ -2,8 +2,9 @@ import axios, { AxiosInstance } from 'axios';
 import { getConfig } from './config.js';
 import chalk from 'chalk';
 
-// normalize backend url (remove trailing slash)
-let BACKEND_URL = (process.env.BRAINLATTICE_API_URL || 'https://api.brainlattice.com/api').replace(/\/$/, '');
+// normalize backend url
+const rawUrl = process.env.BRAINLATTICE_API_URL || 'https://api.brainlattice.com/api';
+export const BACKEND_URL = rawUrl.endsWith('/') ? rawUrl : `${rawUrl}/`;
 
 export function createApiClient(): AxiosInstance {
   const config = getConfig();

@@ -240,7 +240,7 @@ export const genCommand = new Command('gen')
 
       await extract(targetZipPath, { dir: extractDir });
       
-      spinner.succeed('extraction complete! your knowledge graph is live in obsidian.\n');
+      spinner.succeed(`extraction complete! knowledge graph ready at: ${chalk.cyan(extractDir)}\n`);
       
     } catch (error: any) {
       console.error(chalk.red(`\n✖ error: ${error.message}`));
