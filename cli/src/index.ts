@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 
 import { configCommand } from './commands/config.js';
+import { authCommand } from './commands/auth.js';
 
 const program = new Command();
 
@@ -12,6 +13,7 @@ program
   .version('1.0.0');
 
 program.addCommand(configCommand);
+program.addCommand(authCommand);
 
 program
   .command('gen <pdf_path>')
