@@ -11,6 +11,25 @@ from services.job_service import get_job_service
 
 router = APIRouter()
 
+@router.get("/whoami")
+async def whoami(
+    db: Session = Depends(get_db),
+    context: UserContext = Depends(get_user_context)
+):
+    """get current user info and usage stats"""
+    try:
+        project_count = db.query(models.Project).filter(
+            models.Project.user_id == context.user_id
+        ).count()
+        
+        return {
+            "user_id": context.user_id,
+            "project_count": project_count,
+            "success": True
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"whoami error: {str(e)}")
+
 
 @router.post("/project/save", response_model=ProjectSaveResponse)
 async def save_project(
