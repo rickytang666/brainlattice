@@ -7,6 +7,8 @@ import { authCommand } from './commands/auth.js';
 import { genCommand } from './commands/gen.js';
 import { statusCommand } from './commands/status.js';
 
+import { exportCommand } from './commands/export.js';
+
 const program = new Command();
 
 program
@@ -18,12 +20,6 @@ program.addCommand(configCommand);
 program.addCommand(authCommand);
 program.addCommand(genCommand);
 program.addCommand(statusCommand);
-
-program
-  .command('export')
-  .description('download your previously generated graphs from the remote server')
-  .action(() => {
-    console.log(chalk.gray('export command coming soon'));
-  });
+program.addCommand(exportCommand);
 
 program.parse();
