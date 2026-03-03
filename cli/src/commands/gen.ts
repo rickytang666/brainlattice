@@ -17,7 +17,7 @@ export const genCommand = new Command('gen')
   .description('generate an Obsidian vault from a local PDF')
   .argument('<pdf_path>', 'path to the local pdf file')
   .option('-v, --vault <vault_path>', 'destination obsidian vault')
-  .option('--graph-only', 'only export the graph.json file, skipping obsidian export')
+  .option('--graph-only', 'only export the graph.json file (import the json to scratchpad on brainlattice web to visualize)')
   .option('--mock', 'simulate the process without making api calls (for testing purposes)')
   .action(async (pdfPath, options) => {
     try {

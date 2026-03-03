@@ -26,10 +26,10 @@ const formatDate = (dateStr: string) => {
 
 export const exportCommand = new Command('export')
   .description('export an existing project to an obsidian vault')
-  .argument('[project_id]', 'optional project ID to export directly')
+  .argument('[project_title]', 'optional project title to export directly')
   .option('-v, --vault <vault_path>', 'destination obsidian vault')
   .option('--mock', 'simulate the process without making api calls (for testing purposes)')
-  .action(async (projectIdArg, options) => {
+  .action(async (projectTitleArg, options) => {
     try {
 
       const config = getConfig();
@@ -40,13 +40,13 @@ export const exportCommand = new Command('export')
       const vaultPath = path.resolve(vaultPathRaw.replace('~', os.homedir()));
 
       const api = createApiClient();
-      let projectId = projectIdArg;
+      let projectTitle = projectTitleArg;
       let projectName = '';
 
       if (options.mock) {
         console.log(chalk.yellow('running in mock mode - no tokens will be used\n'));
         
-        if (!projectId) {
+        if (!projectTitle) {
           const selection = await select<{ id: string, name: string }>({
             message: 'Select a project to export:',
             loop: false,
@@ -57,10 +57,10 @@ export const exportCommand = new Command('export')
               { name: `Biology Notes ${chalk.gray('(created Feb 15)')}`, value: { id: 'mock-3', name: 'biology_notes' } },
             ],
           });
-          projectId = selection.id;
+          projectTitle = selection.id;
           projectName = selection.name;
         } else {
-          projectName = `mock_${projectId}`;
+          projectName = `mock_${projectTitle}`;
         }
 
         const targetZipPath = path.join(vaultPath, `${projectName}.zip`);
@@ -85,49 +85,73 @@ export const exportCommand = new Command('export')
         if (!fs.existsSync(extractDir)) fs.mkdirSync(extractDir, { recursive: true });
         
         fs.writeFileSync(targetZipPath, 'mock zip content');
-        fs.writeFileSync(path.join(extractDir, 'Exported Note.md'), `# Exported Note\nMock export for project ${projectId}`);
+        fs.writeFileSync(path.join(extractDir, 'Exported Note.md'), `# Exported Note\nMock export for project ${projectTitle}`);
         spinner.succeed(`[mock] export complete! check ${chalk.cyan(extractDir)} for the notes.\n`);
         return;
       }
 
       // 1. resolve project ID and Name
-      if (!projectId) {
-        const spinner = ora('fetching projects...').start();
-        try {
-          const res = await api.get('projects/list');
-          spinner.stop();
-          
-          if (!res.data || res.data.length === 0) {
-            throw new Error('no projects found on remote server.');
-          }
+      const projectsSpinner = ora('fetching projects...').start();
+      let projects: any[] = [];
+      try {
+        const res = await api.get('projects/list');
+        projects = res.data || [];
+        projectsSpinner.stop();
+      } catch (err: any) {
+        projectsSpinner.fail('failed to fetch projects.');
+        throw err;
+      }
 
-          const selection = await select<{ id: string, name: string }>({
-            message: 'Select a project to export:',
-            loop: false,
-            pageSize: 10,
-            choices: res.data.map((p: any) => ({
-              name: `${p.title || p.name || p.filename || p.id} ${chalk.gray(`(created ${formatDate(p.created_at)})`)}`,
-              value: { 
-                id: p.id, 
-                name: sanitizeName(p.title || p.name || p.filename || p.id) 
-              },
-              description: `Status: ${p.status}`
-            })),
-          });
-          
-          projectId = selection.id;
-          projectName = selection.name;
-        } catch (err: any) {
-          spinner.fail('failed to fetch projects.');
-          throw err;
+      if (projects.length === 0) {
+        throw new Error('no projects found on remote server.');
+      }
+
+      if (projectTitleArg) {
+        // try title/name/filename match (case-insensitive)
+        const searchStr = projectTitleArg.toLowerCase();
+        const matches = projects.filter(p => 
+          (p.title && p.title.toLowerCase() === searchStr) ||
+          (p.name && p.name.toLowerCase() === searchStr) ||
+          (p.filename && p.filename.toLowerCase() === searchStr)
+        );
+
+        if (matches.length === 1) {
+          projectTitle = matches[0].id;
+          projectName = sanitizeName(matches[0].title || matches[0].name || matches[0].filename || matches[0].id);
+          console.log(chalk.gray(`matched project: ${matches[0].title || matches[0].name || matches[0].filename}`));
+        } else if (matches.length > 1) {
+          // multiple matches, fall through to picker
+          console.log(chalk.yellow(`multiple projects matched "${projectTitleArg}", please select one:`));
+          projectTitle = null; 
+        } else {
+          // no matches, fall through to picker
+          console.log(chalk.yellow(`project "${projectTitleArg}" not found, please select from the list:`));
+          projectTitle = null;
         }
-      } else {
-        projectName = `project_${projectId.slice(0, 8)}`;
+      }
+
+      if (!projectTitle) {
+        const selection = await select<{ id: string, name: string }>({
+          message: 'Select a project to export:',
+          loop: false,
+          pageSize: 10,
+          choices: projects.map((p: any) => ({
+            name: `${p.title || p.name || p.filename || p.id} ${chalk.gray(`(created ${formatDate(p.created_at)})`)}`,
+            value: { 
+              id: p.id, 
+              name: sanitizeName(p.title || p.name || p.filename || p.id) 
+            },
+            description: `Status: ${p.status}`
+          })),
+        });
+        
+        projectTitle = selection.id;
+        projectName = selection.name;
       }
       
       // 2. trigger export
       const spinner = ora('triggering obsidian vault export...').start();
-      await api.post(`project/${projectId}/export/obsidian`);
+      await api.post(`project/${projectTitle}/export/obsidian`);
       spinner.succeed('obsidian export triggered.');
 
       // 3. poll status
@@ -142,7 +166,7 @@ export const exportCommand = new Command('export')
       let downloadUrl = null;
       while (true) {
         await sleep(2000);
-        const statusRes = await api.get(`project/${projectId}/export/status`);
+        const statusRes = await api.get(`project/${projectTitle}/export/status`);
         const status = statusRes.data.status;
         const progress = statusRes.data.progress || 0;
         const message = statusRes.data.message || 'processing...';
@@ -163,7 +187,7 @@ export const exportCommand = new Command('export')
 
       // 4. download & extract
       spinner.start('downloading vault zip...');
-      const dlRes = await api.get(`project/${projectId}/export/download`);
+      const dlRes = await api.get(`project/${projectTitle}/export/download`);
       const signedUrl = dlRes.data.download_url;
 
       if (!signedUrl) {
