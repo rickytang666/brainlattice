@@ -8,6 +8,7 @@ import { genCommand } from './commands/gen.js';
 import { statusCommand } from './commands/status.js';
 
 import { exportCommand } from './commands/export.js';
+import { listCommand } from './commands/list.js';
 import { checkForUpdates } from './utils/notifier.js';
 import { showBanner } from './utils/banner.js';
 
@@ -15,7 +16,6 @@ const VERSION = '1.0.0';
 
 const program = new Command();
 
-// Show branding
 showBanner();
 
 // run update check in the background
@@ -30,6 +30,7 @@ program.addCommand(configCommand);
 program.addCommand(authCommand);
 program.addCommand(whoamiCommand);
 program.addCommand(logoutCommand);
+program.addCommand(listCommand);
 program.addCommand(genCommand);
 program.addCommand(statusCommand);
 program.addCommand(exportCommand);
