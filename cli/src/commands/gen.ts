@@ -90,14 +90,22 @@ export const genCommand = new Command('gen')
         console.log(chalk.green('✔ [mock] obsidian export ready.'));
 
         // 4. mock file operation
-        spinner.start(`[mock] creating dummy vault localy...`);
+        const projectName = filename.replace('.pdf', '');
+        const targetZipPath = path.join(vaultPath, `${projectName}.zip`);
+        const extractDir = path.join(vaultPath, projectName);
+
+        spinner.start(`[mock] creating ${chalk.cyan(projectName + '.zip')}...`);
         await sleep(1000);
 
-        if (!fs.existsSync(vaultPath)) {
-          fs.mkdirSync(vaultPath, { recursive: true });
+        if (!fs.existsSync(extractDir)) {
+          fs.mkdirSync(extractDir, { recursive: true });
         }
-        fs.writeFileSync(path.join(vaultPath, 'Mock Note.md'), `# Mock Note\nGenerated via brainlattice --mock mode.`);
-        spinner.succeed(`[mock] extraction complete! check ${chalk.cyan(vaultPath)} for the mock note.\n`);
+        
+        // create a dummy zip file just to show it
+        fs.writeFileSync(targetZipPath, 'mock zip content');
+        fs.writeFileSync(path.join(extractDir, 'Mock Note.md'), `# Mock Note\nGenerated via brainlattice --mock mode.`);
+        
+        spinner.succeed(`[mock] extraction complete! check ${chalk.cyan(extractDir)} for the notes.\n`);
         return;
       }
 
@@ -211,21 +219,27 @@ export const genCommand = new Command('gen')
       const dlRes = await api.get(`project/${projectId}/export/download`);
       const signedUrl = dlRes.data.download_url;
 
-      const zipData = await axios.get(signedUrl, { responseType: 'arraybuffer' });
-      const tempZipPath = path.join(os.tmpdir(), `brainlattice_export_${Date.now()}.zip`);
-      fs.writeFileSync(tempZipPath, Buffer.from(zipData.data));
-      spinner.succeed('downloaded vault zip.');
+      const projectName = filename.replace('.pdf', '');
+      const targetZipPath = path.join(vaultPath, `${projectName}.zip`);
+      const extractDir = path.join(vaultPath, projectName);
 
-      spinner.start(`extracting into ${chalk.cyan(vaultPath)}...`);
-      // check if vaultPath exists, if not make it
+      const zipData = await axios.get(signedUrl, { responseType: 'arraybuffer' });
+      
       if (!fs.existsSync(vaultPath)) {
         fs.mkdirSync(vaultPath, { recursive: true });
       }
-
-      await extract(tempZipPath, { dir: vaultPath });
       
-      fs.unlinkSync(tempZipPath);
+      fs.writeFileSync(targetZipPath, Buffer.from(zipData.data));
+      spinner.succeed(`downloaded ${chalk.cyan(projectName + '.zip')}.`);
 
+      spinner.start(`extracting into ${chalk.cyan(projectName + '/')}...`);
+      
+      if (!fs.existsSync(extractDir)) {
+        fs.mkdirSync(extractDir, { recursive: true });
+      }
+
+      await extract(targetZipPath, { dir: extractDir });
+      
       spinner.succeed('extraction complete! your knowledge graph is live in obsidian.\n');
       
     } catch (error: any) {
