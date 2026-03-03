@@ -25,7 +25,7 @@ export const genCommand = new Command('gen')
 
       const config = getConfig();
       if (!config.gemini_key) {
-        throw new Error('missing gemini_key. please run `brainlattice config init` or `brainlattice login`.');
+        throw new Error('missing gemini_key. please run `brainlattice config`');
       }
 
       const absolutePdfPath = path.resolve(process.cwd(), pdfPath);

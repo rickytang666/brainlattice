@@ -35,7 +35,7 @@ export const exportCommand = new Command('export')
       const config = getConfig();
       const vaultPathRaw = options.vault || config.default_vault;
       if (!vaultPathRaw) {
-        throw new Error('no vault path specified. provide --vault or set a default via `brainlattice config init`.');
+        throw new Error('no vault path specified. provide --vault or set a default via `brainlattice config`.');
       }
       const vaultPath = path.resolve(vaultPathRaw.replace('~', os.homedir()));
 

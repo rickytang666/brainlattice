@@ -5,14 +5,6 @@ import { getConfig, saveConfig } from '../utils/config.js';
 
 export const configCommand = new Command('config')
   .description('configure your api keys and default vaults')
-  .action(async () => {
-    // default action if 'config init' is not used, redirect to init for now
-    await runInit();
-  });
-
-configCommand
-  .command('init')
-  .description('interactive setup for api keys and default directories')
   .action(runInit);
 
 async function runInit() {

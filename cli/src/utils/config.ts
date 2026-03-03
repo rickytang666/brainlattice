@@ -14,21 +14,25 @@ const CONFIG_DIR = path.join(os.homedir(), '.brainlattice');
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 
 export function getConfig(): CliConfig {
+  const generateAnonId = () => 'anon_' + Math.random().toString(36).substring(2, 15);
+
   if (!fs.existsSync(CONFIG_FILE)) {
-    // generate a permanent anonymous UUID for this device until they login
-    const anonymousId = 'anon_' + Math.random().toString(36).substring(2, 15);
-    return { user_id: anonymousId };
+    const config = { user_id: generateAnonId() };
+    saveConfig(config);
+    return config;
   }
   try {
     const data = fs.readFileSync(CONFIG_FILE, 'utf-8');
     const parsed = JSON.parse(data) as CliConfig;
     if (!parsed.user_id) {
-      parsed.user_id = 'anon_' + Math.random().toString(36).substring(2, 15);
+      parsed.user_id = generateAnonId();
       saveConfig(parsed);
     }
     return parsed;
   } catch (error) {
-    return { user_id: 'anon_' + Math.random().toString(36).substring(2, 15) };
+    const config = { user_id: generateAnonId() };
+    saveConfig(config);
+    return config;
   }
 }
 
