@@ -1,35 +1,48 @@
 # brainlattice cli
 
-a command-line interface to orchestrate the [brainlattice](https://github.com/rickytang/brainlattice) backend directly from your terminal.
+a high-performance CLI to orchestrate the brainlattice extraction engine. turn dense pdfs into obsidian vaults with a single command.
 
-turn dense pdfs into beautiful obsidian knowledge graphs with a single command.
+> [!NOTE]
+> the heavy lifting happens on the remote backend. this cli is designed for a **bring-your-own-key (byok)** workflow.
 
-> note: the heavy lifting (llm extraction, chunking, embedding) happens on the remote aws backend. you must provide your own gemini/openai api keys to use this cli.
-
-## getting started
+## quick start
 
 ```bash
 # install globally
 npm i -g brainlattice
 
-# configure your api keys and default obsidian vault
-brainlattice config init
+# configure your keys and default vault
+brainlattice config
 
-# generate a knowledge graph from a local pdf
-brainlattice gen path/to/textbook.pdf --vault ~/obsidian/university
+# generate a vault from a local pdf
+brainlattice gen path/to/textbook.pdf
 ```
 
 ## commands
 
-- `brainlattice config init`: interactive setup for keys and default directories
-- `brainlattice gen <pdf>`: uploads pdf, processes it on aws, and downloads directly to your vault
-- `brainlattice export`: interactively select and download your previously generated cloud projects
+| command  | description                                                             |
+| :------- | :---------------------------------------------------------------------- |
+| `login`  | authenticate your terminal via the brainlattice dashboard.              |
+| `whoami` | display current authenticated user and project usage stats.             |
+| `config` | interactive setup for gemini/openai keys and default obsidian vault.    |
+| `list`   | list all your remote projects in a clean table view.                    |
+| `gen`    | upload, extract, and download a vault directly to your obsidian folder. |
+| `export` | interactively pick and download any previously generated project.       |
+| `status` | verify your local configuration and backend connectivity.               |
+| `logout` | clear local session data and disconnect from the backend.               |
+
+## key features
+
+- **rich extraction summaries**: `gen` displays stats after each process.
+- **dual progress bars**: separate visual tracking for _graph extraction_ and _vault generation_.
+- **resilient matching**: `export` accepts human-readable titles.
+- **update notifier**: automatic 24-hour checks to ensure you're always on the latest version.
 
 ## development
 
 ```bash
 npm install
-npm run dev    # watch mode for local dev
-npm run build  # strict build via tsup
-npm link       # expose the 'brainlattice' command locally
+npm run dev    # watch mode
+npm run build  # production build via tsup
+npm link       # expose 'brainlattice' command locally
 ```

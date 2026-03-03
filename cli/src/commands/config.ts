@@ -18,7 +18,7 @@ async function runInit() {
   });
 
   const openaiKey = await input({
-    message: 'enter your openai api key (optional):',
+    message: 'enter your openai api key (optional, but better for embeddings):',
     default: current.openai_key || '',
   });
 
