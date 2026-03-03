@@ -56,14 +56,14 @@ export const genCommand = new Command('gen')
       spinner.succeed(`uploaded successfully.`);
 
       // 2. poll ingest status
-      const progressBar = new cliProgress.SingleBar({
-        format: `${chalk.blue('processing')} |${chalk.cyan('{bar}')}| {percentage}% | {step}`,
+      const extractionBar = new cliProgress.SingleBar({
+        format: `${chalk.blue('graph extraction')} |${chalk.cyan('{bar}')}| {percentage}% | {step}`,
         barCompleteChar: '\u2588',
         barIncompleteChar: '\u2591',
         hideCursor: true
       });
 
-      progressBar.start(100, 0, { step: 'initializing...' });
+      extractionBar.start(100, 0, { step: 'initializing...' });
       
       let projectId = null;
       while (true) {
@@ -72,13 +72,13 @@ export const genCommand = new Command('gen')
         const status = statusRes.data.status;
         const progress = statusRes.data.progress || 0;
         const details = statusRes.data.details || {};
-        const step = status === 'completed' ? 'done' : (details.current_step || 'extracting...');
+        const step = status === 'completed' ? 'done' : (details.current_step || 'processing...');
         
-        progressBar.update(progress, { step: step.toLowerCase() });
+        extractionBar.update(progress, { step: step.toLowerCase() });
 
         if (status === 'completed') {
-          progressBar.update(100, { step: 'done' });
-          progressBar.stop();
+          extractionBar.update(100, { step: 'done' });
+          extractionBar.stop();
           console.log(chalk.green('✔ graph extraction complete!'));
           projectId = statusRes.data.metadata?.project_id || statusRes.data.details?.project_id || statusRes.data.result?.project_id;
           
@@ -87,7 +87,7 @@ export const genCommand = new Command('gen')
           }
           break;
         } else if (status === 'failed') {
-          progressBar.stop();
+          extractionBar.stop();
           throw new Error('remote processing failed: ' + (statusRes.data.details?.error || 'unknown error'));
         }
       }
@@ -117,9 +117,8 @@ export const genCommand = new Command('gen')
       await api.post(`project/${projectId}/export/obsidian`);
       spinner.succeed('obsidian export triggered.');
 
-      spinner.start('generating obsidian canvas and notes...');
       const exportBar = new cliProgress.SingleBar({
-        format: `${chalk.blue('exporting')}  |${chalk.magenta('{bar}')}| {percentage}% | {step}`,
+        format: `${chalk.magenta('vault exploration')} |${chalk.magenta('{bar}')}| {percentage}% | {step}`,
         barCompleteChar: '\u2588',
         barIncompleteChar: '\u2591',
         hideCursor: true
