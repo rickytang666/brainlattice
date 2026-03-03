@@ -3,7 +3,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 
 import { configCommand } from './commands/config.js';
-import { authCommand } from './commands/auth.js';
+import { authCommand, whoamiCommand, logoutCommand } from './commands/auth.js';
 import { genCommand } from './commands/gen.js';
 import { statusCommand } from './commands/status.js';
 
@@ -28,6 +28,8 @@ program
 
 program.addCommand(configCommand);
 program.addCommand(authCommand);
+program.addCommand(whoamiCommand);
+program.addCommand(logoutCommand);
 program.addCommand(genCommand);
 program.addCommand(statusCommand);
 program.addCommand(exportCommand);

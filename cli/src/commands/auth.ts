@@ -3,7 +3,8 @@ import http from 'node:http';
 import open from 'open';
 import chalk from 'chalk';
 import ora from 'ora';
-import { saveConfig } from '../utils/config.js';
+import { saveConfig, getConfig } from '../utils/config.js';
+import { createApiClient } from '../utils/client.js';
 
 const FRONTEND_URL = process.env.BRAINLATTICE_FRONTEND_URL;
 const AUTH_URL = `${FRONTEND_URL}/cli-auth`;
@@ -127,4 +128,46 @@ export const authCommand = new Command('login')
         process.exit(1);
       }
     });
+  });
+
+export const whoamiCommand = new Command('whoami')
+  .description('display the current authenticated user and usage')
+  .action(async () => {
+    const config = getConfig();
+    if (!config.user_id) {
+      console.log(chalk.yellow('\n⚠ not logged in. run `brainlattice login` to get started.\n'));
+      return;
+    }
+
+    const spinner = ora('fetching user info...').start();
+    try {
+      const api = createApiClient();
+      const res = await api.get('whoami');
+      spinner.stop();
+
+      console.log(chalk.bold.blue('\nbrainlattice user info\n'));
+      console.log(`${chalk.cyan('user id:')}    ${res.data.user_id}`);
+      console.log(`${chalk.cyan('projects:')}   ${res.data.project_count}`);
+      console.log();
+    } catch (err: any) {
+      spinner.fail('failed to fetch user info.');
+      console.error(chalk.red(`\n✖ error: ${err.message}\n`));
+    }
+  });
+
+export const logoutCommand = new Command('logout')
+  .description('log out of your brainlattice account')
+  .action(async () => {
+    const config = getConfig();
+    if (!config.user_id) {
+      console.log(chalk.yellow('\n⚠ already logged out.\n'));
+      return;
+    }
+
+    saveConfig({
+      user_id: undefined,
+      session_token: undefined
+    });
+
+    console.log(chalk.green('\n✔ successfully logged out. all local session data cleared.\n'));
   });
