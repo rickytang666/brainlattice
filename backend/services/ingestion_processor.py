@@ -107,6 +107,10 @@ class IngestionProcessor:
                 f.write(file_bytes)
             
             markdown_content = self.pdf_service.extract_content(temp_path)
+            
+            if not markdown_content.strip():
+                raise ValueError(f"extracted content from {filename} is empty. Please ensure the PDF contains searchable text.")
+                
             db_file.content = markdown_content
             db.commit()
             self.timings['pdf_parsing'] = time.time() - parse_start
