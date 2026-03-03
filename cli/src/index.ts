@@ -9,10 +9,14 @@ import { statusCommand } from './commands/status.js';
 
 import { exportCommand } from './commands/export.js';
 import { checkForUpdates } from './utils/notifier.js';
+import { showBanner } from './utils/banner.js';
 
 const VERSION = '1.0.0';
 
 const program = new Command();
+
+// Show branding
+showBanner();
 
 // run update check in the background
 checkForUpdates(VERSION).catch(() => {});
