@@ -18,6 +18,7 @@ export const genCommand = new Command('gen')
   .argument('<pdf_path>', 'path to the local pdf file')
   .option('-v, --vault <vault_path>', 'destination obsidian vault')
   .option('--graph-only', 'only export the graph.json file, skipping obsidian export')
+  .option('--mock', 'simulate the process without making api calls (for testing purposes)')
   .action(async (pdfPath, options) => {
     try {
       console.log(chalk.bold.blue('\nbrainlattice generate\n'));
@@ -41,6 +42,64 @@ export const genCommand = new Command('gen')
 
       const api = createApiClient();
       const filename = path.basename(absolutePdfPath);
+
+      if (options.mock) {
+        console.log(chalk.yellow('running in mock mode - no tokens will be used\n'));
+        
+        // 1. mock upload
+        const spinner = ora(`[mock] uploading ${chalk.cyan(filename)}...`).start();
+        await sleep(1500);
+        spinner.succeed(`[mock] uploaded successfully.`);
+
+        // 2. mock extraction
+        const extractionBar = new cliProgress.SingleBar({
+          format: `${chalk.blue('graph extraction')} |${chalk.cyan('{bar}')}| {percentage}% | {step}`,
+          barCompleteChar: '\u2588',
+          barIncompleteChar: '\u2591',
+          hideCursor: true
+        });
+        extractionBar.start(100, 0, { step: 'initializing...' });
+        for (let i = 0; i <= 100; i += 10) {
+          await sleep(500);
+          extractionBar.update(i, { step: i < 50 ? 'extracting text...' : (i < 90 ? 'building graph...' : 'done') });
+        }
+        extractionBar.stop();
+        console.log(chalk.green('✔ [mock] graph extraction complete!'));
+
+        if (options.graphOnly) {
+          const outPath = path.resolve(process.cwd(), `${filename.replace('.pdf', '')}_graph_mock.json`);
+          fs.writeFileSync(outPath, JSON.stringify({ mock: true, nodes: [], edges: [] }, null, 2));
+          console.log(chalk.green(`✔ [mock] saved mock graph to ${outPath}\n`));
+          return;
+        }
+
+        // 3. mock export
+        console.log(chalk.gray('triggering obsidian vault export...'));
+        const exportBar = new cliProgress.SingleBar({
+          format: `${chalk.magenta('vault exploration')} |${chalk.magenta('{bar}')}| {percentage}% | {step}`,
+          barCompleteChar: '\u2588',
+          barIncompleteChar: '\u2591',
+          hideCursor: true
+        });
+        exportBar.start(100, 0, { step: 'preparing...' });
+        for (let i = 0; i <= 100; i += 20) {
+          await sleep(600);
+          exportBar.update(i, { step: i < 50 ? 'generating notes...' : 'packing canvas...' });
+        }
+        exportBar.stop();
+        console.log(chalk.green('✔ [mock] obsidian export ready.'));
+
+        // 4. mock file operation
+        spinner.start(`[mock] creating dummy vault localy...`);
+        await sleep(1000);
+
+        if (!fs.existsSync(vaultPath)) {
+          fs.mkdirSync(vaultPath, { recursive: true });
+        }
+        fs.writeFileSync(path.join(vaultPath, 'Mock Note.md'), `# Mock Note\nGenerated via brainlattice --mock mode.`);
+        spinner.succeed(`[mock] extraction complete! check ${chalk.cyan(vaultPath)} for the mock note.\n`);
+        return;
+      }
 
       // 1. upload
       const spinner = ora(`uploading ${chalk.cyan(filename)}...`).start();
