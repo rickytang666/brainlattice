@@ -40,14 +40,14 @@ export default function CliAuthRoute() {
         await fetch(url.toString(), { mode: 'no-cors' });
         
         setStatus("success");
-      } catch (e: any) {
+      } catch (e: unknown) {
         setStatus("error");
-        setErrorMessage(e.message || "failed to handoff credentials to the cli");
+        setErrorMessage(e instanceof Error ? e.message : "failed to handoff credentials to the cli");
       }
     }
 
     handoffToCli();
-  }, [isLoaded, user, redirectUri]);
+  }, [isLoaded, user, redirectUri, getToken]);
 
   if (!isLoaded) {
     return (
