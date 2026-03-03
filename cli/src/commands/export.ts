@@ -25,7 +25,7 @@ const formatDate = (dateStr: string) => {
 };
 
 export const exportCommand = new Command('export')
-  .description('download previously generated graphs from the remote server')
+  .description('export an existing project to an obsidian vault')
   .argument('[project_id]', 'optional project ID to export directly')
   .option('-v, --vault <vault_path>', 'destination obsidian vault')
   .option('--mock', 'simulate the process without making api calls (for testing purposes)')
