@@ -10,6 +10,7 @@ export default defineConfig({
   minify: true,
   sourcemap: true,
   env: {
-    BRAINLATTICE_API_URL: process.env.BRAINLATTICE_API_URL || 'https://api.brainlattice.com',
+    BRAINLATTICE_API_URL: process.env.BRAINLATTICE_API_URL || 'https://api.brainlattice.rickytang.dev/api',
+    BRAINLATTICE_FRONTEND_URL: process.env.BRAINLATTICE_FRONTEND_URL || 'https://brainlattice.rickytang.dev',
   }
 });

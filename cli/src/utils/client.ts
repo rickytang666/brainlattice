@@ -2,7 +2,8 @@ import axios, { AxiosInstance } from 'axios';
 import { getConfig } from './config.js';
 import chalk from 'chalk';
 
-const BACKEND_URL = process.env.BRAINLATTICE_API_URL;
+// normalize backend url (remove trailing slash)
+let BACKEND_URL = (process.env.BRAINLATTICE_API_URL || 'https://api.brainlattice.com/api').replace(/\/$/, '');
 
 export function createApiClient(): AxiosInstance {
   const config = getConfig();
@@ -46,14 +47,20 @@ export function createApiClient(): AxiosInstance {
     (error) => {
       if (error.response) {
         const detail = error.response.data?.detail || error.message;
+        const fullUrl = error.config?.url ? `${error.config.baseURL}${error.config.url}` : 'unknown url';
+        
         console.error(chalk.red(`\n✖ api error: ${detail}`));
+        console.error(chalk.gray(`  url: ${fullUrl}`));
+        console.error(chalk.gray(`  status: ${error.response.status}`));
+        
         if (error.response.status === 401 || error.response.status === 403) {
           console.error(chalk.gray('hint: your session may have expired. try running `brainlattice login` again.'));
         }
       } else {
-        console.error(chalk.red(`\n✖ network error: could not connect to ${BACKEND_URL}`));
+        const fullUrl = error.config?.url ? `${error.config.baseURL}${error.config.url}` : 'unknown url';
+        console.error(chalk.red(`\n✖ network error: could not connect to backend`));
+        console.error(chalk.gray(`  attempted: ${fullUrl}`));
       }
-      // re-throw to allow specific commands to handle it if they want
       return Promise.reject(error);
     }
   );

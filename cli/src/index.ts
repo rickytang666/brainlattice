@@ -4,6 +4,8 @@ import chalk from 'chalk';
 
 import { configCommand } from './commands/config.js';
 import { authCommand } from './commands/auth.js';
+import { genCommand } from './commands/gen.js';
+import { statusCommand } from './commands/status.js';
 
 const program = new Command();
 
@@ -14,14 +16,8 @@ program
 
 program.addCommand(configCommand);
 program.addCommand(authCommand);
-
-program
-  .command('gen <pdf_path>')
-  .description('generate a knowledge graph from a local PDF')
-  .option('-v, --vault <vault_path>', 'destination obsidian vault')
-  .action((pdfPath, options) => {
-    console.log(chalk.gray(`gen command coming soon, will process ${pdfPath}`));
-  });
+program.addCommand(genCommand);
+program.addCommand(statusCommand);
 
 program
   .command('export')

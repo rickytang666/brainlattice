@@ -5,7 +5,8 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { saveConfig } from '../utils/config.js';
 
-const AUTH_URL = 'https://brainlattice.rickytang.dev/cli-auth';
+const FRONTEND_URL = process.env.BRAINLATTICE_FRONTEND_URL;
+const AUTH_URL = `${FRONTEND_URL}/cli-auth`;
 
 export const authCommand = new Command('login')
   .description('authenticate with your brainlattice account')
@@ -23,6 +24,23 @@ export const authCommand = new Command('login')
       console.log(chalk.gray(`opening browser to ${fullAuthUrl}...`));
       
       const spinner = ora('waiting for authentication...').start();
+      
+      // handle ctrl+c
+      const cleanup = () => {
+        spinner.stop();
+        console.log(chalk.yellow('\n\n⚠ login cancelled.'));
+        server.close();
+        process.exit(0);
+      };
+
+      process.on('SIGINT', cleanup);
+
+      // auto timeout
+      const timeout = setTimeout(() => {
+        spinner.warn('login timed out after 5 minutes.');
+        server.close();
+        process.off('SIGINT', cleanup);
+      }, 5 * 60 * 1000);
       
       open(fullAuthUrl).catch(() => {
         spinner.warn('could not open browser automatically.');
