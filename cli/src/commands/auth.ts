@@ -51,8 +51,11 @@ export const authCommand = new Command('login')
 
     // handle the incoming redirect request from the browser
     server.on('request', (req, res) => {
+      // console.log(chalk.gray(`\n[debug] received request: ${req.method} ${req.url}`));
+      
       if (!req.url?.startsWith('/callback')) {
-        res.writeHead(404);
+        // console.log(chalk.yellow(`[debug] ignoring non-callback request: ${req.url}`));
+        res.writeHead(404, { 'Access-Control-Allow-Origin': '*' });
         res.end();
         return;
       }
@@ -63,7 +66,10 @@ export const authCommand = new Command('login')
       const token = url.searchParams.get('token');
 
       if (!userId) {
-        res.writeHead(400, { 'Content-Type': 'text/html' });
+        res.writeHead(400, { 
+          'Content-Type': 'text/html',
+          'Access-Control-Allow-Origin': '*'
+        });
         res.end(`
           <html>
             <body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
@@ -85,7 +91,10 @@ export const authCommand = new Command('login')
       });
 
       // send success html to browser
-      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.writeHead(200, { 
+        'Content-Type': 'text/html',
+        'Access-Control-Allow-Origin': '*'
+      });
       res.end(`
         <html>
           <body style="font-family: sans-serif; text-align: center; padding-top: 50px; background-color: #f8f9fa;">

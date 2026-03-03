@@ -30,17 +30,19 @@ export default function CliAuthRoute() {
       try {
         const token = await getToken();
         
-        // ping the local cli server with the user credentials
-        const url = new URL(redirectUri);
-        url.searchParams.set("user_id", user.id);
+        const callbackUrl = new URL(redirectUri);
+        callbackUrl.searchParams.set("user_id", user.id);
         if (token) {
-          url.searchParams.set("token", token);
+          callbackUrl.searchParams.set("token", token);
         }
         
-        await fetch(url.toString(), { mode: 'no-cors' });
+        // console.log(`[debug] pinging cli: ${callbackUrl.toString()}`);
+        await fetch(callbackUrl.toString(), { mode: 'no-cors' });
+        // console.log(`[debug] ping successful`);
         
         setStatus("success");
       } catch (e: unknown) {
+        // console.error(`[debug] ping failed:`, e);
         setStatus("error");
         setErrorMessage(e instanceof Error ? e.message : "failed to handoff credentials to the cli");
       }
