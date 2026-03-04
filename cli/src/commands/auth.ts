@@ -12,94 +12,91 @@ const AUTH_URL = `${FRONTEND_URL}/cli-auth`;
 export const authCommand = new Command('login')
   .description('authenticate with your brainlattice account')
   .action(async () => {
-    console.log(chalk.bold.blue('\nbrainlattice cli login\n'));
-    
-    // find an open port
-    const server = http.createServer();
-    const port = 4135;
-    
-    server.listen(port, '127.0.0.1', () => {
-      const callbackUrl = `http://127.0.0.1:${port}/callback`;
-      const fullAuthUrl = `${AUTH_URL}?redirect_uri=${encodeURIComponent(callbackUrl)}`;
+    return new Promise<void>((resolve) => {
+      console.log(chalk.bold.blue('\nbrainlattice cli login\n'));
       
-      console.log(chalk.gray(`opening browser to ${fullAuthUrl}...`));
-      
+      const server = http.createServer();
+      const port = 4135;
       const spinner = ora('waiting for authentication...').start();
-      
-      // handle ctrl+c
-      const cleanup = () => {
+      let timeout: NodeJS.Timeout;
+
+      const cleanup = (message?: string) => {
         spinner.stop();
-        console.log(chalk.yellow('\n\n⚠ login cancelled.'));
+        if (message) console.log(message);
+        clearTimeout(timeout);
         server.close();
-        process.exit(0);
+        resolve();
       };
 
-      process.on('SIGINT', cleanup);
+      // handle sigint (ctrl+c)
+      const sigintHandler = () => {
+        cleanup(chalk.yellow('\n\n⚠ login cancelled.'));
+        process.off('SIGINT', sigintHandler);
+      };
+      process.on('SIGINT', sigintHandler);
 
-      // auto timeout
-      const timeout = setTimeout(() => {
+      timeout = setTimeout(() => {
         spinner.warn('login timed out after 5 minutes.');
-        server.close();
-        process.off('SIGINT', cleanup);
+        cleanup();
+        process.off('SIGINT', sigintHandler);
       }, 5 * 60 * 1000);
-      
-      open(fullAuthUrl).catch(() => {
-        spinner.warn('could not open browser automatically.');
-        console.log(`please open this url manually: ${chalk.cyan(fullAuthUrl)}`);
-        spinner.start('waiting for authentication...');
-      });
-    });
 
-    // handle the incoming redirect request from the browser
-    server.on('request', (req, res) => {
-      // console.log(chalk.gray(`\n[debug] received request: ${req.method} ${req.url}`));
-      
-      if (!req.url?.startsWith('/callback')) {
-        // console.log(chalk.yellow(`[debug] ignoring non-callback request: ${req.url}`));
-        res.writeHead(404, { 'Access-Control-Allow-Origin': '*' });
-        res.end();
-        return;
-      }
-
-      // parse the query params
-      const url = new URL(req.url, `http://127.0.0.1:${port}`);
-      const userId = url.searchParams.get('user_id');
-      const token = url.searchParams.get('token');
-
-      if (!userId) {
-        res.writeHead(400, { 'Access-Control-Allow-Origin': '*' });
-        res.end('Missing user_id');
-        console.log(chalk.red('\n✖ authentication failed.'));
-        server.close();
-        process.exit(1);
-        return;
-      }
-
-      // save to local config
-      saveConfig({
-        user_id: userId,
-        session_token: token || undefined
+      server.listen(port, '127.0.0.1', () => {
+        const callbackUrl = `http://127.0.0.1:${port}/callback`;
+        const fullAuthUrl = `${AUTH_URL}?redirect_uri=${encodeURIComponent(callbackUrl)}`;
+        
+        console.log(chalk.gray(`opening browser to ${fullAuthUrl}...`));
+        
+        open(fullAuthUrl).catch(() => {
+          spinner.warn('could not open browser automatically.');
+          console.log(`please open this url manually: ${chalk.cyan(fullAuthUrl)}`);
+          spinner.start('waiting for authentication...');
+        });
       });
 
-      // send success (no body needed as web UI handles the visual)
-      res.writeHead(200, { 'Access-Control-Allow-Origin': '*' });
-      res.end('OK');
+      server.on('request', (req, res) => {
+        if (!req.url?.startsWith('/callback')) {
+          res.writeHead(404, { 'Access-Control-Allow-Origin': '*' });
+          res.end();
+          return;
+        }
 
-      // shutdown server and exit cleanly
-      console.log(chalk.green('\n✔ successfully authenticated!'));
-      console.log(chalk.gray(`logged in as user: ${userId}\n`));
-      
-      server.close(() => {
-        process.exit(0);
+        const url = new URL(req.url, `http://127.0.0.1:${port}`);
+        const userId = url.searchParams.get('user_id');
+        const token = url.searchParams.get('token');
+
+        if (!userId) {
+          res.writeHead(400, { 'Access-Control-Allow-Origin': '*' });
+          res.end('Missing user_id');
+          console.log(chalk.red('\n✖ authentication failed.'));
+          process.off('SIGINT', sigintHandler);
+          cleanup();
+          return;
+        }
+
+        saveConfig({
+          user_id: userId,
+          session_token: token || undefined
+        });
+
+        res.writeHead(200, { 'Access-Control-Allow-Origin': '*' });
+        res.end('OK');
+
+        spinner.succeed(chalk.green('successfully authenticated!'));
+        console.log(chalk.gray(`logged in as user: ${userId}\n`));
+        
+        process.off('SIGINT', sigintHandler);
+        cleanup();
       });
-    });
 
-    // handle port conflicts
-    server.on('error', (e: any) => {
-      if (e.code === 'EADDRINUSE') {
-        console.error(chalk.red(`\n✖ error: port ${port} is already in use. is another login currently running?`));
-        process.exit(1);
-      }
+      server.on('error', (e: any) => {
+        if (e.code === 'EADDRINUSE') {
+          spinner.stop();
+          console.error(chalk.red(`\n✖ error: port ${port} is already in use. is another login currently running?`));
+          process.off('SIGINT', sigintHandler);
+          cleanup();
+        }
+      });
     });
   });
 

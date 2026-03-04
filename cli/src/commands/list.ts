@@ -28,7 +28,7 @@ export const listCommand = new Command('list')
 
       console.log(chalk.bold.blue('\nyour brainlattice projects\n'));
 
-      // table mapping and formatting
+      // table display logic
       const header = {
           title: 'title',
           date: 'created'
@@ -40,7 +40,7 @@ export const listCommand = new Command('list')
           date: 20
       };
 
-      // printer header
+      // print header
       const headStr = 
           chalk.bold(header.title.padEnd(colWidths.title)) + 
           chalk.bold(header.date);

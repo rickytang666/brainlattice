@@ -90,7 +90,7 @@ export const exportCommand = new Command('export')
         return;
       }
 
-      // 1. resolve project ID and Name
+      // resolve project id/name
       const projectsSpinner = ora('fetching projects...').start();
       let projects: any[] = [];
       try {
@@ -107,7 +107,7 @@ export const exportCommand = new Command('export')
       }
 
       if (projectTitleArg) {
-        // try title/name/filename match (case-insensitive)
+        // title/name/filename match
         const searchStr = projectTitleArg.toLowerCase();
         const matches = projects.filter(p => 
           (p.title && p.title.toLowerCase() === searchStr) ||
@@ -120,11 +120,11 @@ export const exportCommand = new Command('export')
           projectName = sanitizeName(matches[0].title || matches[0].name || matches[0].filename || matches[0].id);
           console.log(chalk.gray(`matched project: ${matches[0].title || matches[0].name || matches[0].filename}`));
         } else if (matches.length > 1) {
-          // multiple matches, fall through to picker
+          // multiple matches, use picker
           console.log(chalk.yellow(`multiple projects matched "${projectTitleArg}", please select one:`));
           projectTitle = null; 
         } else {
-          // no matches, fall through to picker
+          // no matches, use picker
           console.log(chalk.yellow(`project "${projectTitleArg}" not found, please select from the list:`));
           projectTitle = null;
         }
@@ -149,12 +149,12 @@ export const exportCommand = new Command('export')
         projectName = selection.name;
       }
       
-      // 2. trigger export
+      // trigger export
       const spinner = ora('triggering obsidian vault export...').start();
       await api.post(`project/${projectTitle}/export/obsidian`);
       spinner.succeed('obsidian export triggered.');
 
-      // 3. poll status
+      // poll status
       const exportBar = new cliProgress.SingleBar({
         format: `${chalk.magenta('vault exploration')} |${chalk.magenta('{bar}')}| {percentage}% | {step}`,
         barCompleteChar: '\u2588',
@@ -185,7 +185,7 @@ export const exportCommand = new Command('export')
         }
       }
 
-      // 4. download & extract
+      // download & extract
       spinner.start('downloading vault zip...');
       const dlRes = await api.get(`project/${projectTitle}/export/download`);
       const signedUrl = dlRes.data.download_url;
@@ -216,6 +216,6 @@ export const exportCommand = new Command('export')
 
     } catch (error: any) {
       console.error(chalk.red(`\n✖ error: ${error.message}`));
-      process.exit(1);
+      if (!process.env.BRAINLATTICE_SHELL) process.exit(1);
     }
   });

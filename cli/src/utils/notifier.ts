@@ -10,7 +10,7 @@ const CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
 
 export async function checkForUpdates(currentVersion: string) {
   try {
-    // 1. check cache
+    // check cache
     if (fs.existsSync(CACHE_FILE)) {
       const cache = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
       if (Date.now() - cache.lastCheck < CHECK_INTERVAL) {
@@ -18,14 +18,14 @@ export async function checkForUpdates(currentVersion: string) {
       }
     }
 
-    // 2. check npm registry (short timeout to not block CLI)
+    // check npm registry (short timeout)
     const response = await axios.get('https://registry.npmjs.org/brainlattice/latest', {
       timeout: 1000 
     });
     
     const latestVersion = response.data.version;
 
-    // 3. update cache
+    // update cache
     if (!fs.existsSync(CONFIG_DIR)) {
       fs.mkdirSync(CONFIG_DIR, { recursive: true });
     }
@@ -34,7 +34,7 @@ export async function checkForUpdates(currentVersion: string) {
       latestVersion
     }));
 
-    // 4. compare (simple comparison, if they are different and not equal, assume update)
+    // compare versions
     if (latestVersion !== currentVersion) {
       console.log(
         boxen(
@@ -44,11 +44,11 @@ export async function checkForUpdates(currentVersion: string) {
       );
     }
   } catch (error) {
-    // silently fail if registry is down or offline
+    // silently fail on network error
   }
 }
 
-// simple boxen-like helper to avoid another dependency
+// boxen helper to avoid deps
 function boxen(text: string, options: any) {
   const lines = text.split('\n');
   const width = Math.max(...lines.map(l => l.replace(/\u001b\[\d+m/g, '').length)) + 4;

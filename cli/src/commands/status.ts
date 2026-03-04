@@ -11,7 +11,7 @@ export const statusCommand = new Command('status')
     const config = getConfig();
     const api = createApiClient();
     
-    // 1. check local config
+    // check local config
     console.log(chalk.bold('local configuration:'));
     console.log(`- user_id: ${chalk.cyan(config.user_id || 'not set')}`);
     console.log(`- session: ${config.session_token ? chalk.green('logged in') : chalk.yellow('anonymous')}`);
@@ -20,7 +20,7 @@ export const statusCommand = new Command('status')
     console.log(`- default_vault: ${chalk.cyan(config.default_vault || 'not set')}`);
     console.log('');
 
-    // 2. check backend connection
+    // check backend connection
     const spinner = ora('connecting to brainlattice backend...').start();
     try {
       const start = Date.now();

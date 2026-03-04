@@ -10,13 +10,11 @@ import { statusCommand } from './commands/status.js';
 import { exportCommand } from './commands/export.js';
 import { listCommand } from './commands/list.js';
 import { checkForUpdates } from './utils/notifier.js';
-import { showBanner } from './utils/banner.js';
+import { runShell } from './commands/shell.js';
 
 const VERSION = '1.0.0';
 
 const program = new Command();
-
-showBanner();
 
 // run update check in the background
 checkForUpdates(VERSION).catch(() => {});
@@ -35,4 +33,9 @@ program.addCommand(genCommand);
 program.addCommand(statusCommand);
 program.addCommand(exportCommand);
 
-program.parse();
+// enter interactive shell if no args
+if (process.argv.length <= 2) {
+  runShell(program);
+} else {
+  program.parse();
+}

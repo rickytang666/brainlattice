@@ -46,12 +46,12 @@ export const genCommand = new Command('gen')
       if (options.mock) {
         console.log(chalk.yellow('running in mock mode - no tokens will be used\n'));
         
-        // 1. mock upload
+        // mock upload
         const spinner = ora(`[mock] uploading ${chalk.cyan(filename)}...`).start();
         await sleep(1500);
         spinner.succeed(`[mock] uploaded successfully.`);
 
-        // 2. mock extraction
+        // mock extraction
         const extractionBar = new cliProgress.SingleBar({
           format: `${chalk.blue('graph extraction')} |${chalk.cyan('{bar}')}| {percentage}% | {step}`,
           barCompleteChar: '\u2588',
@@ -75,7 +75,7 @@ export const genCommand = new Command('gen')
           return;
         }
 
-        // 3. mock export
+        // mock export
         console.log(chalk.gray('triggering obsidian vault export...'));
         const exportBar = new cliProgress.SingleBar({
           format: `${chalk.magenta('vault exploration')} |${chalk.magenta('{bar}')}| {percentage}% | {step}`,
@@ -91,7 +91,7 @@ export const genCommand = new Command('gen')
         exportBar.stop();
         console.log(chalk.green('✔ [mock] obsidian export ready.'));
 
-        // 4. mock file operation
+        // mock file ops
         const projectName = filename.replace('.pdf', '');
         const targetZipPath = path.join(vaultPath, `${projectName}.zip`);
         const extractDir = path.join(vaultPath, projectName);
@@ -103,7 +103,7 @@ export const genCommand = new Command('gen')
           fs.mkdirSync(extractDir, { recursive: true });
         }
         
-        // create a dummy zip file just to show it
+        // dummy zip for ui
         fs.writeFileSync(targetZipPath, 'mock zip content');
         fs.writeFileSync(path.join(extractDir, 'Mock Note.md'), `# Mock Note\nGenerated via brainlattice --mock mode.`);
         
@@ -111,7 +111,7 @@ export const genCommand = new Command('gen')
         return;
       }
 
-      // 1. upload
+      // upload
       const spinner = ora(`uploading ${chalk.cyan(filename)}...`).start();
       const formData = new FormData();
       formData.append('file', fs.createReadStream(absolutePdfPath));
@@ -124,7 +124,7 @@ export const genCommand = new Command('gen')
       const jobId = uploadRes.data.job_id;
       spinner.succeed(`uploaded successfully.`);
 
-      // 2. poll ingest status
+      // poll status
       const extractionBar = new cliProgress.SingleBar({
         format: `${chalk.blue('graph extraction')} |${chalk.cyan('{bar}')}| {percentage}% | {step}`,
         barCompleteChar: '\u2588',
@@ -174,7 +174,7 @@ export const genCommand = new Command('gen')
       }
 
       if (!projectId) {
-         // try to get it from the projects list as a fallback
+         // fallback to project list
          const projList = await api.get('projects/list');
          if (projList.data && projList.data.length > 0) {
             projectId = projList.data[0].id;
@@ -183,7 +183,7 @@ export const genCommand = new Command('gen')
          }
       }
 
-      // 3. graph only flow
+      // graph only flow
       if (options.graphOnly) {
         spinner.start(`downloading graph.json...`);
         const graphRes = await api.get(`project/${projectId}/graph`);
@@ -193,7 +193,7 @@ export const genCommand = new Command('gen')
         return;
       }
 
-      // 4. obsidian export flow
+      // obsidian export flow
       spinner.start('triggering obsidian vault export...');
       await api.post(`project/${projectId}/export/obsidian`);
       spinner.succeed('obsidian export triggered.');
@@ -258,6 +258,6 @@ export const genCommand = new Command('gen')
       
     } catch (error: any) {
       console.error(chalk.red(`\n✖ error: ${error.message}`));
-      process.exit(1);
+      if (!process.env.BRAINLATTICE_SHELL) process.exit(1);
     }
   });

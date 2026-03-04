@@ -16,20 +16,20 @@ export function createApiClient(): AxiosInstance {
     },
   });
 
-  // automatically inject headers before every request
+  // inject headers before every request
   client.interceptors.request.use(
     (req) => {
-      // always attach the user's ID
+      // attach user id
       if (config.user_id) {
         req.headers['X-User-Id'] = config.user_id;
       }
       
-      // attach clerk session token (if logged in)
+      // attach session token
       if (config.session_token) {
         req.headers['Authorization'] = `Bearer ${config.session_token}`;
       }
 
-      // attach standard api keys (BYOK logic)
+      // attach byok keys
       if (config.gemini_key) {
         req.headers['X-Gemini-API-Key'] = config.gemini_key;
       }
@@ -42,7 +42,7 @@ export function createApiClient(): AxiosInstance {
     (error) => Promise.reject(error)
   );
 
-  // intercept responses to print clean error messages if the backend complains
+  // intercept errors for clean reporting
   client.interceptors.response.use(
     (res) => res,
     (error) => {
