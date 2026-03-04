@@ -6,6 +6,8 @@ import {
   IconRefresh,
   IconTrash,
   IconSearch,
+  IconCopy,
+  IconCheck,
 } from "@tabler/icons-react";
 import { useSafeAuth } from "../../hooks/useSafeAuth";
 import { API_BASE, apiFetch } from "../../config";
@@ -186,9 +188,16 @@ export default function LandingPage() {
     }
   };
 
+  const [copied, setCopied] = useState(false);
+  const copyCli = () => {
+    navigator.clipboard.writeText("npm i -g brainlattice\nbrainlattice");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div
-      className="flex flex-col items-center justify-start pt-[20vh] w-full h-full relative overflow-hidden bg-background"
+      className="flex flex-col items-center justify-start pt-[15vh] w-full h-full relative overflow-hidden bg-background"
       onDragOver={(e) => {
         e.preventDefault();
         e.currentTarget.classList.add("bg-primary/5");
@@ -255,6 +264,34 @@ export default function LandingPage() {
             <span className="text-xs font-medium tracking-wide text-muted-foreground/80">
               native obsidian vault export
             </span>
+          </div>
+
+          {/* Minimal CLI Snippet */}
+          <div 
+            className={`mt-4 w-full max-w-[220px] rounded-xs relative flex items-start justify-between px-3 py-1.5 border border-border/40 bg-muted backdrop-blur-sm transition-all hover:bg-muted hover:border-border ${
+              isTypingComplete ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+          >
+            <div className="flex flex-col gap-0.5">
+              <code className="text-xs font-mono flex items-center gap-2 tracking-tight">
+                npm i -g brainlattice
+              </code>
+              <code className="text-xs font-mono flex items-center gap-2 tracking-tight">
+                brainlattice
+              </code>
+            </div>
+            
+            <button
+              onClick={copyCli}
+              className="p-1 text-muted-foreground/60 hover:text-foreground transition-colors"
+              title="Copy to clipboard"
+            >
+              {copied ? (
+                <IconCheck className="w-3.5 h-3.5 text-primary" />
+              ) : (
+                <IconCopy className="w-3.5 h-3.5" />
+              )}
+            </button>
           </div>
         </div>
 
