@@ -61,6 +61,22 @@ class S3StorageService:
         except Exception as e:
             raise Exception(f"failed to generate signed url: {str(e)}")
 
+    def get_upload_url(self, filename: str, content_type: str = 'application/pdf', expires_in: int = 3600) -> str:
+        """generate a signed url for uploading (PUT) to r2"""
+        try:
+            url = self.s3_client.generate_presigned_url(
+                'put_object',
+                Params={
+                    'Bucket': self.bucket, 
+                    'Key': filename,
+                    'ContentType': content_type
+                },
+                ExpiresIn=expires_in
+            )
+            return url
+        except Exception as e:
+            raise Exception(f"failed to generate upload url: {str(e)}")
+
 class LocalStorageService:
     """local disk fallback storage service when r2 keys are omitted"""
     
@@ -92,6 +108,11 @@ class LocalStorageService:
     def get_download_url(self, filename: str, expires_in: int = 3600) -> str:
         """returns a local path-based URL for dev testing"""
         return f"/api/storage/local/{filename}"
+
+    def get_upload_url(self, filename: str, content_type: str = 'application/pdf', expires_in: int = 3600) -> str:
+        """returns a mock upload url for local dev"""
+        # in local mode, we still just use the standard /ingest/upload for now or mock it
+        return f"/api/ingest/upload"
 
     def delete_file(self, filename: str):
         """delete file from local disk"""

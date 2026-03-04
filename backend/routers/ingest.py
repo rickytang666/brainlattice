@@ -4,11 +4,52 @@ from services.storage_service import S3StorageService
 from services.job_service import get_job_service
 
 from core.config import get_settings
+from schemas.ingest import RequestUploadRequest, FinalizeUploadRequest
 import uuid
 import os
 
 router = APIRouter()
 settings = get_settings()
+
+@router.post("/ingest/request-upload")
+async def request_upload(
+    request: RequestUploadRequest,
+    context: UserContext = Depends(get_user_context)
+):
+    """Phase 1: Get presigned URL for direct upload to R2"""
+    try:
+        from services.task_orchestrator import TaskOrchestrator
+        orchestrator = TaskOrchestrator()
+        result = await orchestrator.request_ingestion(
+            request.filename,
+            user_id=context.user_id
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"upload request failed: {str(e)}")
+
+@router.post("/ingest/finalize-upload")
+async def finalize_upload(
+    background_tasks: BackgroundTasks,
+    request: FinalizeUploadRequest,
+    context: UserContext = Depends(get_user_context)
+):
+    """Phase 2: Trigger processing after the file has been uploaded to R2"""
+    try:
+        from services.task_orchestrator import TaskOrchestrator
+        orchestrator = TaskOrchestrator()
+        result = await orchestrator.finalize_ingestion(
+            project_id=request.project_id,
+            s3_key=request.s3_key,
+            filename=request.filename,
+            background_tasks=background_tasks,
+            user_id=context.user_id,
+            gemini_key=context.gemini_key,
+            openai_key=context.openai_key
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"finalize failed: {str(e)}")
 
 @router.post("/ingest/upload")
 async def upload_file(

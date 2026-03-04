@@ -127,15 +127,41 @@ export default function LandingPage() {
     
     setProjects((prev) => [tempProject, ...prev]);
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      const res = await apiFetch(
-        `${API_BASE}/ingest/upload`,
+      // 1. request pre-signed URL and pre-allocate project
+      const requestRes = await apiFetch(
+        `${API_BASE}/ingest/request-upload`,
         {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: file.name }),
+        },
+        userId,
+      );
+
+      if (!requestRes.ok) throw new Error("failed to request upload slot");
+      const { upload_url, s3_key, project_id } = await requestRes.json();
+
+      // 2. direct upload to R2 (bypasses Lambda 6MB limit)
+      const uploadRes = await fetch(upload_url, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      if (!uploadRes.ok) throw new Error("failed to upload file to processing engine");
+
+      // 3. finalize and trigger worker
+      const res = await apiFetch(
+        `${API_BASE}/ingest/finalize-upload`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            project_id,
+            s3_key,
+            filename: file.name,
+          }),
         },
         userId,
       );

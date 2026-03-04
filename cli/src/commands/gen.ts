@@ -111,18 +111,29 @@ export const genCommand = new Command('gen')
         return;
       }
 
-      // upload
-      const spinner = ora(`uploading ${chalk.cyan(filename)}...`).start();
-      const formData = new FormData();
-      formData.append('file', fs.createReadStream(absolutePdfPath));
-      
-      const uploadRes = await api.post('ingest/upload', formData, {
-        headers: {
-          ...formData.getHeaders(),
-        }
+      // 1. request upload slot
+      const spinner = ora(`requesting upload slot for ${chalk.cyan(filename)}...`).start();
+      const requestRes = await api.post('ingest/request-upload', { filename });
+      const { upload_url, s3_key, project_id: allocatedProjectId } = requestRes.data;
+      spinner.succeed(`upload slot acquired.`);
+
+      // 2. direct upload to R2
+      spinner.start(`uploading ${chalk.cyan(filename)}...`);
+      const fileData = fs.readFileSync(absolutePdfPath);
+      await axios.put(upload_url, fileData, {
+        headers: { 'Content-Type': 'application/pdf' }
       });
-      const jobId = uploadRes.data.job_id;
       spinner.succeed(`uploaded successfully.`);
+
+      // 3. finalize ingestion
+      spinner.start(`finalizing ingestion...`);
+      const finalizeRes = await api.post('ingest/finalize-upload', {
+        project_id: allocatedProjectId,
+        s3_key,
+        filename
+      });
+      const jobId = finalizeRes.data.job_id;
+      spinner.succeed(`ingestion finalized.`);
 
       // poll status
       const extractionBar = new cliProgress.SingleBar({
@@ -164,7 +175,7 @@ export const genCommand = new Command('gen')
           projectId = statusRes.data.metadata?.project_id || statusRes.data.details?.project_id || statusRes.data.result?.project_id;
           
           if (!projectId) {
-            projectId = statusRes.data.details?.project_id || uploadRes.data.project_id;
+            projectId = allocatedProjectId;
           }
           break;
         } else if (status === 'failed') {
@@ -173,15 +184,6 @@ export const genCommand = new Command('gen')
         }
       }
 
-      if (!projectId) {
-         // fallback to project list
-         const projList = await api.get('projects/list');
-         if (projList.data && projList.data.length > 0) {
-            projectId = projList.data[0].id;
-         } else {
-             throw new Error('could not determine project_id from backend response.');
-         }
-      }
 
       // graph only flow
       if (options.graphOnly) {

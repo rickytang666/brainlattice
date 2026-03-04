@@ -22,6 +22,127 @@ class TaskOrchestrator:
         self.jobs = get_job_service()
         self.queue = get_queue_service()
 
+    async def request_ingestion(
+        self, 
+        filename: str, 
+        user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Phase 1: Pre-allocate project and S3 key.
+        Returns presigned URL for PUT.
+        """
+        from db.session import SessionLocal
+        from db import models
+        db = SessionLocal()
+        project_id = None
+        try:
+            new_proj = models.Project(
+                title=filename, 
+                status="processing",
+                user_id=user_id
+            )
+            db.add(new_proj)
+            db.flush()
+            project_id = str(new_proj.id)
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            raise e
+        finally:
+            db.close()
+
+        file_id = str(uuid.uuid4())
+        ext = os.path.splitext(filename)[1]
+        s3_key = f"uploads/{file_id}{ext}"
+        
+        upload_url = self.storage.get_upload_url(s3_key)
+        
+        return {
+            "upload_url": upload_url,
+            "s3_key": s3_key,
+            "project_id": project_id,
+            "filename": filename
+        }
+
+    async def finalize_ingestion(
+        self,
+        project_id: str,
+        s3_key: str,
+        filename: str,
+        user_id: Optional[str] = None,
+        gemini_key: Optional[str] = None,
+        openai_key: Optional[str] = None,
+        background_tasks: Optional[Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Phase 2: Once file is in R2, trigger the processing job.
+        """
+        job_id = str(uuid.uuid4())
+        metadata = {
+            "filename": filename, 
+            "s3_key": s3_key,
+            "project_id": project_id,
+            "user_id": user_id,
+            "gemini_key": gemini_key,
+            "openai_key": openai_key
+        }
+        
+        # update project metadata with job_id so frontend can track status
+        from db.session import SessionLocal
+        from db import models
+        db = SessionLocal()
+        try:
+            project = db.query(models.Project).filter(models.Project.id == project_id).first()
+            if project:
+                meta = project.project_metadata or {}
+                meta["job_id"] = job_id
+                project.project_metadata = meta
+                from sqlalchemy.orm.attributes import flag_modified
+                flag_modified(project, "project_metadata")
+                db.commit()
+        finally:
+            db.close()
+
+        self.jobs.create_job(
+            job_id=job_id,
+            job_type="ingest_pdf",
+            metadata=metadata
+        )
+        
+        # publish task to worker
+        worker_url = os.getenv("WORKER_PUBLIC_URL")
+        if not worker_url or not self.queue:
+            msg_id = "local_only"
+            if background_tasks:
+                from services.ingestion_processor import IngestionProcessor
+                processor = IngestionProcessor(
+                    job_id=job_id, 
+                    file_key=s3_key,
+                    gemini_key=gemini_key,
+                    openai_key=openai_key,
+                    user_id=user_id
+                )
+                background_tasks.add_task(processor.process)
+        else:
+            msg_id = self.queue.publish_task(
+                destination_url=worker_url,
+                payload={
+                    "job_id": job_id, 
+                    "file_key": s3_key, 
+                    "action": "ingest",
+                    "gemini_key": gemini_key,
+                    "openai_key": openai_key,
+                    "user_id": user_id
+                }
+            )
+        
+        return {
+            "status": "queued",
+            "job_id": job_id,
+            "msg_id": msg_id,
+            "project_id": project_id
+        }
+
     async def init_ingestion(
         self, 
         filename: str, 

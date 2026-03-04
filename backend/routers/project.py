@@ -66,6 +66,9 @@ async def list_all_projects(
         formatted = []
         jobs = get_job_service()
         
+        from datetime import datetime, timezone, timedelta
+        now = datetime.now(timezone.utc)
+        
         for p in projects:
             base_p = {
                 "id": str(p.id), 
@@ -77,6 +80,7 @@ async def list_all_projects(
             if p.status == "processing":
                 metadata = p.project_metadata or {}
                 job_id = metadata.get("job_id")
+                
                 if job_id:
                     job = jobs.get_job(job_id)
                     if job:
@@ -84,6 +88,17 @@ async def list_all_projects(
                         
                         # handle edge case where job failed in redis but db hasn't updated
                         if job.get("status") == "failed":
+                            base_p["status"] = "failed"
+                else:
+                    # check if the project is "stale" (pre-allocated but Phase 3 never reached)
+                    # if it's older than 10 minutes and has no job_id, it's failed
+                    if p.created_at:
+                        # normalize created_at to utc if it's naive, or just compare
+                        p_created = p.created_at
+                        if p_created.tzinfo is None:
+                            p_created = p_created.replace(tzinfo=timezone.utc)
+                            
+                        if (now - p_created) > timedelta(minutes=10):
                             base_p["status"] = "failed"
             
             formatted.append(base_p)
