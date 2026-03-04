@@ -28,7 +28,7 @@ export const genCommand = new Command('gen')
         throw new Error('missing gemini_key. please run `brainlattice config`');
       }
 
-      const absolutePdfPath = path.resolve(process.cwd(), pdfPath);
+      const absolutePdfPath = path.resolve(pdfPath.replace('~', os.homedir()));
       if (!fs.existsSync(absolutePdfPath)) {
         throw new Error(`file not found: ${absolutePdfPath}`);
       }
