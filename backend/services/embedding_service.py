@@ -52,6 +52,9 @@ class EmbeddingService:
 
     def get_embeddings(self, texts: List[str]) -> List[List[float]]:
         """batch embed multiple texts"""
+        if not texts:
+            return []
+            
         try:
             # clean all texts
             cleaned_texts = [t.replace("\n", " ") for t in texts]

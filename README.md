@@ -33,8 +33,44 @@ BrainLattice automates the learning process. It parses the document, discovers t
 - **Backend**: FastAPI
 - **Database**: Neon PostgreSQL
 - **Infra**: AWS Lambda, Cloudflare R2, Upstash Redis, Upstash QStash
+- **CLI**: Node.js (Commander.js)
 
-## Quick Start
+## How to use
+
+### BrainLattice Web App
+
+1. Open [BrainLattice web app](https://brainlattice.rickytang.dev).
+2. Upload a PDF.
+3. Wait for the graph generation to complete.
+4. Click on any node to view the AI-generated notes.
+5. If you want a Obsidian vault with full notes, click "export" to export the graph, and click "download" to download the prepared zip file.
+
+### BrainLattice CLI
+
+This is a very convenient method for those who want to use BrainLattice locally.
+
+#### Installation
+
+```bash
+npm i -g brainlattice
+```
+
+#### Core Usage
+
+```bash
+# optionally login (if you want projects to sync across devices)
+brainlattice login
+
+# configure your vault & keys
+brainlattice config
+
+# generate a vault from a local pdf
+brainlattice gen path/to/pdf
+```
+
+_For more details, see the [CLI Documentation](cli/README.md)._
+
+## Local dev
 
 _For full setup details, see the specific READMEs in `/frontend` and `/backend`._
 
