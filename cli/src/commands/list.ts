@@ -31,29 +31,42 @@ export const listCommand = new Command('list')
       // table display logic
       const header = {
           title: 'title',
+          status: 'status',
           date: 'created'
       };
 
       // calculate column widths
       const colWidths = {
-          title: Math.max(...projects.map((p: any) => (p.title || p.filename || p.id).length), header.title.length) + 4,
+          title: Math.max(...projects.map((p: any) => (p.title || p.filename || p.id).slice(0, 30).length), header.title.length) + 2,
+          status: 14,
           date: 20
       };
 
       // print header
       const headStr = 
           chalk.bold(header.title.padEnd(colWidths.title)) + 
+          chalk.bold(header.status.padEnd(colWidths.status)) +
           chalk.bold(header.date);
       
       console.log(headStr);
-      console.log(chalk.gray('─'.repeat(colWidths.title + colWidths.date)));
+      console.log(chalk.gray('─'.repeat(colWidths.title + colWidths.status + colWidths.date)));
 
       // print rows
       projects.forEach((p: any) => {
-          const title = (p.title || p.filename || p.id).padEnd(colWidths.title);
+          const rawTitle = (p.title || p.filename || p.id);
+          const title = (rawTitle.length > 30 ? rawTitle.slice(0, 27) + '...' : rawTitle).padEnd(colWidths.title);
+          
+          let statusText = p.status || 'unknown';
+          let statusColor = chalk.white;
+          
+          if (statusText === 'complete') statusColor = chalk.green;
+          else if (statusText === 'processing' || statusText === 'uploading') statusColor = chalk.yellow;
+          else if (statusText === 'failed') statusColor = chalk.red;
+          
+          const status = statusColor(statusText.padEnd(colWidths.status));
           const date = formatDate(p.created_at);
           
-          console.log(`${title}${date}`);
+          console.log(`${title}${status}${date}`);
       });
 
       console.log(chalk.gray(`\n(${projects.length} project${projects.length === 1 ? '' : 's'} total)\n`));
