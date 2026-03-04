@@ -11,11 +11,14 @@ a high-performance CLI to orchestrate the brainlattice extraction engine. turn d
 # install globally
 npm i -g brainlattice
 
-# configure your keys and default vault
-brainlattice config
+# enter interactive shell mode (persistent session)
+brainlattice
 
-# generate a vault from a local pdf
-brainlattice gen path/to/textbook.pdf
+# enter your keys and default vault
+config
+
+# generate directly (one-shot mode)
+gen path/to/textbook.pdf
 ```
 
 ## commands
@@ -30,11 +33,14 @@ brainlattice gen path/to/textbook.pdf
 | `export` | interactively pick and download any previously generated project.       |
 | `status` | verify your local configuration and backend connectivity.               |
 | `logout` | clear local session data and disconnect from the backend.               |
+| `help`   | details of all commands                                                 |
+| `exit`   | exit the interactive shell mode                                         |
 
-## key features
-
-- **rich extraction summaries**: `gen` displays stats after each process.
-- **dual progress bars**: separate visual tracking for _graph extraction_ and _vault generation_.
+- **interactive shell mode**: running `brainlattice` with no arguments opens a persistent REPL.
+- **static header**: the brand banner stays at the top of your session—no more repetitive logs.
+- **resilient loop**: prompt stays open even after syntax errors or cancelled logins.
+- **rich extraction summaries**: `gen` displays stats (nodes, links) after each process.
+- **dual progress bars**: separate tracking for _graph extraction_ and _vault generation_.
 - **resilient matching**: `export` accepts human-readable titles.
 - **update notifier**: automatic 24-hour checks to ensure you're always on the latest version.
 

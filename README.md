@@ -47,25 +47,31 @@ BrainLattice automates the learning process. It parses the document, discovers t
 
 ### BrainLattice CLI
 
-This is a very convenient method for those who want to use BrainLattice locally.
-
 #### Installation
 
 ```bash
 npm i -g brainlattice
 ```
 
+#### Start
+
+This will open an interactive session.
+
+```bash
+brainlattice
+```
+
 #### Core Usage
 
 ```bash
 # optionally login (if you want projects to sync across devices)
-brainlattice login
+login
 
 # configure your vault & keys
-brainlattice config
+config
 
 # generate a vault from a local pdf
-brainlattice gen path/to/pdf
+gen path/to/pdf
 ```
 
 _For more details, see the [CLI Documentation](cli/README.md)._
