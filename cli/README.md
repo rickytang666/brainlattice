@@ -40,6 +40,13 @@ brainlattice gen path/to/textbook.pdf
 
 ## development
 
+fill out the .env file first:
+
+```env
+BRAINLATTICE_API_URL=
+BRAINLATTICE_FRONTEND_URL=
+```
+
 ```bash
 npm install
 npm run dev    # watch mode
