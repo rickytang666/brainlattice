@@ -29,7 +29,7 @@ gen path/to/textbook.pdf
 | `whoami` | display current authenticated user and project usage stats.             |
 | `config` | interactive setup for gemini/openai keys and default obsidian vault.    |
 | `list`   | list all your remote projects in a clean table view.                    |
-| `delete` | delete a project.                                                       |
+| `delete` | delete a project (matches by exact title).                              |
 | `gen`    | upload, extract, and download a vault directly to your obsidian folder. |
 | `export` | interactively pick and download any previously generated project.       |
 | `status` | verify your local configuration and backend connectivity.               |

@@ -20,12 +20,14 @@ Human knowledge is a high-dimensional network, but PDFs are linear streams of ch
 
 ## The Solution
 
-BrainLattice automates the learning process. It parses the document, discovers the core conceptual nodes, and plots their relationships on an interactive canvas.
+BrainLattice turns linear documents into high-dimensional knowledge networks. It automatically parses PDFs, discovers core conceptual nodes, and plots their relationships on an interactive canvas.
 
-- **Graph-First Synthesis**: Automatically identifies entities, theorems, and definitions using LLM-driven entity extraction.
-- **Deep Contextual Retrieval**: Click any node to instantly pull up an AI-synthesized summary sourced directly from the original text chunks.
-- **Native Obsidian Export**: One-click export to a full Obsidian Vault. Includes all markdown notes and a pre-configured Canvas file.
-- **High-Performance WebGL**: Real-time force-directed graphs that stay snappy even with thousands of conceptual links.
+- **Graph-First Synthesis**: Extracts theorems, definitions, and entities into interactive WebGL networks.
+- **Contextual Synthesis**: Click any node to instantly pull up AI-summarized context from original source chunks.
+- **Native Obsidian Export**: Generates a full Obsidian Vault complete with markdown notes and Canvas maps.
+- **Semantic Intelligence**: Understands "ancestors" (dependencies) and "descendants" (what depends on it) for every concept.
+- **Infinite Zoom**: Move from a 50,000-ft textbook overview to a specific theorem in seconds.
+- **CLI Workflow**: Full-featured CLI for local vault generations.
 
 ## Tech Stack
 
@@ -75,6 +77,13 @@ gen path/to/pdf
 ```
 
 _For more details, see the [CLI Documentation](cli/README.md)._
+
+## Pro-Tips
+
+- **Large Documents**: For dense textbooks (>100MB), the extraction works best if you process it in sections or ensure you have high LLM rate limits.
+- **Math Support**: BrainLattice has native KaTeX support in the scratchpad and exports clean LaTeX to Obsidian.
+- **Knowledge Caching**: Your previous extractions are cached in your account; use the CLI `export` command to pull them down to new machines instantly.
+- **Dark Mode**: The WebGL graph is optimized for high-contrast viewing. Toggle the sun/moon icon for a premium night-mode experience.
 
 ## Local dev
 
