@@ -9,6 +9,7 @@ import { statusCommand } from './commands/status.js';
 
 import { exportCommand } from './commands/export.js';
 import { listCommand } from './commands/list.js';
+import { deleteCommand } from './commands/delete.js';
 import { checkForUpdates } from './utils/notifier.js';
 import { runShell } from './commands/shell.js';
 
@@ -32,6 +33,7 @@ program.addCommand(listCommand);
 program.addCommand(genCommand);
 program.addCommand(statusCommand);
 program.addCommand(exportCommand);
+program.addCommand(deleteCommand);
 
 // enter interactive shell if no args
 if (process.argv.length <= 2) {
