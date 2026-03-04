@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="BrainLattice Logo" width="250">
+<a href="https://brainlattice.rickytang.dev"><img src="assets/logo.png" alt="BrainLattice Logo" width="250"></a>
 
 <br>
 
