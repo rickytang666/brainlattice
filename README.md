@@ -8,6 +8,8 @@
 
 ![Obsidian Support](https://img.shields.io/badge/Obsidian-Support-101010?logo=obsidian&logoColor=7C3AED&labelColor=101010)
 
+<!-- [![NPM Version](https://img.shields.io/npm/v/brainlattice?color=339933&logo=npm)](https://www.npmjs.com/package/brainlattice) -->
+
 **BrainLattice** is an AI-powered extraction engine that turns dense PDFs (textbooks, research papers, course notes) into interactive, explorable WebGL knowledge networks.
 
 </div>
@@ -39,13 +41,17 @@ BrainLattice turns linear documents into high-dimensional knowledge networks. It
 
 ## How to use
 
+Before using you need to get your API keys from [Google AI](https://aistudio.google.com/), [OpenRouter](https://openrouter.ai/settings/keys), and optionally, [OpenAI](https://openai.com/index/openai-api-platform/).
+
 ### BrainLattice Web App
 
 1. Open [BrainLattice web app](https://brainlattice.rickytang.dev).
-2. Upload a PDF.
-3. Wait for the graph generation to complete.
-4. Click on any node to view the AI-generated notes.
-5. If you want a Obsidian vault with full notes, click "export" to export the graph, and click "download" to download the prepared zip file.
+2. Fill in your API keys by clicking the settings icon in the top navigation bar.
+3. (Optional) You can sign up for an account to sync your projects across devices; otherwise it's local-only.
+4. Upload a PDF.
+5. Wait for the graph generation to complete.
+6. Click on any node to view the LLM-generated notes.
+7. If you want a Obsidian vault with full notes, click "export" to export the graph, and click "download" to download the prepared zip file. Then unzip the file and open it in Obsidian (File > Open Vault > Open Folder as Vault).
 
 ### BrainLattice CLI
 
@@ -65,18 +71,25 @@ brainlattice
 
 #### Core Usage
 
+Optionally login (if you want projects to sync across devices).
+
 ```bash
-# optionally login (if you want projects to sync across devices)
 login
+```
 
-# configure your vault & keys
+Configure your vault & keys.
+
+```bash
 config
+```
 
-# generate a vault from a local pdf
+Generate a vault from a local pdf.
+
+```bash
 gen path/to/pdf
 ```
 
-_For more details, see the [CLI Documentation](cli/README.md)._
+_For more details, see the [CLI Documentation](cli/README.md) or enter `help` in the interactive session._
 
 ## Architecture
 
@@ -88,10 +101,11 @@ _For full setup details, see the specific READMEs in `/frontend` and `/backend`.
 
 ### 1. Configure Keys
 
-Create a `.env` in `backend/` with your Gemini API key and DB URL (either local SQLite or Neon PostgreSQL):
+Create a `.env` in `backend/` with your API keys and DB URL (Neon PostgreSQL required for pgvector):
 
 ```bash
-GEMINI_API_KEY=your_key_here
+GEMINI_API_KEY=your_gemini_key_here
+OPENROUTER_API_KEY=your_openrouter_key_here
 DATABASE_URL=your_db_url_here
 ```
 
@@ -116,3 +130,11 @@ The app will be live at `http://localhost:5173`.
 ## More Info on Local Development/Self-Hosting
 
 Consult the `README.md` files inside the `frontend/` and `backend/` folders for detailed instructions.
+
+## Contributions
+
+Please open an issue or submit a pull request!
+
+## License
+
+MIT

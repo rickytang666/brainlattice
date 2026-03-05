@@ -23,20 +23,20 @@ gen path/to/textbook.pdf
 
 ## commands
 
-| command  | description                                                             |
-| :------- | :---------------------------------------------------------------------- |
-| `login`  | authenticate your terminal via the brainlattice dashboard.              |
-| `whoami` | display current authenticated user and project usage stats.             |
-| `config` | interactive setup for gemini/openai keys and default obsidian vault.    |
-| `list`   | list all your remote projects in a clean table view.                    |
-| `delete` | delete a project (matches by exact title).                              |
-| `info`   | display info of this project and repository link.                       |
-| `gen`    | upload, extract, and download a vault directly to your obsidian folder. |
-| `export` | interactively pick and download any previously generated project.       |
-| `status` | verify your local configuration and backend connectivity.               |
-| `logout` | clear local session data and disconnect from the backend.               |
-| `help`   | details of all commands                                                 |
-| `exit`   | exit the interactive shell mode                                         |
+| command  | description                                                                     |
+| :------- | :------------------------------------------------------------------------------ |
+| `login`  | authenticate your terminal via the brainlattice dashboard.                      |
+| `whoami` | display current authenticated user and project usage stats.                     |
+| `config` | interactive setup for API keys (Gemini, OpenRouter) and default obsidian vault. |
+| `list`   | list all your remote projects in a clean table view.                            |
+| `delete` | delete a project (matches by exact title).                                      |
+| `info`   | display info of this project and repository link.                               |
+| `gen`    | upload, extract, and download a vault directly to your obsidian folder.         |
+| `export` | interactively pick and download any previously generated project.               |
+| `status` | verify your local configuration and backend connectivity.                       |
+| `logout` | clear local session data and disconnect from the backend.                       |
+| `help`   | details of all commands                                                         |
+| `exit`   | exit the interactive shell mode                                                 |
 
 - **interactive shell mode**: running `brainlattice` with no arguments opens a persistent REPL.
 - **static header**: the brand banner stays at the top of your session—no more repetitive logs.
