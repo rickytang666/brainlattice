@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import asyncio
 import logging
@@ -11,6 +12,7 @@ from services.chunking_service import RecursiveMarkdownSplitter
 from services.embedding_service import EmbeddingService
 from services.job_service import get_job_service
 from services.llm.graph_extractor import GraphExtractor
+from services.llm.seed_extractor import SeedExtractor
 from services.graph.builder import GraphBuilder
 from services.graph.connector import GraphConnector
 from services.graph.persistence_service import GraphPersistenceService
@@ -172,7 +174,9 @@ class IngestionProcessor:
                 from schemas.graph import GraphData
                 graph_data = [GraphData(**g) for g in cached_extraction]
             else:
-                graph_data = await self._run_graph_extraction(markdown_content, cache_name=cache_name)
+                graph_data = await self._run_graph_extraction(
+                    markdown_content, cache_name=cache_name, gemini_key=gemini_key
+                )
                 # cache the results for potential retries
                 self.jobs.set_extraction_cache(self.job_id, [g.model_dump() for g in graph_data])
                 
@@ -247,7 +251,9 @@ class IngestionProcessor:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
 
-    async def _run_graph_extraction(self, text: str, cache_name: str = None) -> List[Any]:
+    async def _run_graph_extraction(
+        self, text: str, cache_name: str = None, gemini_key: str = None
+    ) -> List[Any]:
         """runs stateful windowing extraction logic or paginated full-cache extraction"""
         if cache_name:
             logger.info(f"using full-context cache {cache_name} for paginated graph extraction")
@@ -296,43 +302,54 @@ class IngestionProcessor:
                 if end == text_len:
                     break
                 start += (window_size - overlap)
-                
-        # pass 1: extract core concepts from skeleton (h1/h2)
-        skeleton = self._extract_skeleton(text)
-        logger.info(f"extracted skeleton context: {len(skeleton)} chars")
-        
+
+        # step 1: global seed from headers (H1/H2/H3)
+        header_text = self._extract_headers(text)
+        seed_ids: List[str] = []
+        if header_text:
+            logger.info("extracting global seed from headers...")
+            seed_start = time.time()
+            try:
+                seed_extractor = SeedExtractor(gemini_key=gemini_key)
+                seed_ids = await seed_extractor.extract_seed_from_headers(header_text)
+                if hasattr(self, 'timings'):
+                    self.timings['global_seed'] = time.time() - seed_start
+                logger.info(f"extracted {len(seed_ids)} seed concept IDs from headers")
+            except Exception as e:
+                logger.warning(f"seed extraction failed, continuing without seed: {e}")
+
         extracted_graphs = []
         accumulated_nodes = []
-        
-        if skeleton:
-            logger.info("identifying core concepts from skeleton...")
-            skeleton_graph = await self.extractor.extract_from_skeleton(skeleton)
-            accumulated_nodes.extend(skeleton_graph.nodes)
-            extracted_graphs.append(skeleton_graph)
-            logger.info(f"seeded {len(skeleton_graph.nodes)} core concepts.")
+        concept_ids = list(seed_ids)
 
-        # pass 2: extract from text windows using seeded concepts
+        # step 2: extract from text windows using seeded concepts
         for i, window_text in enumerate(windows):
             logger.info(f"extracting window {i+1}/{len(windows)}...")
-            concept_ids = [n.id for n in accumulated_nodes]
             
             graph_data = await self.extractor.extract_from_window(
                 window_text, 
-                existing_concepts=concept_ids
+                existing_concepts=concept_ids if concept_ids else None
             )
             
             extracted_graphs.append(graph_data)
             accumulated_nodes.extend(graph_data.nodes)
+            concept_ids = list(seed_ids) + [n.id for n in accumulated_nodes]
             
         return extracted_graphs
 
-    def _extract_skeleton(self, text: str) -> str:
-        """extracts h1 and h2 headers to form a document skeleton"""
-        import re
+    def _extract_headers(self, text: str) -> str:
+        """extracts H1/H2/H3 headers for seed extraction (regex)"""
         headers = []
         for line in text.split('\n'):
-            # match # header or ## header
+            m = re.match(r'^#{1,3}\s+(.+)$', line)
+            if m:
+                headers.append(line.strip())
+        return "\n".join(headers)
+
+    def _extract_skeleton(self, text: str) -> str:
+        """extracts h1 and h2 headers to form a document skeleton (legacy)"""
+        headers = []
+        for line in text.split('\n'):
             if re.match(r'^#{1,2}\s+', line):
                 headers.append(line.strip())
-        
         return "\n".join(headers)
