@@ -10,7 +10,7 @@
 
 <!-- [![NPM Version](https://img.shields.io/npm/v/brainlattice?color=339933&logo=npm)](https://www.npmjs.com/package/brainlattice) -->
 
-**BrainLattice** is an AI-powered extraction engine that turns dense PDFs (textbooks, research papers, course notes) into interactive, explorable WebGL knowledge networks.
+Upload a PDF. Get an Obsidian vault. BrainLattice extracts concepts, maps relationships, and writes all the notes automatically.
 
 </div>
 
@@ -18,29 +18,26 @@
 
 ## Demo
 
-
 https://github.com/user-attachments/assets/25b569c5-db16-4153-b75f-cfc3fcf607ce
 
-
 https://github.com/user-attachments/assets/cf8c6bf7-a76b-4ac8-8997-8efb8560c3a4
-
 
 Or watch it on [YouTube](https://youtu.be/T3rIfQf7UWE).
 
 ## The Problem
 
-Human knowledge is a high-dimensional network, but PDFs are linear streams of characters. When you read a 200-page textbook, you lose the "map" of how concepts actually connect. Mentally mapping these relationships is the hardest part of learning.
+PDFs are linear. Knowledge is not. Turning a 200-page textbook into a structured system of notes, links, and concepts is manual work that most people never finish.
 
 ## The Solution
 
-BrainLattice turns linear documents into high-dimensional knowledge networks. It automatically parses PDFs, discovers core conceptual nodes, and plots their relationships on an interactive canvas.
+BrainLattice reads the PDF and does all of it automatically: extracts concepts, maps relationships, and writes full markdown notes. Drop it into Obsidian and you're way ahead in learning the contents.
 
-- **Graph-First Synthesis**: Extracts theorems, definitions, and entities into interactive WebGL networks.
-- **Contextual Synthesis**: Click any node to instantly pull up AI-summarized context from original source chunks.
-- **Native Obsidian Export**: Generates a full Obsidian Vault complete with markdown notes and Canvas maps.
-- **Semantic Intelligence**: Understands "ancestors" (dependencies) and "descendants" (what depends on it) for every concept.
-- **Infinite Zoom**: Move from a 50,000-ft textbook overview to a specific theorem in seconds.
-- **CLI Workflow**: Full-featured CLI for local vault generations.
+- **Obsidian Vaults**: Auto-generated notes with `[[backlinks]]` ready to open in Obsidian.
+- **WebGL Knowledge Graph**: Interactive, searchable force graph. See the whole textbook in one canvas.
+- **Source-grounded Notes**: Every note is synthesized from actual source chunks—more relevant and no hallucinations.
+- **Concept Hierarchy**: Ancestors (prerequisites) and descendants for every node.
+- **CLI Workflow**: `brainlattice` -> `gen path/to/pdf` — done.
+- **BYOK**: API keys stay in-memory. Never stored.
 
 ## Tech Stack
 
@@ -52,7 +49,7 @@ BrainLattice turns linear documents into high-dimensional knowledge networks. It
 
 ## How to use
 
-Before using you need to get your API keys from [Google AI](https://aistudio.google.com/), [OpenRouter](https://openrouter.ai/settings/keys), and optionally, [OpenAI](https://openai.com/index/openai-api-platform/).
+Requires API keys from [Google AI](https://aistudio.google.com/), [OpenRouter](https://openrouter.ai/settings/keys), and [OpenAI](https://openai.com/index/openai-api-platform/).
 
 ### BrainLattice Web App
 
