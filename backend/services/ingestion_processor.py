@@ -314,11 +314,3 @@ class IngestionProcessor:
     def _extract_headers(self, text: str) -> str:
         """extracts H1/H2/H3 headers for seed extraction (regex)"""
         return extract_headers_for_seed(text)
-
-    def _extract_skeleton(self, text: str) -> str:
-        """extracts h1 and h2 headers to form a document skeleton (legacy)"""
-        headers = []
-        for line in text.split('\n'):
-            if re.match(r'^#{1,2}\s+', line):
-                headers.append(line.strip())
-        return "\n".join(headers)
