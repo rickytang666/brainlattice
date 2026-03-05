@@ -1,15 +1,16 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { SignInButton, UserButton, SignedIn, SignedOut } from "@clerk/clerk-react";
-import { IconSettings, IconStar } from "@tabler/icons-react";
+import { IconSettings, IconStar, IconKey } from "@tabler/icons-react";
 import { FaGithub } from "react-icons/fa";
 import { ThemeToggle } from "../ThemeToggle";
 import { Logo } from "../Logo";
 
 interface NavbarProps {
   onOpenConfig: () => void;
+  hasGeminiKey: boolean;
 }
 
-export function Navbar({ onOpenConfig }: NavbarProps) {
+export function Navbar({ onOpenConfig, hasGeminiKey }: NavbarProps) {
   const location = useLocation();
   const isDashboard = location.pathname !== "/scratchpad";
   const isLanding = location.pathname === "/";
@@ -51,10 +52,18 @@ export function Navbar({ onOpenConfig }: NavbarProps) {
         
         <button
           onClick={onOpenConfig}
-          className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors"
-          title="API Settings"
+          className={`p-1.5 rounded-md transition-all duration-500 ${
+            hasGeminiKey 
+              ? "text-muted-foreground hover:text-foreground" 
+              : "text-amber-500 animate-pulse"
+          }`}
+          title={hasGeminiKey ? "api keys set" : "missing api keys :("}
         >
-          <IconSettings className="w-5 h-5" />
+          {hasGeminiKey ? (
+            <IconSettings className="w-5 h-5" />
+          ) : (
+            <IconKey className="w-5 h-5" />
+          )}
         </button>
 
         <NavLink
