@@ -36,6 +36,9 @@ export function createApiClient(): AxiosInstance {
       if (config.openai_key) {
         req.headers['X-OpenAI-API-Key'] = config.openai_key;
       }
+      if (config.openrouter_key) {
+        req.headers['X-OpenRouter-API-Key'] = config.openrouter_key;
+      }
 
       return req;
     },

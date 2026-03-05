@@ -40,7 +40,8 @@ async def trigger_obsidian_export(
             project_id=project_id,
             user_id=context.user_id,
             gemini_key=context.gemini_key,
-            openai_key=context.openai_key
+            openai_key=context.openai_key,
+            openrouter_key=context.openrouter_key
         )
 
         return {"success": True, "message": "export triggered"}

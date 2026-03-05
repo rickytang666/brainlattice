@@ -27,6 +27,9 @@ export const genCommand = new Command('gen')
       if (!config.gemini_key) {
         throw new Error('missing gemini_key. please run `brainlattice config`');
       }
+      if (!config.openrouter_key) {
+        throw new Error('missing openrouter_key. please run `brainlattice config`');
+      }
 
       const absolutePdfPath = path.resolve(pdfPath.replace('~', os.homedir()));
       if (!fs.existsSync(absolutePdfPath)) {

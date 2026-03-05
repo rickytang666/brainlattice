@@ -72,6 +72,7 @@ class TaskOrchestrator:
         user_id: Optional[str] = None,
         gemini_key: Optional[str] = None,
         openai_key: Optional[str] = None,
+        openrouter_key: Optional[str] = None,
         background_tasks: Optional[Any] = None
     ) -> Dict[str, Any]:
         """
@@ -84,7 +85,8 @@ class TaskOrchestrator:
             "project_id": project_id,
             "user_id": user_id,
             "gemini_key": gemini_key,
-            "openai_key": openai_key
+            "openai_key": openai_key,
+            "openrouter_key": openrouter_key
         }
         
         # update project metadata with job_id for frontend tracking
@@ -120,6 +122,7 @@ class TaskOrchestrator:
                     file_key=s3_key,
                     gemini_key=gemini_key,
                     openai_key=openai_key,
+                    openrouter_key=openrouter_key,
                     user_id=user_id
                 )
                 background_tasks.add_task(processor.process)
@@ -132,6 +135,7 @@ class TaskOrchestrator:
                     "action": "ingest",
                     "gemini_key": gemini_key,
                     "openai_key": openai_key,
+                    "openrouter_key": openrouter_key,
                     "user_id": user_id
                 }
             )
@@ -151,7 +155,8 @@ class TaskOrchestrator:
         background_tasks: Optional[Any] = None,
         user_id: Optional[str] = None,
         gemini_key: Optional[str] = None,
-        openai_key: Optional[str] = None
+        openai_key: Optional[str] = None,
+        openrouter_key: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         initializes ingestion process for a new file
@@ -198,7 +203,8 @@ class TaskOrchestrator:
                 "project_id": project_id,
                 "user_id": user_id,
                 "gemini_key": gemini_key,
-                "openai_key": openai_key
+                "openai_key": openai_key,
+                "openrouter_key": openrouter_key
             }
             
             self.jobs.create_job(
@@ -223,6 +229,7 @@ class TaskOrchestrator:
                         file_key=s3_key,
                         gemini_key=gemini_key,
                         openai_key=openai_key,
+                        openrouter_key=openrouter_key,
                         user_id=user_id
                     )
                     background_tasks.add_task(processor.process)
@@ -235,6 +242,7 @@ class TaskOrchestrator:
                         "action": "ingest",
                         "gemini_key": gemini_key,
                         "openai_key": openai_key,
+                        "openrouter_key": openrouter_key,
                         "user_id": user_id
                     }
                 )
@@ -256,7 +264,8 @@ class TaskOrchestrator:
         background_tasks: Optional[Any] = None,
         user_id: Optional[str] = None,
         gemini_key: Optional[str] = None,
-        openai_key: Optional[str] = None
+        openai_key: Optional[str] = None,
+        openrouter_key: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         re-triggers ingestion for an existing job ID
@@ -274,13 +283,15 @@ class TaskOrchestrator:
             if not s3_key:
                 raise ValueError(f"missing s3_key in job {job_id} metadata")
 
-            # update metadata with fresh user_id/gemini_key if provided
+            # update metadata with fresh user_id/keys if provided
             if user_id:
                 metadata["user_id"] = user_id
             if gemini_key:
                 metadata["gemini_key"] = gemini_key
             if openai_key:
                 metadata["openai_key"] = openai_key
+            if openrouter_key is not None:
+                metadata["openrouter_key"] = openrouter_key
                 
             self.jobs.create_job(job_id=job_id, job_type="ingest_pdf", metadata=metadata)
 
@@ -298,7 +309,13 @@ class TaskOrchestrator:
                 msg_id = "local_only"
                 if background_tasks:
                     from services.ingestion_processor import IngestionProcessor
-                    processor = IngestionProcessor(job_id=job_id, file_key=s3_key)
+                    processor = IngestionProcessor(
+                        job_id=job_id,
+                        file_key=s3_key,
+                        gemini_key=metadata.get("gemini_key"),
+                        openai_key=metadata.get("openai_key"),
+                        openrouter_key=metadata.get("openrouter_key")
+                    )
                     background_tasks.add_task(processor.process)
             else:
                 msg_id = self.queue.publish_task(
@@ -309,6 +326,7 @@ class TaskOrchestrator:
                         "action": "ingest",
                         "gemini_key": metadata.get("gemini_key"),
                         "openai_key": metadata.get("openai_key"),
+                        "openrouter_key": metadata.get("openrouter_key"),
                         "user_id": metadata.get("user_id")
                     }
                 )
@@ -330,6 +348,7 @@ class TaskOrchestrator:
         user_id: str,
         gemini_key: str,
         openai_key: str = None,
+        openrouter_key: str = None,
         background_tasks: Optional[Any] = None
     ) -> str:
         """
@@ -342,7 +361,8 @@ class TaskOrchestrator:
                 "project_id": project_id,
                 "user_id": user_id,
                 "gemini_key": gemini_key,
-                "openai_key": openai_key
+                "openai_key": openai_key,
+                "openrouter_key": openrouter_key
             }
 
             if not worker_url or not self.queue:

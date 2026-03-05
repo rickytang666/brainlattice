@@ -27,11 +27,20 @@ class IngestionProcessor:
     download -> parse -> chunk -> embed -> extract graph -> resolve concepts
     """
 
-    def __init__(self, job_id: str, file_key: str, gemini_key: str = None, openai_key: str = None, user_id: str = None):
+    def __init__(
+        self,
+        job_id: str,
+        file_key: str,
+        gemini_key: str = None,
+        openai_key: str = None,
+        openrouter_key: str = None,
+        user_id: str = None,
+    ):
         self.job_id = job_id
         self.file_key = file_key
         self.gemini_key = gemini_key
         self.openai_key = openai_key
+        self.openrouter_key = openrouter_key
         self.user_id = user_id
         
         self.storage = get_storage_service()
@@ -67,10 +76,15 @@ class IngestionProcessor:
             # prioritize keys from constructor over stale metadata
             gemini_key = self.gemini_key or metadata.get("gemini_key")
             openai_key = self.openai_key or metadata.get("openai_key")
+            openrouter_key = self.openrouter_key or metadata.get("openrouter_key")
             user_id = self.user_id or metadata.get("user_id")
             
             if not gemini_key:
                 raise ValueError(f"No Gemini API key found for job {self.job_id}. Strict BYOK is enabled.")
+            if not openrouter_key:
+                raise ValueError(
+                    f"No OpenRouter API key found for job {self.job_id}. Strict BYOK is enabled."
+                )
 
             # init services with custom byok keys
             self.embedder = EmbeddingService(gemini_key=gemini_key, openai_key=openai_key)
@@ -310,7 +324,7 @@ class IngestionProcessor:
             logger.info("extracting global seed from headers...")
             seed_start = time.time()
             try:
-                seed_extractor = SeedExtractor(gemini_key=gemini_key)
+                seed_extractor = SeedExtractor(openrouter_key=openrouter_key)
                 seed_ids = await seed_extractor.extract_seed_from_headers(header_text)
                 if hasattr(self, 'timings'):
                     self.timings['global_seed'] = time.time() - seed_start

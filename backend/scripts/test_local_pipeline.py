@@ -10,7 +10,13 @@ load_dotenv()
 
 BASE_URL = "http://localhost:8000/api"
 
-def run_test(pdf_path: str, gemini_key: str = None, openai_key: str = None, output_file: str = None):
+def run_test(
+    pdf_path: str,
+    gemini_key: str = None,
+    openai_key: str = None,
+    openrouter_key: str = None,
+    output_file: str = None,
+):
     path = Path(pdf_path)
     if not path.exists():
         print(f"error: could not find {pdf_path}")
@@ -25,6 +31,8 @@ def run_test(pdf_path: str, gemini_key: str = None, openai_key: str = None, outp
         headers["X-Gemini-API-Key"] = gemini_key
     if openai_key:
         headers["X-OpenAI-API-Key"] = openai_key
+    if openrouter_key:
+        headers["X-OpenRouter-API-Key"] = openrouter_key
         
     with open(path, "rb") as f:
         files = {"file": (path.name, f, "application/pdf")}
@@ -126,7 +134,8 @@ if __name__ == "__main__":
     parser.add_argument("--file", required=True, help="Path to PDF file to test.")
     parser.add_argument("--gemini-key", default=os.getenv("GEMINI_API_KEY"), help="Gemini API key")
     parser.add_argument("--openai-key", default=os.getenv("OPENAI_API_KEY"), help="OpenAI API key")
+    parser.add_argument("--openrouter-key", default=os.getenv("OPENROUTER_API_KEY"), help="OpenRouter API key (required)")
     parser.add_argument("--output", default=None, help="Save the resulting JSON graph to a file (e.g., my_graph.json)")
     args = parser.parse_args()
-    
-    run_test(args.file, args.gemini_key, args.openai_key, args.output)
+
+    run_test(args.file, args.gemini_key, args.openai_key, args.openrouter_key, args.output)

@@ -3,6 +3,7 @@ export const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8
 export const SESSION_ID_KEY = "brainlattice_session_id";
 export const GEMINI_KEY_STORAGE = "brainlattice_gemini_key";
 export const OPENAI_KEY_STORAGE = "brainlattice_openai_key";
+export const OPENROUTER_KEY_STORAGE = "brainlattice_openrouter_key";
 
 export function getSessionId(): string {
   let sessionId = localStorage.getItem(SESSION_ID_KEY);
@@ -17,9 +18,10 @@ export function apiFetch(input: RequestInfo | URL, init?: RequestInit, clerkUser
   const sessionId = getSessionId();
   const apiKey = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
   const openAiKey = localStorage.getItem(OPENAI_KEY_STORAGE) || "";
-  
+  const openRouterKey = localStorage.getItem(OPENROUTER_KEY_STORAGE) || "";
+
   const userId = clerkUserId || sessionId;
-  
+
   const headers = new Headers(init?.headers);
   headers.set("X-User-Id", userId);
   if (apiKey) {
@@ -27,6 +29,9 @@ export function apiFetch(input: RequestInfo | URL, init?: RequestInit, clerkUser
   }
   if (openAiKey) {
     headers.set("X-OpenAI-API-Key", openAiKey);
+  }
+  if (openRouterKey) {
+    headers.set("X-OpenRouter-API-Key", openRouterKey);
   }
   
   return fetch(input, {

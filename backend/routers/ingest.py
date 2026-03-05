@@ -45,7 +45,8 @@ async def finalize_upload(
             background_tasks=background_tasks,
             user_id=context.user_id,
             gemini_key=context.gemini_key,
-            openai_key=context.openai_key
+            openai_key=context.openai_key,
+            openrouter_key=context.openrouter_key
         )
         return result
     except Exception as e:
@@ -79,7 +80,8 @@ async def upload_file(
             background_tasks=background_tasks,
             user_id=context.user_id,
             gemini_key=context.gemini_key,
-            openai_key=context.openai_key
+            openai_key=context.openai_key,
+            openrouter_key=context.openrouter_key
         )
         
         return result
@@ -111,7 +113,8 @@ async def retry_ingest(
             background_tasks=background_tasks,
             user_id=context.user_id,
             gemini_key=context.gemini_key,
-            openai_key=context.openai_key
+            openai_key=context.openai_key,
+            openrouter_key=context.openrouter_key
         )
         return result
     except ValueError as e:

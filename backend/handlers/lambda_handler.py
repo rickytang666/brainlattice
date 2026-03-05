@@ -29,6 +29,7 @@ def worker_handler(event, context):
         
         gemini_key = payload.get("gemini_key")
         openai_key = payload.get("openai_key")
+        openrouter_key = payload.get("openrouter_key")
         user_id = payload.get("user_id")
         
         try:
@@ -47,6 +48,7 @@ def worker_handler(event, context):
                 file_key=file_key,
                 gemini_key=gemini_key,
                 openai_key=openai_key,
+                openrouter_key=openrouter_key,
                 user_id=user_id
             )
             

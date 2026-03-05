@@ -22,9 +22,6 @@ class Settings(BaseSettings):
     UPSTASH_REDIS_REST_URL: Optional[str] = None
     UPSTASH_REDIS_REST_TOKEN: Optional[str] = None
 
-    # openrouter (cheap llm for seed extraction)
-    OPENROUTER_API_KEY: Optional[str] = None
-
     # qstash (async task queue)
     QSTASH_URL: str = "https://qstash.upstash.io"
     QSTASH_TOKEN: Optional[str] = None

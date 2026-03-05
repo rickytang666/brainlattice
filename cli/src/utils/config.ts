@@ -5,6 +5,7 @@ import fs from 'node:fs';
 export interface CliConfig {
   gemini_key?: string;
   openai_key?: string;
+  openrouter_key?: string;
   default_vault?: string;
   user_id?: string;
   session_token?: string;
