@@ -7,10 +7,10 @@ import { Logo } from "../Logo";
 
 interface NavbarProps {
   onOpenConfig: () => void;
-  hasGeminiKey: boolean;
+  hasRequiredKeys: boolean;
 }
 
-export function Navbar({ onOpenConfig, hasGeminiKey }: NavbarProps) {
+export function Navbar({ onOpenConfig, hasRequiredKeys }: NavbarProps) {
   const location = useLocation();
   const isDashboard = location.pathname !== "/scratchpad";
   const isLanding = location.pathname === "/";
@@ -53,13 +53,13 @@ export function Navbar({ onOpenConfig, hasGeminiKey }: NavbarProps) {
         <button
           onClick={onOpenConfig}
           className={`p-1.5 rounded-md transition-all duration-500 ${
-            hasGeminiKey 
+            hasRequiredKeys 
               ? "text-muted-foreground hover:text-foreground" 
               : "text-amber-500 animate-pulse"
           }`}
-          title={hasGeminiKey ? "api keys set" : "missing api keys :("}
+          title={hasRequiredKeys ? "api keys set" : "missing api keys (gemini + openrouter)"}
         >
-          {hasGeminiKey ? (
+          {hasRequiredKeys ? (
             <IconSettings className="w-5 h-5" />
           ) : (
             <IconKey className="w-5 h-5" />

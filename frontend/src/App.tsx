@@ -10,34 +10,27 @@ import { useAuthSync } from "./hooks/useAuthSync";
 import { Navbar } from "./components/layout/Navbar";
 import { Footer } from "./components/layout/Footer";
 import { useEffect } from "react";
-import { GEMINI_KEY_STORAGE } from "./config";
+import { GEMINI_KEY_STORAGE, OPENROUTER_KEY_STORAGE } from "./config";
 
 
 function App() {
   useAuthSync();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const [hasGeminiKey, setHasGeminiKey] = useState(true);
+  const [hasRequiredKeys, setHasRequiredKeys] = useState(true);
   const location = useLocation();
   const isLanding = location.pathname === "/";
 
   useEffect(() => {
-    const checkKey = () => {
-      const key = localStorage.getItem(GEMINI_KEY_STORAGE);
-      setHasGeminiKey(!!key);
-    };
-    checkKey();
-    
-    // check again whenever the modal might have changed it
-    if (!isConfigOpen) {
-      checkKey();
-    }
+    const geminiKey = localStorage.getItem(GEMINI_KEY_STORAGE);
+    const openRouterKey = localStorage.getItem(OPENROUTER_KEY_STORAGE);
+    setHasRequiredKeys(!!geminiKey && !!openRouterKey);
   }, [isConfigOpen]);
 
   return (
     <div className={`w-screen antialiased text-foreground bg-background flex flex-col ${isLanding ? "min-h-screen" : "h-screen overflow-hidden"}`}>
       <ConfigModal isOpen={isConfigOpen} onClose={() => setIsConfigOpen(false)} />
       
-      <Navbar onOpenConfig={() => setIsConfigOpen(true)} hasGeminiKey={hasGeminiKey} />
+      <Navbar onOpenConfig={() => setIsConfigOpen(true)} hasRequiredKeys={hasRequiredKeys} />
 
       <main className="flex-1 w-full relative">
         <Routes>
