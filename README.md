@@ -16,6 +16,17 @@
 
 ---
 
+## Demo
+
+
+https://github.com/user-attachments/assets/25b569c5-db16-4153-b75f-cfc3fcf607ce
+
+
+https://github.com/user-attachments/assets/cf8c6bf7-a76b-4ac8-8997-8efb8560c3a4
+
+
+Or watch it on [YouTube](https://youtu.be/T3rIfQf7UWE).
+
 ## The Problem
 
 Human knowledge is a high-dimensional network, but PDFs are linear streams of characters. When you read a 200-page textbook, you lose the "map" of how concepts actually connect. Mentally mapping these relationships is the hardest part of learning.
