@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from db.session import get_db
@@ -10,6 +10,7 @@ router = APIRouter()
 @router.post("/project/{project_id}/export/obsidian")
 async def trigger_obsidian_export(
     project_id: str,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     context: UserContext = Depends(get_user_context)
 ):
@@ -41,7 +42,8 @@ async def trigger_obsidian_export(
             user_id=context.user_id,
             gemini_key=context.gemini_key,
             openai_key=context.openai_key,
-            openrouter_key=context.openrouter_key
+            openrouter_key=context.openrouter_key,
+            background_tasks=background_tasks,
         )
 
         return {"success": True, "message": "export triggered"}

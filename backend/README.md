@@ -1,6 +1,6 @@
 # brainlattice backend
 
-fastapi-based extraction engine. ingests pdfs, natively caches massive documents via Gemini 2.0 Flash Context Caching, extracts unified knowledge graphs, and stores the topological structures.
+fastapi-based extraction engine. ingests pdfs, extracts unified knowledge graphs via per-chunk OpenRouter extraction, and stores the topological structures.
 
 ## local development
 
@@ -10,7 +10,7 @@ fastapi-based extraction engine. ingests pdfs, natively caches massive documents
   - **Local Development / Serverless Postgres:** Use a managed postgres database like [Neon](https://neon.tech) or a local Postgres instance. Create a database, configure `pgvector`, and set your connection string.
     - `DATABASE_URL=postgres://user:password@host/neondb?sslmode=require`
 
-**note:** no AI API keys are required in the backend environment _for the web app_. the frontend web app strictly uses keys provided by the client in the request headers (BYOK). **however**, if you want to run the local test script (`test_local_pipeline.py`), you must provide `GEMINI_API_KEY` and `OPENAI_API_KEY` in `backend/.env` since the CLI script does not have access to the browser's local storage.
+**note:** no AI API keys are required in the backend environment _for the web app_. the frontend web app strictly uses keys provided by the client in the request headers (BYOK). **however**, if you want to run the local test script (`test_local_pipeline.py`), you must provide `GEMINI_API_KEY` and `OPENROUTER_API_KEY` in `backend/.env` (and optionally `OPENAI_API_KEY` for embeddings).
 
 other keys (R2, Upstash) are optional for local dev.
 
@@ -89,13 +89,13 @@ BUILDX_NO_DEFAULT_ATTESTATIONS=1 sls deploy
 ## internal pipeline tracking
 
 1. **api (`ingest.py`)**: takes pdf -> dumps to storage -> enqueues async job.
-2. **processing (`ingestion_processor.py`)**: natively caches full document -> extracts global concept seeds -> extracts paginated parallel graphs -> serializes state to job tracker.
-3. **persistence (`persistence_service.py`)**: unwraps LLM models -> connects orphan graphs -> commits nodes/links to postgres.
+2. **processing (`ingestion_processor.py`)**: chunks + embeds -> extracts seed from headers (OpenRouter) -> per-chunk extraction (OpenRouter) -> entity resolution -> concept validation filter -> connects orphan components -> orphan link completion -> persists to postgres.
+3. **persistence (`persistence_service.py`)**: commits nodes/links to postgres.
 4. **dead-letter sweeper (`internal.py`)**: manually sweep and kill stuck processing jobs by sending a POST request to `/api/internal/sweep-jobs` with header `x-internal-key: <INTERNAL_SECRET_KEY>`.
 
 ## codebase mapping
 
 - `main.py`: fastapi root
 - `core/config.py`: env var validation
-- `services/llm/`: encapsulates Gemini SDK caching lifecycle, parallelized note generation, and paginated graph extraction algorithms.
+- `services/llm/`: seed extraction, chunk extraction (OpenRouter), concept validation, orphan link completion, note generation (Gemini).
 - `services/`: contains decoupled components (storage, job tracking, queueing) and the core processor logic.

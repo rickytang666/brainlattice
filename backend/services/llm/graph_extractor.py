@@ -1,5 +1,4 @@
 from google import genai
-from core.config import get_settings
 from schemas.graph import GraphData
 from services.llm.prompt_service import get_prompt_service
 from typing import List
@@ -7,7 +6,6 @@ import json
 import logging
 from tenacity import retry, wait_exponential, stop_after_attempt
 
-settings = get_settings()
 
 class GraphExtractor:
     """
@@ -43,61 +41,6 @@ class GraphExtractor:
             text_window=text_window
         )
         return await self._call_llm(prompt)
-
-    async def extract_global_seed(self, cache_name: str) -> List[str]:
-        """
-        extracts the master list of concept ids using the full-context cache
-        """
-        prompt = self.prompts.render("global_seed.jinja")
-        try:
-            config = {
-                "cached_content": cache_name,
-                "response_mime_type": "application/json",
-                "response_schema": list[str],
-                "temperature": 0.0
-            }
-            response = await self._generate_content_with_retry(prompt, config)
-            raw_json = response.text.strip()
-            if raw_json.startswith("```json"):
-                raw_json = raw_json[7:-3].strip()
-            elif raw_json.startswith("```"):
-                raw_json = raw_json[3:-3].strip()
-                
-            return json.loads(raw_json)
-        except Exception as e:
-            self.logger.error(f"global seed extraction failed: {e}")
-            self.logger.error(f"raw response was: {response.text if 'response' in locals() else 'None'}")
-            return []
-
-    async def extract_paginated_nodes(self, cache_name: str, batch_ids: List[str], global_ids: List[str]) -> GraphData:
-        """
-        extracts graph node objects for a specific batch of ids using the full-context cache
-        """
-        prompt = self.prompts.render(
-            "paginated_graph_extraction.jinja",
-            batch_ids=batch_ids,
-            global_ids=global_ids
-        )
-        try:
-            config = {
-                "cached_content": cache_name,
-                "response_mime_type": "application/json",
-                "response_schema": GraphData,
-                "temperature": 0.0
-            }
-            response = await self._generate_content_with_retry(prompt, config)
-            raw_json = response.text.strip()
-            if raw_json.startswith("```json"):
-                raw_json = raw_json[7:-3].strip()
-            elif raw_json.startswith("```"):
-                raw_json = raw_json[3:-3].strip()
-                
-            data = json.loads(raw_json)
-            return GraphData(**data)
-        except Exception as e:
-            self.logger.error(f"paginated node extraction failed: {e}")
-            self.logger.error(f"raw response was: {response.text if 'response' in locals() else 'None'}")
-            return GraphData()
 
     @retry(wait=wait_exponential(multiplier=1, max=10), stop=stop_after_attempt(3))
     async def _generate_content_with_retry(self, prompt: str, config: dict):

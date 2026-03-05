@@ -368,8 +368,15 @@ class TaskOrchestrator:
             if not worker_url or not self.queue:
                 msg_id = "local_only"
                 if background_tasks:
-                    # local execution skeleton
-                    print(f"[LOCAL] preparation for project {project_id} export triggered.")
+                    from services.export_processor import ExportProcessor
+                    processor = ExportProcessor(
+                        project_id=project_id,
+                        user_id=user_id,
+                        gemini_key=gemini_key,
+                        openai_key=openai_key,
+                    )
+                    background_tasks.add_task(processor.process)
+                    logger.info(f"[LOCAL] export triggered for project {project_id}")
             else:
                 msg_id = self.queue.publish_task(
                     destination_url=worker_url,

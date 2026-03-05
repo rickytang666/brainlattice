@@ -1,11 +1,18 @@
+"""
+DEPRECATED: Use test_local_pipeline.py for PDF ingestion instead.
+This script extracts from markdown files using the legacy windowed pipeline.
+Requires GEMINI_API_KEY in .env.
+"""
 import os
 import sys
 import asyncio
 import json
 from pathlib import Path
+from dotenv import load_dotenv
 
 # add backend to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from services.llm.graph_extractor import GraphExtractor
 from services.graph.builder import GraphBuilder
@@ -27,7 +34,6 @@ async def main():
     with open(md_path, "r") as f:
         content = f.read()
 
-    extractor = GraphExtractor()
     builder = GraphBuilder()
     
     # 50k chars per window, overlap 5k
@@ -60,6 +66,13 @@ async def main():
     skeleton = "\n".join(headers)
     print(f"extracted skeleton context: {len(skeleton)} chars")
 
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_key:
+        print("error: GEMINI_API_KEY required. set in .env")
+        sys.exit(1)
+
+    extractor = GraphExtractor(gemini_key=gemini_key)
+
     if skeleton:
         print("identifying core concepts from skeleton...")
         skeleton_graph = await extractor.extract_from_skeleton(skeleton)
@@ -80,7 +93,9 @@ async def main():
     
     # connectivity: connect orphans
     from services.graph.connector import GraphConnector
-    connector = GraphConnector()
+    from services.embedding_service import EmbeddingService
+    embedder = EmbeddingService(gemini_key=gemini_key, openai_key=os.getenv("OPENAI_API_KEY"))
+    connector = GraphConnector(embeddings=embedder)
     print("connecting orphan components...")
     connected_graph = connector.connect_orphans(final_graph)
     
