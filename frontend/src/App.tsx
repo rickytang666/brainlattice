@@ -1,5 +1,5 @@
 import { Routes, Route, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Analytics } from '@vercel/analytics/react';
 import GraphScratchpad from "./components/scratchpad/GraphScratchpad";
 import ProjectDashboard from "./components/dashboard/ProjectDashboard";
@@ -9,26 +9,30 @@ import CliAuthRoute from "./components/dashboard/CliAuthRoute";
 import { useAuthSync } from "./hooks/useAuthSync";
 import { Navbar } from "./components/layout/Navbar";
 import { Footer } from "./components/layout/Footer";
-import { useEffect } from "react";
 import { GEMINI_KEY_STORAGE, OPENROUTER_KEY_STORAGE } from "./config";
 
+function checkRequiredKeys() {
+  const g = localStorage.getItem(GEMINI_KEY_STORAGE);
+  const o = localStorage.getItem(OPENROUTER_KEY_STORAGE);
+  return !!g && !!o;
+}
 
 function App() {
   useAuthSync();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const [hasRequiredKeys, setHasRequiredKeys] = useState(true);
+  const [hasRequiredKeys, setHasRequiredKeys] = useState(checkRequiredKeys);
   const location = useLocation();
   const isLanding = location.pathname === "/";
 
-  useEffect(() => {
-    const geminiKey = localStorage.getItem(GEMINI_KEY_STORAGE);
-    const openRouterKey = localStorage.getItem(OPENROUTER_KEY_STORAGE);
-    setHasRequiredKeys(!!geminiKey && !!openRouterKey);
-  }, [isConfigOpen]);
+  const refreshKeys = useCallback(() => {
+    setHasRequiredKeys(checkRequiredKeys());
+  }, []);
+
+  const handleClose = useCallback(() => setIsConfigOpen(false), []);
 
   return (
     <div className={`w-screen antialiased text-foreground bg-background flex flex-col ${isLanding ? "min-h-screen" : "h-screen overflow-hidden"}`}>
-      <ConfigModal isOpen={isConfigOpen} onClose={() => setIsConfigOpen(false)} />
+      <ConfigModal isOpen={isConfigOpen} onClose={handleClose} onConfigSaved={refreshKeys} />
       
       <Navbar onOpenConfig={() => setIsConfigOpen(true)} hasRequiredKeys={hasRequiredKeys} />
 

@@ -9,9 +9,10 @@ import {
 interface ConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onConfigSaved?: () => void;
 }
 
-export default function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
+export default function ConfigModal({ isOpen, onClose, onConfigSaved }: ConfigModalProps) {
   const [apiKey, setApiKey] = useState("");
   const [openAIKey, setOpenAIKey] = useState("");
   const [openRouterKey, setOpenRouterKey] = useState("");
@@ -36,6 +37,7 @@ export default function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
     localStorage.setItem(GEMINI_KEY_STORAGE, apiKey.trim());
     localStorage.setItem(OPENAI_KEY_STORAGE, openAIKey.trim());
     localStorage.setItem(OPENROUTER_KEY_STORAGE, openRouterKey.trim());
+    onConfigSaved?.();
     onClose();
   };
 
