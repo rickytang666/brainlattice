@@ -1,4 +1,4 @@
-"""Unit tests for global seed extraction (Step 1)."""
+"""unit tests for global seed extraction"""
 import sys
 import os
 
@@ -8,7 +8,7 @@ from services.ingestion_processor import extract_headers_for_seed
 
 
 def test_extract_headers_h1_h2_h3():
-    """extract_headers_for_seed returns H1/H2/H3 lines only."""
+    """extract_headers_for_seed returns h1/h2/h3 lines only."""
     text = """# Calculus
 
 Some intro text.
@@ -46,7 +46,7 @@ More content.
 
 
 def test_extract_headers_includes_h3_excludes_h4():
-    """extract_headers_for_seed includes H1-H3, excludes H4+."""
+    """extract_headers_for_seed includes h1-h3, excludes h4+."""
     text = """# Root
 ## Child
 ### Grandchild

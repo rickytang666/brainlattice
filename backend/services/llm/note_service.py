@@ -82,7 +82,7 @@ class NodeNoteService:
         )
 
     def _get_context(self, db: Session, project_id: str, concept_id: str) -> str:
-        """RAG: vector search for top 5 chunks relevant to concept_id."""
+        """rag: vector search for top 5 chunks relevant to concept_id."""
         try:
             # get query embedding
             query_vector = self.embedder.get_embedding(concept_id)

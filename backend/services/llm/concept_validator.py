@@ -1,6 +1,6 @@
 """
-ConceptValidator: LLM pass to identify invalid concept IDs (metadata, dates, etc.).
-C3 — single call per document to clean extraction noise.
+conceptvalidator: llm pass to identify invalid concept ids (metadata, dates, etc.).
+c3 — single call per document to clean extraction noise.
 """
 import json
 import logging
@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 class ConceptValidator:
     """
-    Identifies invalid concept IDs via LLM.
-    Uses a capable model for reliable classification.
+    identifies invalid concept ids via llm.
+    uses a capable model for reliable classification.
     """
 
     OPENROUTER_MODEL = "meta-llama/llama-4-scout"
@@ -34,7 +34,7 @@ class ConceptValidator:
     @retry(wait=wait_exponential(multiplier=1, max=10), stop=stop_after_attempt(3))
     async def get_invalid_concepts(self, concept_ids: List[str]) -> Set[str]:
         """
-        Return set of concept IDs that are invalid (dates, metadata, etc.).
+        return set of concept ids that are invalid (dates, metadata, etc.).
         """
         if not concept_ids:
             return set()
@@ -54,7 +54,7 @@ class ConceptValidator:
             raw = response.choices[0].message.content.strip()
             invalid = self._parse_json_array(raw)
 
-            # only return IDs that were in the original list (case-insensitive)
+            # only return ids that were in the original list (case-insensitive)
             id_lower_to_orig = {c.lower(): c for c in concept_ids}
             result = set()
             for x in invalid:

@@ -302,9 +302,9 @@ class TaskOrchestrator:
             worker_url = os.getenv("WORKER_PUBLIC_URL")
             if not worker_url or not self.queue:
                 if not worker_url:
-                    logger.warning("WORKER_PUBLIC_URL not set. skipping qstash publish, running locally instead.")
+                    logger.warning("worker_public_url not set. skipping qstash publish, running locally instead.")
                 else:
-                    logger.warning("QStash service not configured. running locally instead.")
+                    logger.warning("qstash service not configured. running locally instead.")
                     
                 msg_id = "local_only"
                 if background_tasks:
@@ -376,7 +376,7 @@ class TaskOrchestrator:
                         openai_key=openai_key,
                     )
                     background_tasks.add_task(processor.process)
-                    logger.info(f"[LOCAL] export triggered for project {project_id}")
+                    logger.info(f"[local] export triggered for project {project_id}")
             else:
                 msg_id = self.queue.publish_task(
                     destination_url=worker_url,

@@ -101,7 +101,7 @@ def run_test(
                     
                 timings = result.get("timings", {})
                 if timings:
-                    print("\n⏱️  --- Pipeline Timings ---")
+                    print("\n⏱️  --- pipeline timings ---")
                     for k, v in timings.items():
                         print(f"  - {k.replace('_', ' ').title()}: {v:.2f}s")
                 

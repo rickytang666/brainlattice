@@ -11,7 +11,7 @@ export function useAuthSync() {
     const oldSessionId = localStorage.getItem(SESSION_ID_KEY);
     // if we have an anonymous session and it's different from the clerk user id
     if (oldSessionId && oldSessionId !== userId) {
-      console.log(`[useAuthSync] Migrating anonymous projects from ${oldSessionId} to ${userId}`);
+      console.log(`[useAuthSync] migrating anonymous projects from ${oldSessionId} to ${userId}`);
       
       apiFetch(`${API_BASE}/project/transfer`, {
         method: "POST",
@@ -20,13 +20,13 @@ export function useAuthSync() {
       }, userId)
       .then(res => {
         if (res.ok) {
-          console.log("[useAuthSync] Migration complete, clearing anonymous session map.");
+          console.log("[useAuthSync] migration complete, clearing anonymous session map.");
           localStorage.removeItem(SESSION_ID_KEY);
         } else {
-          console.error("[useAuthSync] Migration request returned non-OK status.");
+          console.error("[useAuthSync] migration request returned non-ok status.");
         }
       })
-      .catch(err => console.error("[useAuthSync] Migration failed:", err));
+      .catch(err => console.error("[useAuthSync] migration failed:", err));
     }
   }, [isLoaded, userId]);
 }

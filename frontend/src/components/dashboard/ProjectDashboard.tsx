@@ -144,7 +144,7 @@ export default function ProjectDashboard() {
           }
         }
       })
-      .catch(err => console.error("Initial export status check failed:", err));
+      .catch(err => console.error("initial export status check failed:", err));
   }, [projectIdFromUrl, userId, startExportPolling]);
 
   useEffect(() => {

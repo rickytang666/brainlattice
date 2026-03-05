@@ -207,7 +207,7 @@ class LocalJobService:
 
 
 def get_job_service():
-    """factory function to return Upstash if configured, otherwise Local in-memory"""
+    """factory function to return upstash if configured, otherwise local in-memory"""
     if settings.UPSTASH_REDIS_REST_URL and settings.UPSTASH_REDIS_REST_TOKEN:
         import logging
         logging.getLogger(__name__).info("initializing upstash job service")

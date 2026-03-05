@@ -50,7 +50,7 @@ export default function LandingPage() {
     }
 
     let index = 0;
-    setHeroText(""); // Reset on mount
+    setHeroText(""); // reset on mount
     setIsTypingComplete(false);
     const intervalId = setInterval(() => {
       setHeroText(fullText.slice(0, index + 1));

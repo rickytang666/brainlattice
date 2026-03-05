@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 def extract_headers_for_seed(text: str) -> str:
-    """extracts H1/H2/H3 headers for seed extraction. Pure function, no side effects."""
+    """extracts h1/h2/h3 headers for seed extraction. pure function, no side effects."""
     headers = []
     for line in text.split("\n"):
         if re.match(r"^#{1,3}\s+(.+)$", line):
@@ -169,7 +169,7 @@ class IngestionProcessor:
             logger.info("extracting conceptual graph...")
             extract_start = time.time()
             
-            # check for cached results first (checkpointing phase)
+            # check for cached results first
             cached_extraction = self.jobs.get_extraction_cache(self.job_id)
             if cached_extraction:
                 logger.info(f"using cached extraction results for job {self.job_id}")
@@ -193,7 +193,7 @@ class IngestionProcessor:
             logger.info("resolving concepts...")
             resolved_graph = self.builder.build(graph_data)
 
-            # filter invalid nodes (C2 date regex + C3 LLM validation)
+            # filter invalid nodes (date regex + llm validation)
             logger.info("filtering invalid concepts...")
             filter_start = time.time()
             date_invalid = get_date_like_ids(resolved_graph)
@@ -208,7 +208,7 @@ class IngestionProcessor:
             logger.info("connecting orphan components...")
             connected_graph = self.connector.connect_orphans(filtered_graph)
 
-            # fix degree-0 nodes (orphan link completion)
+            # fix degree-0 nodes
             logger.info("fixing degree-0 nodes...")
             orphan_svc = OrphanLinkService(openrouter_key=openrouter_key)
             connected_graph = await orphan_svc.fix_degree_zero_nodes(connected_graph)
@@ -270,9 +270,9 @@ class IngestionProcessor:
         gemini_key: str = None,
         openrouter_key: str = None,
     ) -> List[Any]:
-        """runs per-chunk extraction (Step 1 seed + Step 2 map). no gemini cache."""
+        """runs per-chunk extraction (step 1 seed + step 2 map). no gemini cache."""
 
-        # step 1: global seed from headers (H1/H2/H3)
+        # step 1: global seed from headers (h1/h2/h3)
         header_text = self._extract_headers(text)
         seed_ids: List[str] = []
         if header_text:
@@ -312,5 +312,5 @@ class IngestionProcessor:
         return [g for g in extracted_graphs if g and g.nodes]
 
     def _extract_headers(self, text: str) -> str:
-        """extracts H1/H2/H3 headers for seed extraction (regex)"""
+        """extracts h1/h2/h3 headers for seed extraction (regex)"""
         return extract_headers_for_seed(text)

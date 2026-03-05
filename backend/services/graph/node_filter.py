@@ -1,6 +1,5 @@
 """
-NodeFilter: remove invalid concept nodes (dates, metadata, etc.) from graph.
-C2: date regex. C3: LLM-identified invalid concepts.
+nodefilter: remove invalid concept nodes (dates, metadata, etc.) from graph.
 """
 import re
 import logging
@@ -18,7 +17,7 @@ DATE_PATTERN = re.compile(
 
 
 def get_date_like_ids(graph_data: GraphData) -> Set[str]:
-    """Return concept IDs that match date pattern (month + year)."""
+    """return concept ids that match date pattern (month + year)."""
     invalid = set()
     for node in graph_data.nodes:
         if DATE_PATTERN.match(node.id.strip()):
@@ -28,9 +27,9 @@ def get_date_like_ids(graph_data: GraphData) -> Set[str]:
 
 def filter_invalid_nodes(graph_data: GraphData, invalid_ids: Set[str]) -> GraphData:
     """
-    Remove nodes whose IDs are in invalid_ids.
-    Strip references to removed nodes from outbound/inbound links.
-    Returns new GraphData (does not mutate input).
+    remove nodes whose ids are in invalid_ids.
+    strip references to removed nodes from outbound/inbound links.
+    returns new graphdata (does not mutate input).
     """
     if not invalid_ids:
         return graph_data

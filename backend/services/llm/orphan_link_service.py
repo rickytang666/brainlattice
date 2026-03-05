@@ -1,5 +1,5 @@
 """
-OrphanLinkService: fix degree-0 nodes by suggesting related concepts via cheap LLM.
+orphanlinkservice: fix degree-0 nodes by suggesting related concepts via cheap openrouter model.
 """
 import json
 import logging
@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 
 class OrphanLinkService:
     """
-    Suggests outbound + inbound links for degree-0 nodes using cheap OpenRouter model.
-    Only runs for nodes with 0 outbound AND 0 inbound links.
-    No RAG — uses canonical list only.
+    suggests outbound + inbound links for degree-0 nodes using cheap openrouter model.
+    only runs for nodes with 0 outbound and 0 inbound links.
+    no rag — uses canonical list only.
     """
 
     OPENROUTER_MODEL = "meta-llama/llama-3.1-8b-instruct"
@@ -35,8 +35,8 @@ class OrphanLinkService:
 
     async def fix_degree_zero_nodes(self, graph_data: GraphData) -> GraphData:
         """
-        For each degree-0 node, ask LLM which concepts relate (outbound + inbound).
-        Adds valid links in-place. Returns the same graph_data (modified).
+        for each degree-0 node, ask llm which concepts relate (outbound + inbound).
+        adds valid links in-place. returns the same graph_data (modified).
         """
         node_map = {n.id: n for n in graph_data.nodes}
         canonical_ids: Set[str] = set(node_map.keys())
@@ -81,7 +81,7 @@ class OrphanLinkService:
                     if target_node and node.id not in target_node.inbound_links:
                         target_node.inbound_links.append(node.id)
 
-                # add inbound: source -> node (so source gets node in outbound, node gets source in inbound)
+                # add inbound: source -> node
                 for source_id in inbound_valid[: self.MAX_LINKS_PER_DIRECTION]:
                     if source_id not in node.inbound_links:
                         node.inbound_links.append(source_id)
@@ -106,7 +106,7 @@ class OrphanLinkService:
         id_lower_to_canonical: Dict[str, str],
         exclude_id: str,
     ) -> List[str]:
-        """Filter to valid canonical IDs, exclude self, dedupe."""
+        """filter to valid canonical ids, exclude self, dedupe."""
         valid = []
         seen = set()
         for rid in ids:
@@ -124,7 +124,7 @@ class OrphanLinkService:
         concept_id: str,
         canonical_list: List[str],
     ) -> Dict[str, List[str]]:
-        """Call cheap LLM to suggest outbound + inbound links."""
+        """call cheap llm to suggest outbound + inbound links."""
         prompt = self.prompts.render(
             "orphan_link_completion.jinja",
             concept_id=concept_id,
@@ -140,7 +140,7 @@ class OrphanLinkService:
         return self._parse_structured(raw)
 
     def _parse_structured(self, raw: str) -> Dict[str, List[str]]:
-        """Parse {"outbound": [...], "inbound": [...]} from string."""
+        """parse {"outbound": [...], "inbound": [...]} from string."""
         if raw.startswith("```json"):
             raw = raw[7:].strip()
         if raw.startswith("```"):

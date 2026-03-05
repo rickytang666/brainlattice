@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 class SeedExtractor:
     """
-    Extracts a canonical concept ID list from document headers (H1/H2/H3).
-    Requires OpenRouter API key (BYOK). No fallback.
+    extracts a canonical concept id list from document headers (h1/h2/h3).
+    requires openrouter api key (byok). no fallback.
     """
 
     OPENROUTER_MODEL = "meta-llama/llama-3.1-8b-instruct"
@@ -36,8 +36,8 @@ class SeedExtractor:
 
     async def extract_seed_from_headers(self, header_text: str) -> List[str]:
         """
-        Convert document headers into canonical concept IDs.
-        Returns a list of strings (e.g. ["calculus", "limit", "derivative"]).
+        convert document headers into canonical concept ids.
+        returns a list of strings (e.g. ["calculus", "limit", "derivative"]).
         """
         if not header_text.strip():
             logger.warning("empty header text, returning empty seed")
@@ -65,7 +65,7 @@ class SeedExtractor:
         return self._parse_json_array(raw)
 
     def _parse_json_array(self, raw: str) -> List[str]:
-        """Parse JSON array from string, handling common wrapper patterns."""
+        """parse json array from string, handling common wrapper patterns."""
         if raw.startswith("```json"):
             raw = raw[7:-3].strip()
         elif raw.startswith("```"):

@@ -4,12 +4,12 @@ from schemas.graph import GraphData
 
 class GraphMetrics:
     """
-    Computes graph theory metrics (PageRank, centrality, etc.) for the conceptual network.
+    computes graph theory metrics (pagerank, centrality, etc.) for the conceptual network.
     """
 
     @staticmethod
     def calculate_pagerank(graph: GraphData) -> Dict[str, float]:
-        """Calculates PageRank for all nodes based on directed outbound edges."""
+        """calculates pagerank for all nodes based on directed outbound edges."""
         G = nx.DiGraph()
         
         for node in graph.nodes:

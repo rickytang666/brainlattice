@@ -159,8 +159,8 @@ export default function KnowledgeGraph({
   // physics tweaks
   useEffect(() => {
     if (fgRef.current) {
-      fgRef.current.d3Force("charge")?.strength(-100); // Stronger repulsion for spacing
-      fgRef.current.d3Force("link")?.distance(60); // Longer links
+      fgRef.current.d3Force("charge")?.strength(-100); // stronger repulsion for spacing
+      fgRef.current.d3Force("link")?.distance(60); // longer links
     }
   }, []);
 
@@ -194,8 +194,8 @@ export default function KnowledgeGraph({
           if (hoverNode) {
             if (node.id === hoverNode) targetColor = COL_HIGHLIGHT;
             else if (highlightNodes.has(node.id))
-              targetColor = COL_DEFAULT; // Neighbors stay grey
-            else targetColor = COL_DIM; // Others dim
+              targetColor = COL_DEFAULT; // neighbors stay grey
+            else targetColor = COL_DIM; // others dim
           }
 
           return targetColor;
@@ -270,9 +270,9 @@ export default function KnowledgeGraph({
         }}
         onNodeHover={handleNodeHover}
         onNodeClick={handleNodeClick}
-        d3AlphaDecay={0.05} // Higher decay = settles faster (less jitter)
-        d3VelocityDecay={0.4} // More friction
-        cooldownTicks={100} // Stop simulation after 100 ticks to freeze layout
+        d3AlphaDecay={0.05} // higher decay = settles faster (less jitter)
+        d3VelocityDecay={0.4} // more friction
+        cooldownTicks={100} // stop simulation after 100 ticks to freeze layout
       />
     </div>
   );

@@ -12,7 +12,13 @@ import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
-import { IconLoader2, IconX, IconBook, IconHash, IconRefresh } from "@tabler/icons-react";
+import {
+  IconLoader2,
+  IconX,
+  IconBook,
+  IconHash,
+  IconRefresh,
+} from "@tabler/icons-react";
 import { useSafeAuth } from "../../hooks/useSafeAuth";
 import "katex/dist/katex.min.css";
 import { API_BASE, apiFetch } from "../../config";
@@ -100,7 +106,7 @@ export default function NoteSidebar({
     apiFetch(
       `${API_BASE}/project/${projectId}/node/${encodeURIComponent(conceptId)}/note`,
       undefined,
-      userId
+      userId,
     )
       .then((res) => {
         if (!res.ok) throw new Error("failed to load note");
@@ -180,7 +186,7 @@ export default function NoteSidebar({
             <div className="h-3 bg-muted/40 rounded w-full mt-6" />
             <div className="h-3 bg-muted/30 rounded w-[95%]" />
             <div className="h-3 bg-muted/30 rounded w-[80%]" />
-            
+
             <div className="flex-1 flex flex-col justify-end pb-8">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <IconLoader2 className="w-4 h-4 animate-spin" />
@@ -241,9 +247,7 @@ export default function NoteSidebar({
                     </div>
                   ),
                   thead: ({ children }) => (
-                    <thead className="bg-muted">
-                      {children}
-                    </thead>
+                    <thead className="bg-muted">{children}</thead>
                   ),
                   th: ({ children }) => (
                     <th className="px-4 py-3 font-semibold text-muted-foreground border-b border-border text-xs">
@@ -277,7 +281,9 @@ export default function NoteSidebar({
                       !validNodeIds || validNodeIds.has(targetId.toLowerCase());
                     if (!isLinked) {
                       return (
-                        <span className="text-muted-foreground">{children}</span>
+                        <span className="text-muted-foreground">
+                          {children}
+                        </span>
                       );
                     }
                     return (
@@ -299,9 +305,7 @@ export default function NoteSidebar({
               <div className="mt-8 pt-6 border-t border-border">
                 <div className="flex items-center gap-2 text-muted-foreground mb-3">
                   <IconHash className="w-3 h-3" />
-                  <span className="text-xs font-medium">
-                    aliases
-                  </span>
+                  <span className="text-xs font-medium">aliases</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {aliases.map((a) => (

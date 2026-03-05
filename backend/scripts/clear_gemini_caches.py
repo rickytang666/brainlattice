@@ -1,4 +1,4 @@
-"""clears all Gemini Context Caches"""
+"""clears all gemini context caches"""
 
 import os
 import sys
@@ -12,7 +12,7 @@ if not api_key:
     print("error: GEMINI_API_KEY not found in .env")
     sys.exit(1)
 
-print("connecting to Gemini API...")
+print("connecting to gemini api...")
 client = genai.Client(api_key=api_key)
 
 try:
@@ -21,10 +21,10 @@ try:
     caches = list(client.caches.list())
     
     if not caches:
-        print("✅ no active caches found! You are safe from billing leaks.")
+        print("✅ no active caches found! you are safe from billing leaks.")
         sys.exit(0)
         
-    print(f"⚠️ found {len(caches)} active caches lingering on Google's servers.")
+    print(f"⚠️ found {len(caches)} active caches lingering on google's servers.")
     
     deleted_count = 0
     for cache in caches:
@@ -36,7 +36,7 @@ try:
             print(f"❌ failed to delete {cache.name}: {e}")
             
     print(f"\n✅ successfully deleted {deleted_count} out of {len(caches)} caches.")
-    print("your Gemini API bill is now safe!")
+    print("your gemini api bill is now safe!")
 
 except Exception as e:
-    print(f"error communicating with Gemini API: {e}")
+    print(f"error communicating with gemini api: {e}")

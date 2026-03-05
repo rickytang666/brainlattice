@@ -76,6 +76,6 @@ def test_save_debug_output(extracted_text, sample_pdf):
     with open(out_path, "w") as f:
         f.write(extracted_text)
     
-    print(f"\nSaved debug output to: {out_path}")
+    print(f"\nsaved debug output to: {out_path}")
     assert out_path.exists()
     assert out_path.stat().st_size > 0

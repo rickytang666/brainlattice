@@ -1,6 +1,6 @@
 """
-ChunkExtractor: extract GraphData (nodes/edges) from a text chunk using OpenRouter.
-Step 2 Map phase - per-chunk extraction with seed list for cross-chunk linking.
+chunkextractor: extract graphdata (nodes/edges) from a text chunk using openrouter.
+per-chunk extraction with seed list for cross-chunk linking.
 """
 import json
 import logging
@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 class ChunkExtractor:
     """
-    Extracts raw nodes/edges from a text chunk using OpenRouter (cheap model).
-    Requires OpenRouter API key (BYOK). Uses seed list for cross-chunk link consistency.
+    extracts raw nodes/edges from a text chunk using openrouter (cheap model).
+    requires openrouter api key (byok). uses seed list for cross-chunk link consistency.
     """
 
     OPENROUTER_MODEL = "google/gemma-3-27b-it"
@@ -42,7 +42,7 @@ class ChunkExtractor:
         seed_list: Optional[List[str]] = None,
     ) -> GraphData:
         """
-        Extract nodes from a single chunk. Returns GraphData.
+        extract nodes from a single chunk. returns graphdata.
         """
         if not chunk_text.strip():
             return GraphData(nodes=[])
@@ -70,7 +70,7 @@ class ChunkExtractor:
         return response.choices[0].message.content.strip()
 
     def _parse_graph_data(self, raw: str) -> GraphData:
-        """Parse JSON to GraphData, handling common wrapper patterns."""
+        """parse json to graphdata, handling common wrapper patterns."""
         if raw.startswith("```json"):
             raw = raw[7:-3].strip()
         elif raw.startswith("```"):
