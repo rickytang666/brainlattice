@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Key } from "lucide-react";
+import { X, Key, Eye, EyeOff } from "lucide-react";
 import {
   GEMINI_KEY_STORAGE,
   OPENAI_KEY_STORAGE,
@@ -13,15 +13,18 @@ interface ConfigModalProps {
 
 export default function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
   const [apiKey, setApiKey] = useState("");
-  const [openAiKey, setOpenAiKey] = useState("");
+  const [openAIKey, setOpenAIKey] = useState("");
   const [openRouterKey, setOpenRouterKey] = useState("");
+  const [showGemini, setShowGemini] = useState(false);
+  const [showOpenRouter, setShowOpenRouter] = useState(false);
+  const [showOpenAI, setShowOpenAI] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       // defer state update to avoid synchronous cascading renders during mount
       setTimeout(() => {
         setApiKey(localStorage.getItem(GEMINI_KEY_STORAGE) || "");
-        setOpenAiKey(localStorage.getItem(OPENAI_KEY_STORAGE) || "");
+        setOpenAIKey(localStorage.getItem(OPENAI_KEY_STORAGE) || "");
         setOpenRouterKey(localStorage.getItem(OPENROUTER_KEY_STORAGE) || "");
       }, 0);
     }
@@ -31,7 +34,7 @@ export default function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
 
   const handleSave = () => {
     localStorage.setItem(GEMINI_KEY_STORAGE, apiKey.trim());
-    localStorage.setItem(OPENAI_KEY_STORAGE, openAiKey.trim());
+    localStorage.setItem(OPENAI_KEY_STORAGE, openAIKey.trim());
     localStorage.setItem(OPENROUTER_KEY_STORAGE, openRouterKey.trim());
     onClose();
   };
@@ -56,47 +59,89 @@ export default function ConfigModal({ isOpen, onClose }: ConfigModalProps) {
             <span>Google Gemini API Key</span>
             <span className="text-xs text-muted-foreground">Required</span>
           </label>
-          <input
-            type="password"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="AIzaSy..."
-            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary transition-colors mb-4 font-mono"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSave();
-              if (e.key === "Escape") onClose();
-            }}
-          />
+          <div className="relative mb-4">
+            <input
+              type={showGemini ? "text" : "password"}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="AIzaSy..."
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 pr-10 text-sm text-foreground focus:outline-none focus:border-primary transition-colors font-mono"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSave();
+                if (e.key === "Escape") onClose();
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowGemini((v) => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+              title={showGemini ? "Hide" : "Show"}
+            >
+              {showGemini ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+            </button>
+          </div>
           <label className="flex items-center justify-between text-sm font-medium text-foreground mb-2 mt-2">
             <span>OpenRouter API Key</span>
             <span className="text-xs text-muted-foreground">Required</span>
           </label>
-          <input
-            type="password"
-            value={openRouterKey}
-            onChange={(e) => setOpenRouterKey(e.target.value)}
-            placeholder="sk-or-..."
-            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary transition-colors mb-4 font-mono"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSave();
-              if (e.key === "Escape") onClose();
-            }}
-          />
+          <div className="relative mb-4">
+            <input
+              type={showOpenRouter ? "text" : "password"}
+              value={openRouterKey}
+              onChange={(e) => setOpenRouterKey(e.target.value)}
+              placeholder="sk-or-..."
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 pr-10 text-sm text-foreground focus:outline-none focus:border-primary transition-colors font-mono"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSave();
+                if (e.key === "Escape") onClose();
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowOpenRouter((v) => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+              title={showOpenRouter ? "Hide" : "Show"}
+            >
+              {showOpenRouter ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+            </button>
+          </div>
           <label className="flex items-center justify-between text-sm font-medium text-foreground mb-2 mt-2">
             <span>OpenAI API Key</span>
             <span className="text-xs text-muted-foreground">Optional</span>
           </label>
-          <input
-            type="password"
-            value={openAiKey}
-            onChange={(e) => setOpenAiKey(e.target.value)}
-            placeholder="sk-proj-..."
-            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary transition-colors mb-4 font-mono"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSave();
-              if (e.key === "Escape") onClose();
-            }}
-          />
+          <div className="relative mb-4">
+            <input
+              type={showOpenAI ? "text" : "password"}
+              value={openAIKey}
+              onChange={(e) => setOpenAIKey(e.target.value)}
+              placeholder="sk-proj-..."
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 pr-10 text-sm text-foreground focus:outline-none focus:border-primary transition-colors font-mono"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSave();
+                if (e.key === "Escape") onClose();
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowOpenAI((v) => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+              title={showOpenAI ? "Hide" : "Show"}
+            >
+              {showOpenAI ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+            </button>
+          </div>
           <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
             Your API keys are stored locally in your browser and are only sent
             to the server for document ingestion. Gemini and OpenRouter are
