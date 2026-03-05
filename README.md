@@ -36,7 +36,7 @@ BrainLattice reads the PDF and does all of it automatically: extracts concepts, 
 - **WebGL Knowledge Graph**: Interactive, searchable force graph. See the whole textbook in one canvas.
 - **Source-grounded Notes**: Every note is synthesized from actual source chunks—more relevant and no hallucinations.
 - **Concept Hierarchy**: Ancestors (prerequisites) and descendants for every node.
-- **CLI Workflow**: `brainlattice` -> `gen path/to/pdf` — done.
+- **CLI Workflow**: `brainlattice` -> `config` -> `gen path/to/pdf` — done.
 - **BYOK**: API keys stay in-memory. Never stored.
 
 ## Tech Stack
@@ -49,7 +49,7 @@ BrainLattice reads the PDF and does all of it automatically: extracts concepts, 
 
 ## How to use
 
-Requires API keys from [Google AI](https://aistudio.google.com/), [OpenRouter](https://openrouter.ai/settings/keys), and [OpenAI](https://openai.com/index/openai-api-platform/).
+Requires API keys from [Google AI](https://aistudio.google.com/), [OpenRouter](https://openrouter.ai/settings/keys), and optionally, [OpenAI](https://openai.com/index/openai-api-platform/).
 
 ### BrainLattice Web App
 
@@ -109,7 +109,7 @@ _For full setup details, see the specific READMEs in `/frontend` and `/backend`.
 
 ### 1. Configure Keys
 
-Create a `.env` in `backend/` with your API keys and DB URL (Neon PostgreSQL required for pgvector):
+Create a `.env` in `backend/` with your API keys and DB URL ([Neon PostgreSQL](https://neon.tech/) required, make sure to enable pooled connections):
 
 ```bash
 GEMINI_API_KEY=your_gemini_key_here
