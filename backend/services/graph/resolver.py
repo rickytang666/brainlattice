@@ -7,11 +7,12 @@ from services.embedding_service import EmbeddingService
 
 class EntityResolver:
     """
-    handles conceptual deduplication (entity resolution) within the graph
-    uses semantic embeddings + agglomerative clustering to merge near-synonyms
+    Handles conceptual deduplication (entity resolution) within the graph.
+    Uses semantic embeddings + agglomerative clustering to merge near-synonyms.
+    No LLM. Step 3 Reduce phase.
     """
 
-    def __init__(self, clustering_threshold: float = 0.85, embedder: EmbeddingService = None):
+    def __init__(self, clustering_threshold: float = 0.88, embedder: EmbeddingService = None):
         self._embedder = embedder
         self.threshold = clustering_threshold
 

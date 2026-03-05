@@ -19,10 +19,11 @@ class GraphBuilder:
 
         # resolve entity mapping (original_id -> canonical_id)
         id_map = self.resolver.get_id_map(raw_nodes)
-        
-        # consolidate nodes
+        valid_canonical_ids = set(id_map.values())
+
+        # consolidate nodes (only from extracted nodes, no link-target creation)
         final_nodes: Dict[str, GraphNode] = {}
-        
+
         def get_or_create(node_id: str) -> GraphNode:
             if node_id not in final_nodes:
                 final_nodes[node_id] = GraphNode(
@@ -32,32 +33,32 @@ class GraphBuilder:
                     inbound_links=[]
                 )
             return final_nodes[node_id]
-        
+
         for n in raw_nodes:
             canonical = id_map.get(n.id, n.id)
             target = get_or_create(canonical)
-            
+
             # merge aliases
             all_aliases = set(target.aliases)
             all_aliases.update(n.aliases)
             if n.id != canonical:
                 all_aliases.add(n.id)
             target.aliases = list(all_aliases)
-            
-            # handle outbound links (dependencies/children: me -> them)
+
+            # handle outbound links: map to canonical, drop invalid (target not in graph)
             for raw_link in n.outbound_links:
                 remapped_link = id_map.get(raw_link, raw_link)
-                # ensure target exists (implicitly created if missing)
-                get_or_create(remapped_link)
-                
+                if remapped_link not in valid_canonical_ids:
+                    continue  # drop invalid link
                 if remapped_link != canonical and remapped_link not in target.outbound_links:
                     target.outbound_links.append(remapped_link)
 
-            # handle inbound links (parents/context: them -> me)
+            # handle inbound links (parents): map to canonical, drop invalid
             for raw_parent in n.inbound_links:
                 remapped_parent = id_map.get(raw_parent, raw_parent)
+                if remapped_parent not in valid_canonical_ids:
+                    continue  # drop invalid link
                 parent_node = get_or_create(remapped_parent)
-                
                 if canonical != remapped_parent and canonical not in parent_node.outbound_links:
                     parent_node.outbound_links.append(canonical)
         
