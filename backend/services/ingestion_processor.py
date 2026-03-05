@@ -8,11 +8,12 @@ from typing import Dict, Any, List
 
 from services.storage_service import get_storage_service
 from services.pdf_service import PDFService
-from services.chunking_service import RecursiveMarkdownSplitter
+from services.chunking_service import RecursiveMarkdownSplitter, create_extraction_chunks
 from services.embedding_service import EmbeddingService
 from services.job_service import get_job_service
 from services.llm.graph_extractor import GraphExtractor
 from services.llm.seed_extractor import SeedExtractor
+from services.llm.chunk_extractor import ChunkExtractor
 from services.graph.builder import GraphBuilder
 from services.graph.connector import GraphConnector
 from services.graph.persistence_service import GraphPersistenceService
@@ -189,7 +190,10 @@ class IngestionProcessor:
                 graph_data = [GraphData(**g) for g in cached_extraction]
             else:
                 graph_data = await self._run_graph_extraction(
-                    markdown_content, cache_name=cache_name, gemini_key=gemini_key
+                    markdown_content,
+                    cache_name=cache_name,
+                    gemini_key=gemini_key,
+                    openrouter_key=openrouter_key,
                 )
                 # cache the results for potential retries
                 self.jobs.set_extraction_cache(self.job_id, [g.model_dump() for g in graph_data])
@@ -266,7 +270,11 @@ class IngestionProcessor:
                 os.remove(temp_path)
 
     async def _run_graph_extraction(
-        self, text: str, cache_name: str = None, gemini_key: str = None
+        self,
+        text: str,
+        cache_name: str = None,
+        gemini_key: str = None,
+        openrouter_key: str = None,
     ) -> List[Any]:
         """runs stateful windowing extraction logic or paginated full-cache extraction"""
         if cache_name:
@@ -300,22 +308,7 @@ class IngestionProcessor:
             else:
                 logger.warning("failed to extract global seed, falling back to windowed extraction")
 
-        logger.info("falling back to standard windowed graph extraction...")
-        window_size = 50000
-        overlap = 5000
-        text_len = len(text)
-        windows = []
-        
-        if text_len <= window_size:
-            windows.append(text)
-        else:
-            start = 0
-            while start < text_len:
-                end = min(start + window_size, text_len)
-                windows.append(text[start:end])
-                if end == text_len:
-                    break
-                start += (window_size - overlap)
+        logger.info("using per-chunk extraction (Step 2 Map phase)...")
 
         # step 1: global seed from headers (H1/H2/H3)
         header_text = self._extract_headers(text)
@@ -326,30 +319,35 @@ class IngestionProcessor:
             try:
                 seed_extractor = SeedExtractor(openrouter_key=openrouter_key)
                 seed_ids = await seed_extractor.extract_seed_from_headers(header_text)
-                if hasattr(self, 'timings'):
-                    self.timings['global_seed'] = time.time() - seed_start
+                if hasattr(self, "timings"):
+                    self.timings["global_seed"] = time.time() - seed_start
                 logger.info(f"extracted {len(seed_ids)} seed concept IDs from headers")
             except Exception as e:
                 logger.warning(f"seed extraction failed, continuing without seed: {e}")
 
-        extracted_graphs = []
-        accumulated_nodes = []
-        concept_ids = list(seed_ids)
+        # step 2: create extraction chunks (~8k chars) and extract from each
+        extraction_chunks = create_extraction_chunks(text, chunk_size=8000, overlap=200)
+        logger.info(f"extracting graph from {len(extraction_chunks)} chunks...")
 
-        # step 2: extract from text windows using seeded concepts
-        for i, window_text in enumerate(windows):
-            logger.info(f"extracting window {i+1}/{len(windows)}...")
-            
-            graph_data = await self.extractor.extract_from_window(
-                window_text, 
-                existing_concepts=concept_ids if concept_ids else None
+        chunk_extractor = ChunkExtractor(openrouter_key=openrouter_key)
+        sem = asyncio.Semaphore(5)  # limit concurrent OpenRouter calls
+
+        async def extract_one(chunk_obj, idx: int):
+            async with sem:
+                logger.info(f"extracting chunk {idx + 1}/{len(extraction_chunks)}...")
+                return await chunk_extractor.extract_from_chunk(
+                    chunk_obj.page_content,
+                    seed_list=seed_ids if seed_ids else None,
+                )
+
+        extracted_graphs = await asyncio.gather(
+            *(
+                extract_one(c, i)
+                for i, c in enumerate(extraction_chunks)
             )
-            
-            extracted_graphs.append(graph_data)
-            accumulated_nodes.extend(graph_data.nodes)
-            concept_ids = list(seed_ids) + [n.id for n in accumulated_nodes]
-            
-        return extracted_graphs
+        )
+
+        return [g for g in extracted_graphs if g and g.nodes]
 
     def _extract_headers(self, text: str) -> str:
         """extracts H1/H2/H3 headers for seed extraction (regex)"""

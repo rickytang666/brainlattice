@@ -1,0 +1,31 @@
+analyze the following text chunk and extract key concepts (nodes) and their directed relationships.
+
+{% if seed_list -%}
+seed concept IDs (PREFER these when adding links; reuse if the chunk mentions them): {{ seed_list | join(', ') }}
+{%- endif %}
+
+strict output rules:
+1. return only a valid json object with key "nodes"
+2. nodes format:
+{
+  "nodes": [
+    {
+      "id": "concept name lowercase",
+      "aliases": ["synonym1", "acronym"],
+      "outbound_links": ["child concept 1", "dependency 2"],
+      "inbound_links": ["parent concept", "broader category"]
+    }
+  ]
+}
+3. ids: must be lowercase, singular, and use spaces instead of underscores (e.g. "deep learning", not "deep_learning")
+4. **encyclopedic standard**: every id must be a valid potential wikipedia page title.
+- bad: "discussion of integrals", "understanding limits", "chapter 1"
+- good: "integral", "limit", "linear equation"
+5. **linking**: when adding outbound_links or inbound_links, prefer IDs from the seed list when applicable. you may add new concept IDs if they appear in this chunk. connect each node to at least one other concept when possible.
+6. outbound_links: concepts this node points to, relies on, or contains (children)
+7. inbound_links: concepts that contain this node or are broader categories (parents). infer parent if obvious (e.g. "level curve" -> "multivariate calculus").
+8. do not include meta-discourse phrases like "discussion of", "overview of", "types of". extract the core concept only.
+9. return raw json only. do not wrap in ```json or any code block.
+
+text chunk to analyze:
+{{ chunk_text }}

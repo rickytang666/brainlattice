@@ -75,3 +75,31 @@ def test_global_seed_header_prompt_renders():
     assert "# Calculus" in out
     assert "## Limits" in out
     assert "header_text" not in out  # variable should be rendered
+
+
+def test_create_extraction_chunks():
+    """create_extraction_chunks produces ~8k char chunks with overlap."""
+    from services.chunking_service import create_extraction_chunks
+
+    # 20k chars -> ~3 chunks (8k + 8k + 4k)
+    text = "x" * 20000
+    chunks = create_extraction_chunks(text, chunk_size=8000, overlap=200)
+    assert len(chunks) >= 2
+    assert all(hasattr(c, "page_content") for c in chunks)
+    assert chunks[0].page_content == "x" * 8000
+
+
+def test_chunk_extraction_prompt_renders():
+    """chunk_extraction.jinja renders with chunk_text and seed_list."""
+    from services.llm.prompt_service import get_prompt_service
+
+    prompts = get_prompt_service()
+    out = prompts.render(
+        "chunk_extraction.jinja",
+        chunk_text="The limit of a function...",
+        seed_list=["calculus", "limit"],
+    )
+    assert "seed concept" in out.lower()
+    assert "calculus" in out
+    assert "limit" in out
+    assert "The limit of a function" in out

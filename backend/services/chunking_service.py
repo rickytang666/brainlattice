@@ -2,6 +2,31 @@ import re
 from typing import List, Dict, Any
 from dataclasses import dataclass
 
+
+def create_extraction_chunks(
+    text: str,
+    chunk_size: int = 8000,
+    overlap: int = 200,
+) -> List["Chunk"]:
+    """
+    Sliding-window chunker for per-chunk graph extraction.
+    Produces larger chunks (~8k chars) to reduce LLM call count.
+    """
+    if not text.strip():
+        return []
+    chunks = []
+    start = 0
+    text_len = len(text)
+    while start < text_len:
+        end = min(start + chunk_size, text_len)
+        chunk_text = text[start:end]
+        chunks.append(Chunk(text=chunk_text, metadata={"start": start, "end": end}))
+        if end >= text_len:
+            break
+        start = end - overlap
+    return chunks
+
+
 @dataclass
 class Chunk:
     text: str
