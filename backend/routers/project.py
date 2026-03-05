@@ -250,20 +250,15 @@ async def get_node_note(
                 "cached": True
             }
             
-        # generate note (first time or regenerate)
+        # generate note (RAG always, no cache)
         from services.llm.note_service import NodeNoteService
         note_service = NodeNoteService(gemini_key=context.gemini_key, openai_key=context.openai_key)
-        
-        # pass cache if it exists
-        meta = project.project_metadata or {}
-        cache_name = meta.get("gemini_cache_name")
-        
+
         note_content = await note_service.generate_note(
-            db, 
-            project_id, 
-            concept_id, 
+            db,
+            project_id,
+            concept_id,
             outbound_links=node.outbound_links,
-            cache_name=cache_name
         )
         
         # persist generated note
