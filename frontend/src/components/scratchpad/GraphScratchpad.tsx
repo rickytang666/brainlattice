@@ -50,7 +50,7 @@ export default function GraphScratchpad() {
     try {
       const parsed = JSON.parse(jsonInput);
       
-      // Basic validation
+      // basic validation
       if (!parsed.nodes || !Array.isArray(parsed.nodes)) {
         throw new Error('Invalid graph format: missing "nodes" array');
       }

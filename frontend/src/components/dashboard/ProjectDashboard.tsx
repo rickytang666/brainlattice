@@ -41,10 +41,10 @@ export default function ProjectDashboard() {
   const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
   const [cmdOpen, setCmdOpen] = useState(false);
 
-  // Project data for the header title
+  // project data for the header title
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
 
-  // Obsidian Export State
+  // obsidian export state
   const [exportLoading, setExportLoading] = useState(false);
   const [exportStatus, setExportStatus] = useState<{
     status: string;
@@ -116,7 +116,7 @@ export default function ProjectDashboard() {
       );
       if (res.ok) {
         const { download_url } = await res.json();
-        // if local dev, prefix with API_BASE
+        // if local dev, prefix with api_base
         const fullUrl = download_url.startsWith("http") ? download_url : `${API_BASE}${download_url}`;
         window.open(fullUrl, "_blank");
       }
@@ -126,7 +126,7 @@ export default function ProjectDashboard() {
     }
   };
 
-  // Check export status on load
+  // check export status on load
   useEffect(() => {
     if (!projectIdFromUrl) {
       setExportStatus(null);
@@ -207,7 +207,7 @@ export default function ProjectDashboard() {
       .catch((err) => console.error(err));
   }, [userId, isLoaded, navigate, projectIdFromUrl]);
 
-  // when projectId from URL changes, fetch graph and reset selection
+  // when projectid from url changes, fetch graph and reset selection
   useEffect(() => {
     if (!isLoaded) return;
     setSelectedNodeId(null);

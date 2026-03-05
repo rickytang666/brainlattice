@@ -73,7 +73,7 @@ export default function KnowledgeGraph({
 
   const { theme } = useTheme();
 
-  // determine current active palette (handles "system" preference fallback assuming dark for now - can optimize later)
+  // determine current active palette (handles "system" preference fallback assuming dark for now)
   const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const palette = isDark ? THEME_COLORS.dark : THEME_COLORS.light;
 
@@ -118,7 +118,7 @@ export default function KnowledgeGraph({
 
 
   const handleNodeHover = (node: ForceGraphNode | null) => {
-    // Instant update, animation handles the fade
+    // instant update, animation handles the fade
     highlightNodes.clear();
     highlightLinks.clear();
 
@@ -149,14 +149,14 @@ export default function KnowledgeGraph({
   const NODE_R_EXTRA = 5; // more connected = bigger (range 3 to ~7)
   const ZOOM_LABEL_BREAKPOINT = 2;
 
-  // Colors based on current theme
+  // colors based on current theme
   const COL_DEFAULT = palette.mutedForeground; 
   const COL_HIGHLIGHT = palette.primary; 
   const COL_DIM = palette.border; 
   const COL_LINK_DEFAULT = palette.border; 
   const COL_LINK_DIM = palette.background; 
 
-  // Physics tweaks
+  // physics tweaks
   useEffect(() => {
     if (fgRef.current) {
       fgRef.current.d3Force("charge")?.strength(-100); // Stronger repulsion for spacing
@@ -164,7 +164,7 @@ export default function KnowledgeGraph({
     }
   }, []);
 
-  // Focus on node when focusNodeId is set
+  // focus on node when focusNodeId is set
   useEffect(() => {
     if (!focusNodeId || !fgRef.current || !graphData.nodes.length) return;
     const node = graphData.nodes.find((n) => n.id === focusNodeId);
@@ -220,12 +220,12 @@ export default function KnowledgeGraph({
           const label = node.id;
           const fontSize = 10 / globalScale;
 
-          // Radius by connectivity (sqrt for subtle spread: base 3, max ~5.5)
+          // radius by connectivity (sqrt for subtle spread: base 3, max ~5.5)
           const norm = (node as ForceGraphNode & { normConnectivity?: number }).normConnectivity ?? 0;
           const nodeR =
             NODE_R_BASE + NODE_R_EXTRA * Math.sqrt(Math.min(1, norm));
 
-          // 1. Draw Node
+          // draw node
           ctx.beginPath();
           if (node.x != null && node.y != null) {
             ctx.arc(node.x, node.y, nodeR, 0, 2 * Math.PI, false);
@@ -241,7 +241,7 @@ export default function KnowledgeGraph({
 
           ctx.fill();
 
-          // 2. Draw Label (uniform breakpoint: zoomed in = labels + neighbors on hover; zoomed out = only hovered node)
+          // draw label (uniform breakpoint: zoomed in = labels + neighbors on hover; zoomed out = only hovered node)
           const zoomedIn = globalScale >= ZOOM_LABEL_BREAKPOINT;
           const isNeighbor = highlightNodes.has(node.id);
           const showLabel = zoomedIn
@@ -253,11 +253,11 @@ export default function KnowledgeGraph({
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
 
-            // Fade text opacity
+            // fade text opacity
             const opacity =
               node.id === hoverNode || isNeighbor ? 1 : 0.6;
             
-            // Text color from palette
+            // text color from palette
             const r = parseInt(palette.foreground.slice(1, 3), 16);
             const g = parseInt(palette.foreground.slice(3, 5), 16);
             const b = parseInt(palette.foreground.slice(5, 7), 16);

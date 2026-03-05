@@ -44,7 +44,7 @@ class GraphBuilder:
                 all_aliases.add(n.id)
             target.aliases = list(all_aliases)
             
-            # 1. handle outbound links (dependencies/children: me -> them)
+            # handle outbound links (dependencies/children: me -> them)
             for raw_link in n.outbound_links:
                 remapped_link = id_map.get(raw_link, raw_link)
                 # ensure target exists (implicitly created if missing)
@@ -53,7 +53,7 @@ class GraphBuilder:
                 if remapped_link != canonical and remapped_link not in target.outbound_links:
                     target.outbound_links.append(remapped_link)
 
-            # 2. handle inbound links (parents/context: them -> me)
+            # handle inbound links (parents/context: them -> me)
             for raw_parent in n.inbound_links:
                 remapped_parent = id_map.get(raw_parent, raw_parent)
                 parent_node = get_or_create(remapped_parent)
@@ -61,7 +61,7 @@ class GraphBuilder:
                 if canonical != remapped_parent and canonical not in parent_node.outbound_links:
                     parent_node.outbound_links.append(canonical)
         
-        # 3. re-compute symmetrical inbound_links for ALL nodes
+        # re-compute symmetrical inbound_links for all nodes
         for node in final_nodes.values():
             node.inbound_links = [] # reset to rebuild from global state
 

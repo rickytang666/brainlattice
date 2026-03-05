@@ -88,7 +88,7 @@ class LocalStorageService:
         """write bytes to local disk"""
         try:
             file_path = self.base_dir / filename
-            # ensure parent directories exist (like 'uploads/')
+            # ensure parent directories exist
             file_path.parent.mkdir(parents=True, exist_ok=True)
             with open(file_path, "wb") as f:
                 f.write(content)
@@ -111,7 +111,7 @@ class LocalStorageService:
 
     def get_upload_url(self, filename: str, content_type: str = 'application/pdf', expires_in: int = 3600) -> str:
         """returns a mock upload url for local dev"""
-        # in local mode, we still just use the standard /ingest/upload for now or mock it
+        # in local mode, use standard /ingest/upload endpoint
         return f"/api/ingest/upload"
 
     def delete_file(self, filename: str):

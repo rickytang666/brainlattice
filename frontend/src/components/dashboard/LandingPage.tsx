@@ -65,7 +65,7 @@ export default function LandingPage() {
     return () => clearInterval(intervalId);
   }, [isFirstLoad, fullText]);
 
-  // Cmd+K shortcut listener
+  // cmd+k shortcut listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -96,7 +96,7 @@ export default function LandingPage() {
     fetchProjects();
     const interval = setInterval(() => {
       setProjects((prev) => {
-        // also fetch if we are actively uploading, in case the backend hasn't saved the project yet
+        // also fetch if actively uploading, in case backend hasn't saved project yet
         if (uploading || prev.some((p) => p.status === "processing")) {
           fetchProjects();
         }
@@ -128,7 +128,7 @@ export default function LandingPage() {
     setProjects((prev) => [tempProject, ...prev]);
 
     try {
-      // 1. request pre-signed URL and pre-allocate project
+      // request pre-signed url and pre-allocate project
       const requestRes = await apiFetch(
         `${API_BASE}/ingest/request-upload`,
         {
@@ -142,7 +142,7 @@ export default function LandingPage() {
       if (!requestRes.ok) throw new Error("failed to request upload slot");
       const { upload_url, s3_key, project_id } = await requestRes.json();
 
-      // 2. direct upload to R2 (bypasses Lambda 6MB limit)
+      // direct upload to r2 (bypasses lambda 6mb limit)
       const uploadRes = await fetch(upload_url, {
         method: "PUT",
         headers: { "Content-Type": file.type },
@@ -151,7 +151,7 @@ export default function LandingPage() {
 
       if (!uploadRes.ok) throw new Error("failed to upload file to processing engine");
 
-      // 3. finalize and trigger worker
+      // finalize and trigger worker
       const res = await apiFetch(
         `${API_BASE}/ingest/finalize-upload`,
         {
@@ -169,7 +169,7 @@ export default function LandingPage() {
       if (res.ok) {
         fetchProjects();
       } else {
-        // remove the temporary project if it failed
+        // remove temporary project if it failed
         setProjects((prev) => prev.filter((p) => p.id !== tempId));
         const data = await res.json().catch(() => ({}));
         if (
@@ -186,7 +186,7 @@ export default function LandingPage() {
       }
     } catch (err) {
       console.error(err);
-      // remove the temporary project if it failed
+      // remove temporary project if it failed
       setProjects((prev) => prev.filter((p) => p.id !== tempId));
       alert("network error. could not connect to the processing engine.");
     } finally {

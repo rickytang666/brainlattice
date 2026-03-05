@@ -90,10 +90,10 @@ async def list_all_projects(
                         if job.get("status") == "failed":
                             base_p["status"] = "failed"
                 else:
-                    # check if the project is "stale" (pre-allocated but Phase 3 never reached)
-                    # if it's older than 10 minutes and has no job_id, it's failed
+                    # check if project is stale (pre-allocated but phase 3 never reached)
+                    # if older than 10 minutes with no job_id, mark as failed
                     if p.created_at:
-                        # normalize created_at to utc if it's naive, or just compare
+                        # normalize created_at to utc if naive
                         p_created = p.created_at
                         if p_created.tzinfo is None:
                             p_created = p_created.replace(tzinfo=timezone.utc)
@@ -250,7 +250,7 @@ async def get_node_note(
                 "cached": True
             }
             
-        # generate note (either first time or regenerate)
+        # generate note (first time or regenerate)
         from services.llm.note_service import NodeNoteService
         note_service = NodeNoteService(gemini_key=context.gemini_key, openai_key=context.openai_key)
         
@@ -266,7 +266,7 @@ async def get_node_note(
             cache_name=cache_name
         )
         
-        # persist the generated note
+        # persist generated note
         node.content = note_content
         db.commit()
         
@@ -291,7 +291,7 @@ async def transfer_projects(
 ):
     """transfer projects from one user to another (used during auth migration)"""
     try:
-        # require the request sender to be the target owner
+        # require request sender to be the target owner
         if context.user_id != request.target_id:
             raise HTTPException(status_code=403, detail="unauthorized transfer")
             

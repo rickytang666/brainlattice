@@ -51,7 +51,7 @@ async def main():
     accumulated_nodes = []
     extracted_graphs = []
     
-    # 1. Pass 1: Extract Core Concepts from Skeleton (H1/H2)
+    # pass 1: extract core concepts from skeleton (h1/h2)
     import re
     headers = []
     for line in content.split('\n'):
@@ -67,7 +67,7 @@ async def main():
         extracted_graphs.append(skeleton_graph)
         print(f"seeded {len(skeleton_graph.nodes)} core concepts.")
 
-    # 2. Pass 2: Extract from Text Windows
+    # pass 2: extract from text windows
     for i, window_text in enumerate(windows):
         print(f"extracting window {i+1}/{len(windows)}...")
         concept_ids = [n.id for n in accumulated_nodes]
@@ -78,7 +78,7 @@ async def main():
     print("resolving and merging graph...")
     final_graph = builder.build(extracted_graphs)
     
-    # 3. Connectivity: Connect Orphans
+    # connectivity: connect orphans
     from services.graph.connector import GraphConnector
     connector = GraphConnector()
     print("connecting orphan components...")

@@ -1,10 +1,10 @@
 -- 001_initial_schema.sql
 -- brainlattice schema for postgres 18 + neon auth
 
--- 1. enable extensions
+-- enable extensions
 create extension if not exists vector;
 
--- 2. projects table (with user context for auth)
+-- projects table (with user context for auth)
 create table if not exists projects (
     id uuid primary key default gen_random_uuid(),
     user_id uuid, -- links to neon_auth.users.id
@@ -14,7 +14,7 @@ create table if not exists projects (
     updated_at timestamp with time zone default now()
 );
 
--- 3. files table
+-- files table
 create table if not exists files (
     id uuid primary key default gen_random_uuid(),
     project_id uuid references projects(id) on delete cascade,
@@ -24,7 +24,7 @@ create table if not exists files (
     created_at timestamp with time zone default now()
 );
 
--- 4. chunks table
+-- chunks table
 create table if not exists chunks (
     id uuid primary key default gen_random_uuid(),
     file_id uuid references files(id) on delete cascade,
@@ -34,7 +34,7 @@ create table if not exists chunks (
     created_at timestamp with time zone default now()
 );
 
--- 5. semantic & structural indexes
+-- semantic & structural indexes
 create index if not exists chunks_embedding_idx on chunks using hnsw (embedding vector_cosine_ops);
 create index if not exists files_project_id_idx on files(project_id);
 create index if not exists chunks_file_id_idx on chunks(file_id);

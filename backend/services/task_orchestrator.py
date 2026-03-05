@@ -87,7 +87,7 @@ class TaskOrchestrator:
             "openai_key": openai_key
         }
         
-        # update project metadata with job_id so frontend can track status
+        # update project metadata with job_id for frontend tracking
         from db.session import SessionLocal
         from db import models
         db = SessionLocal()
@@ -158,7 +158,7 @@ class TaskOrchestrator:
         returns job details
         """
         try:
-            # instantiate postgres project if not provided
+            # create postgres project if not provided
             if not project_id:
                 from db.session import SessionLocal
                 from db import models
@@ -284,7 +284,7 @@ class TaskOrchestrator:
                 
             self.jobs.create_job(job_id=job_id, job_type="ingest_pdf", metadata=metadata)
 
-            # update job status to reset it
+            # reset job status
             self.jobs.update_progress(job_id, "pending", 0)
             
             # re-publish to worker

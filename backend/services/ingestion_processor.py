@@ -62,7 +62,7 @@ class IngestionProcessor:
             project_id = metadata.get("project_id")
             filename = metadata.get("filename", "unknown.pdf")
             
-            # prioritize keys from constructor (passed by handler) over stale metadata
+            # prioritize keys from constructor over stale metadata
             gemini_key = self.gemini_key or metadata.get("gemini_key")
             openai_key = self.openai_key or metadata.get("openai_key")
             user_id = self.user_id or metadata.get("user_id")
@@ -70,11 +70,11 @@ class IngestionProcessor:
             if not gemini_key:
                 raise ValueError(f"No Gemini API key found for job {self.job_id}. Strict BYOK is enabled.")
 
-            # dynamically init services with the custom BYOK keys
+            # init services with custom byok keys
             self.embedder = EmbeddingService(gemini_key=gemini_key, openai_key=openai_key)
             self.extractor = GraphExtractor(gemini_key=gemini_key)
             
-            # project the embedder into the connector and builder's resolver for lazy use
+            # project embedder into connector and builder's resolver for lazy use
             self.connector._embeddings = self.embedder
             if self.builder.resolver:
                 self.builder.resolver._embedder = self.embedder
@@ -82,7 +82,7 @@ class IngestionProcessor:
             if not project_id:
                 raise ValueError(f"No project_id found in metadata for job {self.job_id}. Cannot process file without a parent project.")
             
-            # check if file already exists in this project to avoid duplicates on retry
+            # check if file already exists to avoid duplicates on retry
             db_file = db.query(models.File).filter(
                 models.File.project_id == project_id,
                 models.File.s3_path == self.file_key
@@ -117,7 +117,7 @@ class IngestionProcessor:
             self.jobs.update_progress(self.job_id, "processing", 40)
             await asyncio.sleep(0.1) # yield after heavy pdf parsing
 
-            # cache full document with Gemini Context Caching
+            # cache full document with gemini context caching
             cache_name = None
             cache_svc = None
             cache_start = time.time()
@@ -184,8 +184,7 @@ class IngestionProcessor:
             logger.info("resolving concepts...")
             resolved_graph = self.builder.build(graph_data)
             
-            # connectivity phase
-            # ensure the graph is a single connected component (or mostly connected)
+            # connectivity phase: ensure graph is a single connected component
             logger.info("connecting orphan components...")
             connected_graph = self.connector.connect_orphans(resolved_graph)
             
@@ -236,7 +235,7 @@ class IngestionProcessor:
                 
             raise e
         finally:
-            # immediately terminate the Gemini Context Cache to stop hourly billing
+            # immediately terminate gemini context cache to stop hourly billing
             if 'cache_name' in locals() and cache_name and 'cache_svc' in locals() and cache_svc:
                 try:
                     logger.info(f"cleaning up gemini context cache {cache_name}...")
@@ -249,11 +248,11 @@ class IngestionProcessor:
                 os.remove(temp_path)
 
     async def _run_graph_extraction(self, text: str, cache_name: str = None) -> List[Any]:
-        """runs stateful windowing extraction logic OR paginated full-cache extraction"""
+        """runs stateful windowing extraction logic or paginated full-cache extraction"""
         if cache_name:
             logger.info(f"using full-context cache {cache_name} for paginated graph extraction")
             
-            # Step 1: Global Seed
+            # step 1: global seed
             logger.info("identifying all root concepts from document cache...")
             seed_start = time.time()
             global_ids = await self.extractor.extract_global_seed(cache_name)
@@ -261,7 +260,7 @@ class IngestionProcessor:
             logger.info(f"extracted {len(global_ids)} global concept IDs")
             
             if global_ids:
-                # Step 2: Paginated extraction
+                # step 2: paginated extraction
                 batch_size = 50
                 batches = [global_ids[i:i + batch_size] for i in range(0, len(global_ids), batch_size)]
                 
@@ -312,7 +311,7 @@ class IngestionProcessor:
             extracted_graphs.append(skeleton_graph)
             logger.info(f"seeded {len(skeleton_graph.nodes)} core concepts.")
 
-        # pass 2: extract from text windows (using seeded concepts)
+        # pass 2: extract from text windows using seeded concepts
         for i, window_text in enumerate(windows):
             logger.info(f"extracting window {i+1}/{len(windows)}...")
             concept_ids = [n.id for n in accumulated_nodes]

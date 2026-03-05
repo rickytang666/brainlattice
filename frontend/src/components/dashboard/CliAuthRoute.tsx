@@ -57,7 +57,7 @@ export default function CliAuthRoute() {
     );
   }
 
-  // if user is not logged in, show the clerk sign in box. 
+  // if user is not logged in, show the clerk sign in box 
   if (!user) {
     return (
       <div className="flex flex-col h-screen w-full items-center justify-center bg-background p-4 animate-in fade-in duration-500">

@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 def clean_markdown(text: str) -> str:
     """post-process markdown to fix common extraction issues"""
-    # fix hyphenated words at line breaks (e.g. "for-\n mer" -> "former")
+    # fix hyphenated words at line breaks
     text = re.sub(r'(\w+)-\n(\w+)', r'\1\2', text)
     
     # normalize multiple spaces
@@ -17,7 +17,7 @@ def clean_markdown(text: str) -> str:
     # limit excessive newlines (max 2 consecutive)
     text = re.sub(r'\n{3,}', '\n\n', text)
     
-    # normalize bullet points (• -> -)
+    # normalize bullet points
     text = text.replace('• ', '- ')
     
     # remove replacement characters

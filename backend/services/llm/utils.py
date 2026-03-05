@@ -97,10 +97,10 @@ def repair_note_markdown(text: str, valid_concept_ids: set[str] | None = None) -
     if text.endswith('```'):
         text = text[:-3].rstrip()
 
-    # normalize [text](text) -> [[text]] so frontend link parsing works
+    # normalize [text](text) -> [[text]] for frontend link parsing
     text = re.sub(r'\[([^\]]+)\]\(\1\)', r'[[\1]]', text)
 
-    # convert html superscript/subscript to latex (e.g. r<sup>3</sup> -> $r^3$, E=mc<sup>2</sup> -> $E=mc^2$)
+    # convert html superscript/subscript to latex
     # base is any non-whitespace, non-< chars immediately before the tag
     text = re.sub(r'([^<\s]*)<sup>([^<]+)</sup>', r'$\1^{\2}$', text)
     text = re.sub(r'([^<\s]*)<sub>([^<]+)</sub>', r'$\1_{\2}$', text)

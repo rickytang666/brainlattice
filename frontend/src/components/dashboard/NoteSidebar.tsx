@@ -40,7 +40,7 @@ export default function NoteSidebar({
   const [error, setError] = useState<string | null>(null);
 
   // process content to handle [[obsidian-links]] -> markdown links
-  // use angle brackets <href> so concepts with spaces (e.g. "scalar field") parse correctly
+  // use angle brackets <href> so concepts with spaces parse correctly
   const processedContent = useMemo(() => {
     if (!content) return null;
     let md = content.replace(
@@ -48,10 +48,10 @@ export default function NoteSidebar({
       (_, concept) => `[${concept}](<${concept}>)`,
     );
 
-    // Normalize block math: ensure $$ starts on its own line and has padding
-    // Use a function as replacement to avoid the JS '$$' string literal trap
+    // normalize block math: ensure $$ starts on its own line and has padding
+    // use a function as replacement to avoid the js '$$' string literal trap
     md = md.replace(/\s*\$\$\s*/g, () => "\n\n$$\n\n");
-    // Also collapse unnecessary multiple newlines created by the above
+    // also collapse unnecessary multiple newlines created by the above
     md = md.replace(/\n{3,}/g, "\n\n");
 
     return md;
@@ -216,7 +216,7 @@ export default function NoteSidebar({
                       {children}
                     </h3>
                   ),
-                  // Removed 'p' component to allow rehype-katex display blocks to render correctly without nesting issues
+                  // removed 'p' component to allow rehype-katex display blocks to render correctly without nesting issues
                   ul: ({ children }) => (
                     <ul className="list-disc list-outside ml-4 mb-4 space-y-1.5">
                       {children}

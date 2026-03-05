@@ -111,13 +111,13 @@ export const genCommand = new Command('gen')
         return;
       }
 
-      // 1. request upload slot
+      // request upload slot
       const spinner = ora(`requesting upload slot for ${chalk.cyan(filename)}...`).start();
       const requestRes = await api.post('ingest/request-upload', { filename });
       const { upload_url, s3_key, project_id: allocatedProjectId } = requestRes.data;
       spinner.succeed(`upload slot acquired.`);
 
-      // 2. direct upload to R2
+      // direct upload to r2
       spinner.start(`uploading ${chalk.cyan(filename)}...`);
       const fileData = fs.readFileSync(absolutePdfPath);
       await axios.put(upload_url, fileData, {
@@ -125,7 +125,7 @@ export const genCommand = new Command('gen')
       });
       spinner.succeed(`uploaded successfully.`);
 
-      // 3. finalize ingestion
+      // finalize ingestion
       spinner.start(`finalizing ingestion...`);
       const finalizeRes = await api.post('ingest/finalize-upload', {
         project_id: allocatedProjectId,

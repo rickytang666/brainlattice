@@ -78,7 +78,7 @@ class ExportProcessor:
             elif not cache_name and missing_count < CACHE_RECREATION_THRESHOLD:
                 logger.info(f"only {missing_count} nodes missing content. skipping cache creation to save costs, using RAG.")
 
-            # 1. find nodes missing content (batch processing)
+            # find nodes missing content (batch processing)
             missing_nodes = db.query(models.GraphNode).filter(
                 models.GraphNode.project_id == self.project_id,
                 or_(models.GraphNode.content == None, models.GraphNode.content == "")
@@ -99,7 +99,7 @@ class ExportProcessor:
             logger.exception(f"export processing failed for project {self.project_id}")
             self._update_metadata(db, {"status": "failed", "error": str(e)})
             
-            # forcefully tear down the context cache on abort to prevent hourly billing leaks!
+            # forcefully tear down context cache on abort to prevent hourly billing leaks
             try:
                 if 'cache_name' in locals() and cache_name and 'cache_svc' in locals() and cache_svc:
                     logger.info(f"cleaning up gemini context cache {cache_name} after worker crash...")
@@ -213,7 +213,7 @@ class ExportProcessor:
                 "status": "complete",
                 "progress": 100,
                 "message": "vault assembly complete.",
-                "download_url": zip_filename # frontend will convert to public URL or signed URL
+                "download_url": zip_filename # frontend will convert to public url or signed url
             })
             logger.info(f"successfully assembled and uploaded vault for project {self.project_id}")
 
@@ -221,7 +221,7 @@ class ExportProcessor:
             logger.exception(f"vault assembly failed for project {self.project_id}")
             self._update_metadata(db, {"status": "failed", "error": f"assembly failed: {str(e)}"})
         finally:
-            # explicitly delete the context cache after assembly to save costs
+            # explicitly delete context cache after assembly to save costs
             try:
                 project = db.query(models.Project).filter(models.Project.id == self.project_id).first()
                 if project:

@@ -57,7 +57,7 @@ class NodeNoteService:
             except Exception as cache_err:
                 if cache_name:
                     logger.warning(f"cache {cache_name} failed or expired for {concept_id}, falling back to RAG: {cache_err}")
-                    # dynamically switch to RAG fallback
+                    # switch to rag fallback
                     context_chunks = self._get_context(db, project_id, concept_id)
                     logger.info(f"retrieved {len(context_chunks.split(chr(10)*2)) if context_chunks else 0} fallback chunks for {concept_id}")
                     
@@ -81,7 +81,7 @@ class NodeNoteService:
             ).all()}
             note_content = repair_note_markdown(note_content, valid_concept_ids=valid_ids)
 
-            # unify related links logic: append missing links to content
+            # append missing links to content
             if outbound_links:
                 lower_content = note_content.toLowerCase() if hasattr(note_content, 'toLowerCase') else note_content.lower()
                 missing_links = [link for link in outbound_links if f"[[{link.lower()}]]" not in lower_content]
@@ -107,10 +107,10 @@ class NodeNoteService:
     def _get_context(self, db: Session, project_id: str, concept_id: str) -> str:
         """performs vector search to find relevant context for the concept"""
         try:
-            # 1. get query embedding
+            # get query embedding
             query_vector = self.embedder.get_embedding(concept_id)
             
-            # 2. find top relevant chunks across all files in the project
+            # find top relevant chunks across all files in the project
             chunks = db.query(models.Chunk).join(models.File).filter(
                 models.File.project_id == project_id
             ).order_by(

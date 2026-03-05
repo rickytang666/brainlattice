@@ -14,7 +14,7 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // init Fuse.js with node data
+  // init fuse.js with node data
   const fuse = useMemo(() => {
     if (!data?.nodes) return null;
     return new Fuse(data.nodes, {
@@ -85,7 +85,7 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
                 setIsOpen(false);
                 setQuery(selected.item.id);
               } else if (results.length > 0) {
-                // Default to first if none explicitly selected
+                // default to first if none explicitly selected
                 const first = results[0];
                 onSelectNode(first.item.id);
                 setIsOpen(false);
