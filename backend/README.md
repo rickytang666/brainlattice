@@ -29,11 +29,28 @@ uv sync
 uv run uvicorn main:app --reload
 ```
 
-**run local pipeline tests:**
+**run tests:**
 
 ```bash
-uv run python scripts/test_local_pipeline.py
+uv run pytest tests/ -v
 ```
+
+**run local pipeline (e2e):**
+
+```bash
+# 1. start backend: uv run uvicorn main:app --reload
+# 2. run:
+uv run python scripts/test_local_pipeline.py --file path/to/doc.pdf
+```
+
+**scripts:**
+
+| script                           | purpose                                         |
+| -------------------------------- | ----------------------------------------------- |
+| `scripts/test_local_pipeline.py` | e2e: upload PDF → poll → save graph json        |
+| `scripts/parse_pdf.py`           | extract markdown from PDF (debug only, no LLM)  |
+| `scripts/clear_gemini_caches.py` | delete lingering gemini context caches          |
+| `scripts/extract_graph.py`       | **deprecated** – legacy markdown→graph pipeline |
 
 ## production deployment
 

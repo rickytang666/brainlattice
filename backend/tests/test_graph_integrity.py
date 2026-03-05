@@ -4,26 +4,44 @@ import pytest
 import networkx as nx
 from pathlib import Path
 
+# minimal valid graph for when data/ has no files (ensures test logic always runs)
+FALLBACK_GRAPH = {
+    "nodes": [
+        {"id": "calculus", "outbound_links": ["limit", "derivative"]},
+        {"id": "limit", "outbound_links": ["calculus"]},
+        {"id": "derivative", "outbound_links": []},
+    ]
+}
+
+
 def get_graph_files():
-    """finds all .json files in /data"""
+    """finds all .json files in data/; returns [(path, data)] for parametrize."""
     data_dir = Path("data")
     if not data_dir.exists():
-        return []
-    return list(data_dir.glob("*.json"))
+        return [("fallback", FALLBACK_GRAPH)]
+    files = list(data_dir.glob("*.json"))
+    if not files:
+        return [("fallback", FALLBACK_GRAPH)]
+    result = []
+    for p in files:
+        with open(p, "r") as f:
+            result.append((str(p), json.load(f)))
+    return result
 
-@pytest.mark.parametrize("graph_path", get_graph_files())
-def test_graph_integrity(graph_path):
+
+def _get_graph_id(item):
+    return item[0] if isinstance(item, tuple) else str(item)
+
+
+@pytest.mark.parametrize("graph_path,graph_data", get_graph_files(), ids=_get_graph_id)
+def test_graph_integrity(graph_path, graph_data):
     """
-    validates that the graph is a clean adjacency list:
-    1. all outbound_links must point to a node that exists in the graph.
-    2. no self-loops (optional, but good for clean graphs).
-    3. proper id formatting (lowercase, spaces).
+    Validates graph integrity: adjacency list validity, no self-loops,
+    proper id formatting (lowercase, spaces), and connectivity.
+    Uses data/*.json when present; otherwise runs with a minimal fallback graph.
     """
-    with open(graph_path, "r") as f:
-        data = json.load(f)
-    
-    nodes = data.get("nodes", [])
-    assert len(nodes) > 0, f"graph {graph_path} is empty"
+    nodes = graph_data.get("nodes", [])
+    assert len(nodes) > 0, f"graph {graph_path!r} is empty"
     
     # map for O(1) existence checks
     node_ids = {n["id"] for n in nodes}
@@ -65,7 +83,8 @@ def test_graph_integrity(graph_path):
                     errors.append(f"  part {i}: {len(comp)} nodes")
 
     # final report
+    name = Path(graph_path).name if graph_path != "fallback" else graph_path
     if errors:
-        pytest.fail(f"graph integrity failed for {graph_path.name}:\n" + "\n".join(errors))
+        pytest.fail(f"graph integrity failed for {name}:\n" + "\n".join(errors))
     else:
-        print(f"{graph_path.name} is a valid conceptual network.")
+        print(f"{name} is a valid conceptual network.")

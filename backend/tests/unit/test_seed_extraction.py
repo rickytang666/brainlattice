@@ -1,22 +1,14 @@
 """Unit tests for global seed extraction (Step 1)."""
-import re
 import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-
-def _extract_headers(text: str) -> str:
-    """Mirrors IngestionProcessor._extract_headers logic for testing."""
-    headers = []
-    for line in text.split("\n"):
-        if re.match(r"^#{1,3}\s+(.+)$", line):
-            headers.append(line.strip())
-    return "\n".join(headers)
+from services.ingestion_processor import extract_headers_for_seed
 
 
 def test_extract_headers_h1_h2_h3():
-    """_extract_headers returns H1/H2/H3 lines only."""
+    """extract_headers_for_seed returns H1/H2/H3 lines only."""
     text = """# Calculus
 
 Some intro text.
@@ -39,7 +31,7 @@ More content.
 
 ## Vector Spaces
 """
-    headers = _extract_headers(text)
+    headers = extract_headers_for_seed(text)
     lines = headers.split("\n")
     assert "# Calculus" in lines
     assert "## Limits" in lines
@@ -54,13 +46,13 @@ More content.
 
 
 def test_extract_headers_includes_h3_excludes_h4():
-    """_extract_headers includes H1-H3, excludes H4+."""
+    """extract_headers_for_seed includes H1-H3, excludes H4+."""
     text = """# Root
 ## Child
 ### Grandchild
 #### Great-grandchild (excluded)
 """
-    headers = _extract_headers(text)
+    headers = extract_headers_for_seed(text)
     assert "#### Great-grandchild" not in headers
     assert "### Grandchild" in headers
 

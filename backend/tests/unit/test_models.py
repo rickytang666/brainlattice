@@ -1,17 +1,13 @@
 import pytest
 import sys
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+import uuid
 
-# fix path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from db.models import Base, Project, File, Chunk
+from db.models import Base, Project, File, Chunk, GraphNode
 
-# use sqlite in-memory for basic model validation 
-# note: pgvector types won't work in sqlite, so we mock them or just skip vector column checks
-# for now, we just check instantiation and non-vector fields
+# basic model validation (no DB; pgvector/JSONB not exercised)
 def test_project_model():
     p = Project(title="Test Project", status="processing")
     assert p.title == "Test Project"
@@ -25,3 +21,15 @@ def test_file_model():
 def test_chunk_model():
     c = Chunk(content="chunk content")
     assert c.content == "chunk content"
+
+
+def test_graph_node_model():
+    n = GraphNode(
+        project_id=uuid.uuid4(),
+        concept_id="calculus",
+        content="branch of mathematics",
+        outbound_links=["limit", "derivative"],
+    )
+    assert n.concept_id == "calculus"
+    assert n.content == "branch of mathematics"
+    assert "limit" in n.outbound_links

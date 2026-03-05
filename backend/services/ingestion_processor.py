@@ -24,6 +24,15 @@ from db import models
 
 logger = logging.getLogger(__name__)
 
+
+def extract_headers_for_seed(text: str) -> str:
+    """extracts H1/H2/H3 headers for seed extraction. Pure function, no side effects."""
+    headers = []
+    for line in text.split("\n"):
+        if re.match(r"^#{1,3}\s+(.+)$", line):
+            headers.append(line.strip())
+    return "\n".join(headers)
+
 class IngestionProcessor:
     """
     orchestrates multi-step ingestion pipeline:
@@ -304,12 +313,7 @@ class IngestionProcessor:
 
     def _extract_headers(self, text: str) -> str:
         """extracts H1/H2/H3 headers for seed extraction (regex)"""
-        headers = []
-        for line in text.split('\n'):
-            m = re.match(r'^#{1,3}\s+(.+)$', line)
-            if m:
-                headers.append(line.strip())
-        return "\n".join(headers)
+        return extract_headers_for_seed(text)
 
     def _extract_skeleton(self, text: str) -> str:
         """extracts h1 and h2 headers to form a document skeleton (legacy)"""

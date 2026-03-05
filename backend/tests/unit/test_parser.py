@@ -69,7 +69,7 @@ def test_table_preservation(extracted_text):
         assert len(tables) > 0, "pipes found but no valid table rows identified"
 
 def test_save_debug_output(extracted_text, sample_pdf):
-    """save output for manual inspection"""
+    """Save extracted markdown to output/ for manual inspection when debugging PDF extraction."""
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     out_path = OUTPUT_DIR / f"{sample_pdf.stem}_debug.md"
     
