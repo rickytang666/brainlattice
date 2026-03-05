@@ -1,0 +1,10 @@
+these concept IDs were extracted from a document. which are NOT valid conceptual knowledge for a knowledge graph?
+
+concept IDs: {{ concept_list | join(', ') }}
+
+invalid means: dates, document metadata (transcription, edition, preliminary version), publisher/journal names, translator names, person names (e.g. "bernhard riemann", "euler", "gauss" — people are not concepts), mathematical notation used as a concept (e.g. "f(x)" or "li(x)" as node id — the concept would be "logarithmic integral").
+
+valid means: mathematical concepts, scientific concepts, named theorems, domains (e.g. "number theory").
+
+return only a json array of the invalid concept IDs. if all are valid, return [].
+do not wrap in ```json or code block. example: ["november 1859", "d r wilkins"]

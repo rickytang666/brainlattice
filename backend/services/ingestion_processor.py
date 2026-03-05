@@ -14,8 +14,10 @@ from services.job_service import get_job_service
 from services.llm.seed_extractor import SeedExtractor
 from services.llm.chunk_extractor import ChunkExtractor
 from services.llm.orphan_link_service import OrphanLinkService
+from services.llm.concept_validator import ConceptValidator
 from services.graph.builder import GraphBuilder
 from services.graph.connector import GraphConnector
+from services.graph.node_filter import get_date_like_ids, filter_invalid_nodes
 from services.graph.persistence_service import GraphPersistenceService
 from db.session import SessionLocal
 from db import models
@@ -181,10 +183,21 @@ class IngestionProcessor:
             # resolve and merge concepts
             logger.info("resolving concepts...")
             resolved_graph = self.builder.build(graph_data)
-            
+
+            # filter invalid nodes (C2 date regex + C3 LLM validation)
+            logger.info("filtering invalid concepts...")
+            filter_start = time.time()
+            date_invalid = get_date_like_ids(resolved_graph)
+            remaining_ids = [n.id for n in resolved_graph.nodes if n.id not in date_invalid]
+            validator = ConceptValidator(openrouter_key=openrouter_key)
+            llm_invalid = await validator.get_invalid_concepts(remaining_ids)
+            all_invalid = date_invalid | llm_invalid
+            filtered_graph = filter_invalid_nodes(resolved_graph, all_invalid)
+            self.timings['concept_validation'] = time.time() - filter_start
+
             # connectivity phase: ensure graph is a single connected component
             logger.info("connecting orphan components...")
-            connected_graph = self.connector.connect_orphans(resolved_graph)
+            connected_graph = self.connector.connect_orphans(filtered_graph)
 
             # fix degree-0 nodes (orphan link completion)
             logger.info("fixing degree-0 nodes...")
@@ -203,7 +216,7 @@ class IngestionProcessor:
             # finalize job
             self.jobs.update_progress(self.job_id, "completed", 100, {
                 "chunks_count": len(chunks),
-                "graph_nodes": len(resolved_graph.nodes),
+                "graph_nodes": len(connected_graph.nodes),
                 "graph_preview": graph_dump,
                 "timings": self.timings
             })
