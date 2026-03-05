@@ -14,6 +14,7 @@ from services.job_service import get_job_service
 from services.llm.graph_extractor import GraphExtractor
 from services.llm.seed_extractor import SeedExtractor
 from services.llm.chunk_extractor import ChunkExtractor
+from services.llm.orphan_link_service import OrphanLinkService
 from services.graph.builder import GraphBuilder
 from services.graph.connector import GraphConnector
 from services.graph.persistence_service import GraphPersistenceService
@@ -209,7 +210,12 @@ class IngestionProcessor:
             # connectivity phase: ensure graph is a single connected component
             logger.info("connecting orphan components...")
             connected_graph = self.connector.connect_orphans(resolved_graph)
-            
+
+            # fix degree-0 nodes (orphan link completion)
+            logger.info("fixing degree-0 nodes...")
+            orphan_svc = OrphanLinkService(openrouter_key=openrouter_key)
+            connected_graph = await orphan_svc.fix_degree_zero_nodes(connected_graph)
+
             graph_dump = connected_graph.model_dump()
             
             # persist graph to db

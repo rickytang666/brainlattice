@@ -1,0 +1,13 @@
+the concept **{{ concept_id }}** has no links in the knowledge graph. pick 1–5 related concepts from the canonical list below.
+
+canonical concept list (all nodes in graph): {{ canonical_list | join(', ') }}
+
+strict rules:
+1. return only a valid json object with keys "outbound" and "inbound". do NOT wrap in a code block.
+2. outbound: concepts this concept points to, relies on, or contains (children, dependencies). e.g. "gradient vector" → ["partial derivative", "directional derivative", "chain rule"]
+3. inbound: concepts that contain or are broader than this concept (parents). e.g. "gradient vector" → ["vector calculus", "multivariable calculus"]
+4. only include concept IDs from the canonical list above. no invented IDs.
+5. each array may have 0–5 items. prefer fewer if fewer are clearly related.
+6. output format: {"outbound": ["a", "b"], "inbound": ["c"]}
+
+return raw json only:
