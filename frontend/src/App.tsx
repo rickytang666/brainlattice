@@ -9,7 +9,8 @@ import CliAuthRoute from "./components/dashboard/CliAuthRoute";
 import { useAuthSync } from "./hooks/useAuthSync";
 import { Navbar } from "./components/layout/Navbar";
 import { Footer } from "./components/layout/Footer";
-import { GEMINI_KEY_STORAGE, OPENROUTER_KEY_STORAGE } from "./config";
+import { GEMINI_KEY_STORAGE, OPENROUTER_KEY_STORAGE, shouldShowSpotlight } from "./config";
+import { KeysSpotlight } from "./components/KeysSpotlight";
 
 function checkRequiredKeys() {
   const g = localStorage.getItem(GEMINI_KEY_STORAGE);
@@ -21,11 +22,13 @@ function App() {
   useAuthSync();
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [hasRequiredKeys, setHasRequiredKeys] = useState(checkRequiredKeys);
+  const [showSpotlight, setShowSpotlight] = useState(() => !checkRequiredKeys() && shouldShowSpotlight());
   const location = useLocation();
   const isLanding = location.pathname === "/";
 
   const refreshKeys = useCallback(() => {
     setHasRequiredKeys(checkRequiredKeys());
+    setShowSpotlight(false);
   }, []);
 
   const handleClose = useCallback(() => setIsConfigOpen(false), []);
@@ -33,6 +36,12 @@ function App() {
   return (
     <div className={`w-screen antialiased text-foreground bg-background flex flex-col ${isLanding ? "min-h-screen" : "h-screen overflow-hidden"}`}>
       <ConfigModal isOpen={isConfigOpen} onClose={handleClose} onConfigSaved={refreshKeys} />
+      {showSpotlight && (
+        <KeysSpotlight
+          targetSelector="[data-spotlight='key-button']"
+          onDismiss={() => setShowSpotlight(false)}
+        />
+      )}
       
       <Navbar onOpenConfig={() => setIsConfigOpen(true)} hasRequiredKeys={hasRequiredKeys} />
 

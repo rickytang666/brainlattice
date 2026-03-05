@@ -4,6 +4,7 @@ export const SESSION_ID_KEY = "brainlattice_session_id";
 export const GEMINI_KEY_STORAGE = "brainlattice_gemini_key";
 export const OPENAI_KEY_STORAGE = "brainlattice_openai_key";
 export const OPENROUTER_KEY_STORAGE = "brainlattice_openrouter_key";
+export const SPOTLIGHT_DISMISSED_KEY = "bl_spotlight_dismissed";
 
 export function getSessionId(): string {
   let sessionId = localStorage.getItem(SESSION_ID_KEY);
@@ -38,4 +39,8 @@ export function apiFetch(input: RequestInfo | URL, init?: RequestInit, clerkUser
     ...init,
     headers
   });
+}
+
+export function shouldShowSpotlight(): boolean {
+  return !localStorage.getItem(SPOTLIGHT_DISMISSED_KEY);
 }

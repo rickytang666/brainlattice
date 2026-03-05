@@ -51,6 +51,7 @@ export function Navbar({ onOpenConfig, hasRequiredKeys }: NavbarProps) {
         <ThemeToggle />
         
         <button
+          data-spotlight="key-button"
           onClick={onOpenConfig}
           className={`p-1.5 rounded-md transition-all duration-500 ${
             hasRequiredKeys 
