@@ -78,12 +78,9 @@ gen path/to/pdf
 
 _For more details, see the [CLI Documentation](cli/README.md)._
 
-## Pro-Tips
+## Architecture
 
-- **Large Documents**: For dense textbooks (>100MB), the extraction works best if you process it in sections or ensure you have high LLM rate limits.
-- **Math Support**: BrainLattice has native KaTeX support in the scratchpad and exports clean LaTeX to Obsidian.
-- **Knowledge Caching**: Your previous extractions are cached in your account; use the CLI `export` command to pull them down to new machines instantly.
-- **Dark Mode**: The WebGL graph is optimized for high-contrast viewing. Toggle the sun/moon icon for a premium night-mode experience.
+![Architecture](assets/arch.svg)
 
 ## Local dev
 
