@@ -22,7 +22,7 @@ class ChunkExtractor:
     Requires OpenRouter API key (BYOK). Uses seed list for cross-chunk link consistency.
     """
 
-    OPENROUTER_MODEL = "meta-llama/llama-3.1-8b-instruct"
+    OPENROUTER_MODEL = "google/gemma-3n-e4b-it"
 
     def __init__(self, openrouter_key: str):
         if not openrouter_key:
