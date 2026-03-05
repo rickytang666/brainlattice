@@ -30,6 +30,7 @@ gen path/to/textbook.pdf
 | `config` | interactive setup for gemini/openai keys and default obsidian vault.    |
 | `list`   | list all your remote projects in a clean table view.                    |
 | `delete` | delete a project (matches by exact title).                              |
+| `info`   | display info of this project and repository link.                       |
 | `gen`    | upload, extract, and download a vault directly to your obsidian folder. |
 | `export` | interactively pick and download any previously generated project.       |
 | `status` | verify your local configuration and backend connectivity.               |
@@ -44,6 +45,7 @@ gen path/to/textbook.pdf
 - **dual progress bars**: separate tracking for _graph extraction_ and _vault generation_.
 - **resilient matching**: `export` accepts human-readable titles.
 - **update notifier**: automatic 24-hour checks to ensure you're always on the latest version.
+- **project info**: quick access to repo links and contribution info via `info`.
 
 ## development
 
