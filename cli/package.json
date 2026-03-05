@@ -4,16 +4,21 @@
   "description": "brainlattice cli - convert pdfs to obsidian knowledge graphs",
   "type": "module",
   "bin": {
-    "brainlattice": "./dist/index.js"
+    "brainlattice": "dist/index.js"
   },
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "brainlattice",
+    "pdf",
+    "obsidian",
+    "cli"
+  ],
+  "author": "Ricky Tang",
+  "license": "MIT",
   "devDependencies": {
     "@types/cli-progress": "^3.11.6",
     "@types/extract-zip": "^2.0.0",
