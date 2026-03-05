@@ -18,9 +18,10 @@ strict output rules:
   ]
 }
 3. ids: must be lowercase, singular, and use spaces instead of underscores (e.g. "deep learning", not "deep_learning")
-4. **encyclopedic standard**: every id must be a valid potential wikipedia page title.
-- bad: "discussion of integrals", "understanding limits", "chapter 1"
-- good: "integral", "limit", "linear equation"
+4. **encyclopedic standard**: every id must be a valid potential wikipedia page title. extract only conceptual knowledge, not metadata.
+- bad: "discussion of integrals", "understanding limits", "chapter 1", "november 1859", "d r wilkins", "preliminary version", "berliner akademie", "monatsberichte", "f(x)"
+- good: "integral", "limit", "linear equation", "bernhard riemann", "zeta function", "prime number"
+- **exclude**: dates, translator/author names (unless the person is the subject), publisher/journal names, document metadata (transcription, preliminary version, edition), mathematical notation as standalone concepts (use "logarithmic integral" not "f(x)" or "li(x)" as a node id)
 5. **linking**: when adding outbound_links or inbound_links, prefer IDs from the seed list when applicable. you may add new concept IDs if they appear in this chunk. connect each node to at least one other concept when possible.
 6. outbound_links: concepts this node points to, relies on, or contains (children)
 7. inbound_links: concepts that contain this node or are broader categories (parents). infer parent if obvious (e.g. "level curve" -> "multivariate calculus").

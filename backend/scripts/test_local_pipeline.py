@@ -1,3 +1,12 @@
+"""
+Test local PDF ingestion pipeline end-to-end.
+Produces output_graph.json with the knowledge graph.
+
+Usage:
+  1. Start backend: cd backend && uvicorn main:app --reload
+  2. Run: python scripts/test_local_pipeline.py --file path/to/doc.pdf
+  3. Graph saved to output_graph.json (or --output other.json)
+"""
 import requests
 import time
 import sys
@@ -6,7 +15,9 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# load .env from backend/ when run from project root or backend/
+_env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(_env_path)
 
 BASE_URL = "http://localhost:8000/api"
 
@@ -20,6 +31,13 @@ def run_test(
     path = Path(pdf_path)
     if not path.exists():
         print(f"error: could not find {pdf_path}")
+        sys.exit(1)
+
+    if not gemini_key:
+        print("error: GEMINI_API_KEY required. set in .env or pass --gemini-key")
+        sys.exit(1)
+    if not openrouter_key:
+        print("error: OPENROUTER_API_KEY required. set in .env or pass --openrouter-key")
         sys.exit(1)
 
     print(f"uploading {path.name} to local backend...")
@@ -93,9 +111,9 @@ def run_test(
                 print("\n--- results summary ---")
                 print(json.dumps(result, indent=2))
                 
-                # if user wants to save the json, fetch and save it
+                # fetch and save graph json
                 project_id = metadata.get("project_id")
-                if output_file and project_id:
+                if project_id and output_file:
                     print(f"\nfetching graph json for project {project_id}...")
                     graph_res = requests.get(
                         f"{BASE_URL}/project/{project_id}/graph",
@@ -135,7 +153,7 @@ if __name__ == "__main__":
     parser.add_argument("--gemini-key", default=os.getenv("GEMINI_API_KEY"), help="Gemini API key")
     parser.add_argument("--openai-key", default=os.getenv("OPENAI_API_KEY"), help="OpenAI API key")
     parser.add_argument("--openrouter-key", default=os.getenv("OPENROUTER_API_KEY"), help="OpenRouter API key (required)")
-    parser.add_argument("--output", default=None, help="Save the resulting JSON graph to a file (e.g., my_graph.json)")
+    parser.add_argument("--output", default="output_graph.json", help="Save graph JSON to file (default: output_graph.json)")
     args = parser.parse_args()
 
     run_test(args.file, args.gemini_key, args.openai_key, args.openrouter_key, args.output)

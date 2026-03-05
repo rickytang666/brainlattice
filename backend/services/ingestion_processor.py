@@ -11,7 +11,6 @@ from services.pdf_service import PDFService
 from services.chunking_service import RecursiveMarkdownSplitter, create_extraction_chunks
 from services.embedding_service import EmbeddingService
 from services.job_service import get_job_service
-from services.llm.graph_extractor import GraphExtractor
 from services.llm.seed_extractor import SeedExtractor
 from services.llm.chunk_extractor import ChunkExtractor
 from services.llm.orphan_link_service import OrphanLinkService
@@ -90,8 +89,7 @@ class IngestionProcessor:
 
             # init services with custom byok keys
             self.embedder = EmbeddingService(gemini_key=gemini_key, openai_key=openai_key)
-            self.extractor = GraphExtractor(gemini_key=gemini_key)
-            
+
             # project embedder into connector and builder's resolver for lazy use
             self.connector._embeddings = self.embedder
             if self.builder.resolver:
@@ -135,28 +133,6 @@ class IngestionProcessor:
             self.jobs.update_progress(self.job_id, "processing", 40)
             await asyncio.sleep(0.1) # yield after heavy pdf parsing
 
-            # cache full document with gemini context caching
-            cache_name = None
-            cache_svc = None
-            cache_start = time.time()
-            try:
-                from services.llm.cache_service import CacheService
-                from sqlalchemy.orm.attributes import flag_modified
-                cache_svc = CacheService(gemini_key=gemini_key)
-                cache_name = cache_svc.create_document_cache(markdown_content, str(project_id))
-                if cache_name:
-                    project = db.query(models.Project).filter(models.Project.id == project_id).first()
-                    if project:
-                        meta = project.project_metadata or {}
-                        meta["gemini_cache_name"] = cache_name
-                        project.project_metadata = meta
-                        flag_modified(project, "project_metadata")
-                        db.commit()
-                        logger.info(f"saved cache_name {cache_name} to project metadata")
-            except Exception as e:
-                logger.error(f"failed to setup document cache: {e}")
-            self.timings['cache_creation'] = time.time() - cache_start
-
             # chunk text and generate embeddings
             logger.info("chunking and embedding...")
             embed_start = time.time()
@@ -192,7 +168,6 @@ class IngestionProcessor:
             else:
                 graph_data = await self._run_graph_extraction(
                     markdown_content,
-                    cache_name=cache_name,
                     gemini_key=gemini_key,
                     openrouter_key=openrouter_key,
                 )
@@ -263,14 +238,6 @@ class IngestionProcessor:
                 
             raise e
         finally:
-            # immediately terminate gemini context cache to stop hourly billing
-            if 'cache_name' in locals() and cache_name and 'cache_svc' in locals() and cache_svc:
-                try:
-                    logger.info(f"cleaning up gemini context cache {cache_name}...")
-                    cache_svc.delete_cache(cache_name)
-                except Exception as cache_cleanup_err:
-                    logger.error(f"failed to clean up context cache: {cache_cleanup_err}")
-
             db.close()
             if os.path.exists(temp_path):
                 os.remove(temp_path)
@@ -278,43 +245,10 @@ class IngestionProcessor:
     async def _run_graph_extraction(
         self,
         text: str,
-        cache_name: str = None,
         gemini_key: str = None,
         openrouter_key: str = None,
     ) -> List[Any]:
-        """runs stateful windowing extraction logic or paginated full-cache extraction"""
-        if cache_name:
-            logger.info(f"using full-context cache {cache_name} for paginated graph extraction")
-            
-            # step 1: global seed
-            logger.info("identifying all root concepts from document cache...")
-            seed_start = time.time()
-            global_ids = await self.extractor.extract_global_seed(cache_name)
-            if hasattr(self, 'timings'): self.timings['global_seed'] = time.time() - seed_start
-            logger.info(f"extracted {len(global_ids)} global concept IDs")
-            
-            if global_ids:
-                # step 2: paginated extraction
-                batch_size = 50
-                batches = [global_ids[i:i + batch_size] for i in range(0, len(global_ids), batch_size)]
-                
-                pag_start = time.time()
-                sem = asyncio.Semaphore(10)
-                
-                async def process_batch(batch, batch_index):
-                    async with sem:
-                        logger.info(f"extracting paginated batch {batch_index+1}/{len(batches)}...")
-                        return await self.extractor.extract_paginated_nodes(cache_name, batch, global_ids)
-                
-                extracted_graphs = await asyncio.gather(*(
-                    process_batch(batch, i) for i, batch in enumerate(batches)
-                ))
-                if hasattr(self, 'timings'): self.timings['paginated_generation'] = time.time() - pag_start
-                return [g for g in extracted_graphs if g and g.nodes]
-            else:
-                logger.warning("failed to extract global seed, falling back to windowed extraction")
-
-        logger.info("using per-chunk extraction (Step 2 Map phase)...")
+        """runs per-chunk extraction (Step 1 seed + Step 2 map). no gemini cache."""
 
         # step 1: global seed from headers (H1/H2/H3)
         header_text = self._extract_headers(text)
