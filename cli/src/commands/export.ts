@@ -31,8 +31,11 @@ export const exportCommand = new Command('export')
   .option('--mock', 'simulate the process without making api calls (for testing purposes)')
   .action(async (projectTitleArg, options) => {
     try {
-
       const config = getConfig();
+      if (!config.gemini_key) {
+        throw new Error('missing gemini_key. export requires it for note generation. run `brainlattice config`');
+      }
+
       const vaultPathRaw = options.vault || config.default_vault;
       if (!vaultPathRaw) {
         throw new Error('no vault path specified. provide --vault or set a default via `brainlattice config`.');

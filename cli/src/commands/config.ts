@@ -13,17 +13,17 @@ async function runInit() {
   console.log(chalk.bold.blue("\nbrainlattice cli setup\n"));
 
   const geminiKey = await input({
-    message: "enter your gemini api key (required for core extraction):",
+    message: "enter your gemini api key (required for note generation):",
     default: current.gemini_key || "",
   });
 
   const openRouterKey = await input({
-    message: "enter your openrouter api key (required for seed extraction):",
+    message: "enter your openrouter api key (required for graph extraction):",
     default: current.openrouter_key || "",
   });
 
   const openaiKey = await input({
-    message: "enter your openai api key (optional, but better for embeddings):",
+    message: "enter your openai api key (optional, for better embeddings):",
     default: current.openai_key || "",
   });
 

@@ -49,7 +49,7 @@ export const statusCommand = new Command("status")
       if (!config.gemini_key || !config.openrouter_key) {
         console.log(
           chalk.yellow(
-            "\nwarning: gemini_key or openrouter_key is missing. `gen` will fail until you add them.",
+            "\nwarning: gemini_key and openrouter_key are required for `gen`; gemini_key is also required for `export`. run `brainlattice config`.",
           ),
         );
       } else {
