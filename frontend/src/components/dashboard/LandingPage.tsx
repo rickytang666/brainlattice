@@ -219,14 +219,28 @@ export default function LandingPage() {
   const [totalDownloads, setTotalDownloads] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/stats/downloads`)
-      .then((res) => res.json())
-      .then((data) => {
+    // try backend first, fallback to npm api (works when deployed even if API_BASE is wrong)
+    const fetchStats = async () => {
+      try {
+        const res = await apiFetch(`${API_BASE}/stats/downloads`);
+        const data = await res.json();
         if (data && typeof data.total === "number") {
           setTotalDownloads(data.total);
+          return;
         }
-      })
-      .catch((err) => console.error("failed to fetch download stats:", err));
+      } catch {
+        /* backend failed, try npm directly */
+      }
+      try {
+        const npmRes = await fetch("https://api.npmjs.org/downloads/point/last-year/brainlattice");
+        const npmData = await npmRes.json();
+        const count = npmData?.downloads;
+        if (typeof count === "number") setTotalDownloads(count);
+      } catch (err) {
+        console.error("failed to fetch download stats:", err);
+      }
+    };
+    fetchStats();
   }, []);
 
   const copyCli = () => {
@@ -238,7 +252,7 @@ export default function LandingPage() {
     setTotalDownloads(prev => (prev !== null ? prev + 1 : 1));
 
     // fire and forget tracking
-    fetch(`${API_BASE}/stats/copy`, { method: "POST" }).catch((err) =>
+    apiFetch(`${API_BASE}/stats/copy`, { method: "POST" }).catch((err) =>
       console.error("failed to track copy:", err),
     );
   };
