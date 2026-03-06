@@ -170,8 +170,8 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground overscroll-none;
+  html, body {
+    @apply bg-background text-foreground overscroll-none overflow-hidden h-full;
   }
 }
 
