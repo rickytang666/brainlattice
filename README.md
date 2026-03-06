@@ -26,7 +26,9 @@ Or watch it on [YouTube](https://youtu.be/T3rIfQf7UWE).
 
 ## The Problem
 
-PDFs are linear. Knowledge is not. Turning a 200-page textbook into a structured system of notes, links, and concepts is manual work that most people never finish.
+PDFs are linear, but knowledge is a network. Tools like NotebookLM or ChatPDF are great for quick Q & A, but they lock your data inside their SaaS ecosystems.
+
+Turning a 200+ page textbook into a structured system of notes, links, and concepts in your own Obsidian vault, is a manual work that most people never finish.
 
 ## The Solution
 
