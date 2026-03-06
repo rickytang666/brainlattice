@@ -8,7 +8,7 @@
 
 ![Obsidian Support](https://img.shields.io/badge/Obsidian-Support-101010?logo=obsidian&logoColor=7C3AED&labelColor=101010)
 
-<!-- [![NPM Version](https://img.shields.io/npm/v/brainlattice?color=339933&logo=npm)](https://www.npmjs.com/package/brainlattice) -->
+[![NPM Version](https://img.shields.io/npm/v/brainlattice?color=069eb9&logo=npm)](https://www.npmjs.com/package/brainlattice)
 
 Upload a PDF. Get an Obsidian vault. BrainLattice extracts concepts, maps relationships, and writes all the notes automatically.
 
