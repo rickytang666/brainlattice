@@ -6,9 +6,7 @@
 
 **PDFs → Living Knowledge Networks**
 
-![Obsidian Support](https://img.shields.io/badge/Obsidian-Support-101010?logo=obsidian&logoColor=7C3AED&labelColor=101010)
-
-[![NPM Version](https://img.shields.io/npm/v/brainlattice?color=069eb9&logo=npm)](https://www.npmjs.com/package/brainlattice)
+![Obsidian Support](https://img.shields.io/badge/Obsidian-Support-101010?logo=obsidian&logoColor=7C3AED&labelColor=101010) [![NPM Version](https://img.shields.io/npm/v/brainlattice?color=069eb9&logo=npm)](https://www.npmjs.com/package/brainlattice) ![visitor badge](https://visitor-badge.laobi.icu/badge?page_id=rickytang666.brainlattice&left_text=visits)
 
 Upload a PDF. Get an Obsidian vault. BrainLattice extracts concepts, maps relationships, and writes all the notes automatically.
 
