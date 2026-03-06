@@ -14,7 +14,11 @@ import { infoCommand } from './commands/info.js';
 import { checkForUpdates } from './utils/notifier.js';
 import { runShell } from './commands/shell.js';
 
-const VERSION = '1.0.0';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const pkg = require('../package.json');
+const VERSION = pkg.version;
 
 const program = new Command();
 

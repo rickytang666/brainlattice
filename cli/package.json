@@ -1,6 +1,6 @@
 {
   "name": "brainlattice",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "brainlattice cli - convert pdfs to obsidian knowledge graphs",
   "type": "module",
   "bin": {
