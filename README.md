@@ -103,7 +103,7 @@ _For more details, see the [CLI Documentation](cli/README.md) or enter `help` in
 
 ## Architecture
 
-![Architecture](assets/arch.svg)
+![Architecture](assets/arch.png)
 
 ## Local dev
 
