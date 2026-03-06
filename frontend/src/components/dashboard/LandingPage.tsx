@@ -115,7 +115,7 @@ export default function LandingPage() {
     if (!file) return;
 
     setUploading(true);
-    
+
     // immediately add a temporary project to the list
     const tempId = `temp-${Date.now()}`;
     const tempProject = {
@@ -124,7 +124,7 @@ export default function LandingPage() {
       status: "uploading",
       created_at: new Date().toISOString(),
     };
-    
+
     setProjects((prev) => [tempProject, ...prev]);
 
     try {
@@ -149,7 +149,8 @@ export default function LandingPage() {
         body: file,
       });
 
-      if (!uploadRes.ok) throw new Error("failed to upload file to processing engine");
+      if (!uploadRes.ok)
+        throw new Error("failed to upload file to processing engine");
 
       // finalize and trigger worker
       const res = await apiFetch(
@@ -215,10 +216,31 @@ export default function LandingPage() {
   };
 
   const [copied, setCopied] = useState(false);
+  const [totalDownloads, setTotalDownloads] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/stats/downloads`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && typeof data.total === "number") {
+          setTotalDownloads(data.total);
+        }
+      })
+      .catch((err) => console.error("failed to fetch download stats:", err));
+  }, []);
+
   const copyCli = () => {
     navigator.clipboard.writeText("npm i -g brainlattice\nbrainlattice");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+
+    // instant local update
+    setTotalDownloads(prev => (prev !== null ? prev + 1 : 1));
+
+    // fire and forget tracking
+    fetch(`${API_BASE}/stats/copy`, { method: "POST" }).catch((err) =>
+      console.error("failed to track copy:", err),
+    );
   };
 
   return (
@@ -293,7 +315,7 @@ export default function LandingPage() {
           </div>
 
           {/* Minimal CLI Snippet */}
-          <div 
+          <div
             className={`mt-4 w-full max-w-[220px] rounded-xs relative flex items-start justify-between px-3 py-1.5 border border-border/40 bg-muted backdrop-blur-sm transition-all hover:bg-muted hover:border-border ${
               isTypingComplete ? "opacity-100" : "opacity-0 pointer-events-none"
             }`}
@@ -306,7 +328,7 @@ export default function LandingPage() {
                 brainlattice
               </code>
             </div>
-            
+
             <button
               onClick={copyCli}
               className="p-1 text-muted-foreground/60 hover:text-foreground transition-colors"
@@ -319,6 +341,18 @@ export default function LandingPage() {
               )}
             </button>
           </div>
+
+          {totalDownloads !== null && totalDownloads > 0 && (
+            <div
+              className={`mt-2 flex items-center justify-center gap-1.5 transition-all duration-1000 delay-500 ${
+                isTypingComplete ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <span className="text-xs font-medium tracking-wide text-muted-foreground/80">
+                <span className="font-bold text-primary/90">{totalDownloads.toLocaleString()}</span> installs
+              </span>
+            </div>
+          )}
         </div>
 
         {/* The Omnibar */}
@@ -434,7 +468,9 @@ export default function LandingPage() {
                   <div
                     key={p.id}
                     className={`group relative flex items-center justify-between py-2 px-3 rounded-lg transition-all ${
-                      p.status === "complete" ? "hover:bg-muted/30 cursor-pointer" : "cursor-default"
+                      p.status === "complete"
+                        ? "hover:bg-muted/30 cursor-pointer"
+                        : "cursor-default"
                     }`}
                     onClick={() => {
                       if (p.status === "complete") {
@@ -472,45 +508,48 @@ export default function LandingPage() {
                                   <span>
                                     {p.status === "uploading"
                                       ? "uploading"
-                                    : p.status === "processing"
-                                      ? "synthesizing"
-                                      : p.status}
+                                      : p.status === "processing"
+                                        ? "synthesizing"
+                                        : p.status}
                                   </span>
-                                  {p.progress !== undefined && p.status !== "uploading" && (
-                                    <span className="tabular-nums">
-                                      {p.progress}%
-                                    </span>
-                                  )}
+                                  {p.progress !== undefined &&
+                                    p.status !== "uploading" && (
+                                      <span className="tabular-nums">
+                                        {p.progress}%
+                                      </span>
+                                    )}
                                 </div>
-                                {p.progress !== undefined && p.status !== "uploading" && (
-                                  <div className="h-[2px] w-full bg-border/50 overflow-hidden rounded-full">
-                                    <div
-                                      className="h-full bg-foreground/40 transition-all duration-500 ease-out rounded-full"
-                                      style={{ width: `${p.progress}%` }}
-                                    />
-                                  </div>
-                                )}
+                                {p.progress !== undefined &&
+                                  p.status !== "uploading" && (
+                                    <div className="h-[2px] w-full bg-border/50 overflow-hidden rounded-full">
+                                      <div
+                                        className="h-full bg-foreground/40 transition-all duration-500 ease-out rounded-full"
+                                        style={{ width: `${p.progress}%` }}
+                                      />
+                                    </div>
+                                  )}
                               </div>
                             </>
                           )}
                         </div>
                       )}
-                      {p.status !== "processing" && p.status !== "uploading" && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeletingId(p.id);
-                          }}
-                          className={`${
-                            p.status !== "complete"
-                              ? "opacity-0 group-hover:opacity-100"
-                              : "opacity-0 group-hover:opacity-100"
-                          } text-muted-foreground/40 hover:text-destructive transition-colors shrink-0`}
-                          title="Delete Project"
-                        >
-                          <IconTrash className="w-4 h-4" />
-                        </button>
-                      )}
+                      {p.status !== "processing" &&
+                        p.status !== "uploading" && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingId(p.id);
+                            }}
+                            className={`${
+                              p.status !== "complete"
+                                ? "opacity-0 group-hover:opacity-100"
+                                : "opacity-0 group-hover:opacity-100"
+                            } text-muted-foreground/40 hover:text-destructive transition-colors shrink-0`}
+                            title="Delete Project"
+                          >
+                            <IconTrash className="w-4 h-4" />
+                          </button>
+                        )}
                     </div>
 
                     {/* Inline Delete Confirmation */}
