@@ -4,10 +4,10 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="w-full py-4 mt-auto border-t border-border/20 bg-background/50 backdrop-blur-sm z-10">
-      <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+    <footer className="w-full py-4 pb-8 sm:pb-4 mt-auto border-t border-border/20 bg-background/50 backdrop-blur-sm z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
         <div className="flex flex-col items-center md:items-start gap-2">
-          <p className="text-xs text-muted-foreground font-medium">
+          <p className="text-xs text-muted-foreground font-medium text-center">
             &copy; {currentYear} BrainLattice. All rights reserved.
           </p>
         </div>

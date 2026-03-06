@@ -156,6 +156,13 @@ export default function ProjectDashboard() {
   const panelsContainerRef = useRef<HTMLDivElement>(null);
   const [graphWidthPercent, setGraphWidthPercent] = useState(60);
   const [isResizing, setIsResizing] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const clearFocusNodeId = useCallback(() => setFocusNodeId(null), []);
 
@@ -295,12 +302,12 @@ export default function ProjectDashboard() {
       {selectedProjectId && (
         <div
           ref={panelsContainerRef}
-          className="flex-1 flex flex-row w-full min-w-0 overflow-hidden relative"
+          className="flex-1 flex flex-col sm:flex-row w-full min-w-0 overflow-hidden relative"
         >
           {/* Graph Panel - resizable */}
           <div
-            className="min-w-0 h-full flex flex-col relative overflow-hidden bg-background shrink-0"
-            style={{ width: `${graphWidthPercent}%` }}
+            className="min-w-0 flex flex-col relative overflow-hidden bg-background shrink-0"
+            style={isMobile ? { width: '100%', height: '50%' } : { width: `${graphWidthPercent}%`, height: '100%' }}
           >
              {/* Header overlay - scoped to graph panel only */}
             <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-2">
@@ -446,21 +453,23 @@ export default function ProjectDashboard() {
           </div>
 
           {/* Resize handle */}
-          <div
-            onMouseDown={handleResizeStart}
-            className="absolute top-0 bottom-0 w-1.5 cursor-col-resize z-30 shrink-0 select-none flex justify-center"
-            style={{ left: `calc(${graphWidthPercent}% - 3px)` }}
-            title="Drag to resize"
-          >
+          {!isMobile && (
             <div
-              className={`h-full w-px transition-colors ${isResizing ? "bg-muted-foreground" : "bg-border hover:bg-muted-foreground"}`}
-            />
-          </div>
+              onMouseDown={handleResizeStart}
+              className="absolute top-0 bottom-0 w-1.5 cursor-col-resize z-30 shrink-0 select-none flex justify-center"
+              style={{ left: `calc(${graphWidthPercent}% - 3px)` }}
+              title="Drag to resize"
+            >
+              <div
+                className={`h-full w-px transition-colors ${isResizing ? "bg-muted-foreground" : "bg-border hover:bg-muted-foreground"}`}
+              />
+            </div>
+          )}
 
           {/* Note Panel - resizable */}
           <div
-            className="min-w-[280px] shrink-0 h-full flex flex-col overflow-hidden border-l border-border/50 bg-card"
-            style={{ width: `${100 - graphWidthPercent}%` }}
+            className="sm:min-w-[280px] shrink-0 flex flex-col overflow-hidden border-t sm:border-t-0 sm:border-l border-border/50 bg-card"
+            style={isMobile ? { width: '100%', height: '50%' } : { width: `${100 - graphWidthPercent}%`, height: '100%' }}
           >
             <NoteSidebar
               projectId={selectedProjectId}

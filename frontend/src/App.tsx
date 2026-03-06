@@ -34,7 +34,7 @@ function App() {
   const handleClose = useCallback(() => setIsConfigOpen(false), []);
 
   return (
-    <div className={`w-screen antialiased text-foreground bg-background flex flex-col ${isLanding ? "min-h-screen" : "h-screen overflow-hidden"}`}>
+    <div className={`w-screen antialiased text-foreground bg-background flex flex-col ${isLanding ? "min-h-[100dvh]" : "h-[100dvh] overflow-hidden"}`}>
       <ConfigModal isOpen={isConfigOpen} onClose={handleClose} onConfigSaved={refreshKeys} />
       {showSpotlight && (
         <KeysSpotlight

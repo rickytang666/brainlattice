@@ -266,11 +266,11 @@ export default function LandingPage() {
       />
 
       <div
-        className={`z-10 w-full max-w-2xl px-6 flex flex-col items-center ${isFirstLoad ? "animate-in fade-in slide-in-from-bottom-4 duration-1000" : ""}`}
+        className={`z-10 w-full max-w-2xl px-4 sm:px-6 flex flex-col items-center ${isFirstLoad ? "animate-in fade-in slide-in-from-bottom-4 duration-1000" : ""}`}
       >
         {/* Hero Typewriter & Badge */}
         <div className="mb-8 flex flex-col items-center justify-center min-h-[60px]">
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground/90 font-serif lowercase text-center">
+          <h1 className="text-lg sm:text-2xl font-semibold tracking-tight text-foreground/90 font-serif lowercase text-center">
             {heroText}
             <span className="animate-pulse text-primary ml-0.5">_</span>
           </h1>
@@ -354,14 +354,14 @@ export default function LandingPage() {
                 }
               }}
               placeholder="Search past projects, or type 'upload' and hit enter..."
-              className="w-full bg-transparent border-none py-4 text-base tracking-wide text-foreground placeholder-muted-foreground/40 focus:outline-none focus:ring-0 font-sans"
+              className="w-full bg-transparent border-none py-3 sm:py-4 text-sm sm:text-base tracking-wide text-foreground placeholder-muted-foreground/40 focus:outline-none focus:ring-0 font-sans"
               autoFocus
             />
             <div className="pr-4 flex items-center gap-3">
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="p-2 rounded-xl bg-primary/5 text-primary/80 hover:text-primary hover:bg-primary/10 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                className="p-1.5 sm:p-2 rounded-xl bg-primary/5 text-primary/80 hover:text-primary hover:bg-primary/10 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                 title="Upload PDF"
               >
                 <IconUpload className="w-4 h-4" />
