@@ -18,9 +18,9 @@ Upload a PDF. Get an Obsidian vault. BrainLattice extracts concepts, maps relati
 
 ## Demo
 
-https://github.com/user-attachments/assets/25b569c5-db16-4153-b75f-cfc3fcf607ce
+https://github.com/user-attachments/assets/765c4959-ead3-4b88-8e18-a7f09d6d923e
 
-https://github.com/user-attachments/assets/cf8c6bf7-a76b-4ac8-8997-8efb8560c3a4
+https://github.com/user-attachments/assets/57beb200-7493-40d0-ae18-031e1415e752
 
 Or watch it on [YouTube](https://youtu.be/T3rIfQf7UWE).
 
