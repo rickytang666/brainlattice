@@ -21,7 +21,7 @@ class EmbeddingService:
             from google import genai
             self.provider = "gemini"
             self.gemini_client = genai.Client(api_key=gemini_key)
-            self.gemini_model = "text-embedding-004"
+            self.gemini_model = "gemini-embedding-001"
             logger.info("initialized gemini embedding service (BYOK custom key)")
         else:
             raise ValueError("No API key provided for EmbeddingService. Strict BYOK is enabled.")
@@ -66,13 +66,20 @@ class EmbeddingService:
                 )
                 return [data.embedding for data in response.data]
             else:
+                # Gemini embed API: at most 100 contents per batch (OpenAI has a higher limit)
                 from google.genai import types
-                response = self.gemini_client.models.embed_content(
-                    model=self.gemini_model,
-                    contents=cleaned_texts,
-                    config=types.EmbedContentConfig(output_dimensionality=self.dimensions)
-                )
-                return [data.values for data in response.embeddings]
+                cfg = types.EmbedContentConfig(output_dimensionality=self.dimensions)
+                out: List[List[float]] = []
+                batch_size = 100
+                for i in range(0, len(cleaned_texts), batch_size):
+                    batch = cleaned_texts[i : i + batch_size]
+                    response = self.gemini_client.models.embed_content(
+                        model=self.gemini_model,
+                        contents=batch,
+                        config=cfg,
+                    )
+                    out.extend([data.values for data in response.embeddings])
+                return out
                 
         except Exception as e:
             raise Exception(f"failed to get batch embeddings: {str(e)}")
