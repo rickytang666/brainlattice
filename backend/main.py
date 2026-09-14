@@ -18,10 +18,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# cors middleware
+# cors middleware. defaults to "*" for local dev; set CORS_ALLOW_ORIGINS to the
+# real frontend origins in production.
+_origins = [o.strip() for o in settings.CORS_ALLOW_ORIGINS.split(",") if o.strip()]
+if _origins == ["*"]:
+    logger.warning(
+        "CORS_ALLOW_ORIGINS is '*'. set it to your frontend origins in production."
+    )
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
