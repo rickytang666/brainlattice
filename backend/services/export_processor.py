@@ -1,12 +1,12 @@
 import logging
 import asyncio
+import re
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from db.session import SessionLocal
 from db import models
 from services.llm.note_service import NodeNoteService
-from services.queue_service import get_queue_service
 
 logger = logging.getLogger(__name__)
 
@@ -142,8 +142,9 @@ class ExportProcessor:
 
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+                used_names: set[str] = set()
                 for node in nodes:
-                    filename = f"{node.concept_id}.md"
+                    filename = self._safe_filename(node.concept_id, used_names)
                     content = self._format_node_as_markdown(node)
                     zip_file.writestr(filename, content)
 
@@ -164,6 +165,23 @@ class ExportProcessor:
         except Exception as e:
             logger.exception(f"vault assembly failed for project {self.project_id}")
             self._update_metadata(db, {"status": "failed", "error": f"assembly failed: {str(e)}"})
+
+    @staticmethod
+    def _safe_filename(concept_id: str, used: set[str]) -> str:
+        # concept ids are model output: strip anything that could escape the archive root
+        name = re.sub(r"[\\/\x00]", "-", concept_id or "").strip().strip(".")
+        name = re.sub(r"\s+", " ", name)
+        if not name or set(name) <= {"."}:
+            name = "untitled"
+        name = name[:120]
+
+        candidate = f"{name}.md"
+        suffix = 2
+        while candidate.lower() in used:
+            candidate = f"{name} ({suffix}).md"
+            suffix += 1
+        used.add(candidate.lower())
+        return candidate
 
     def _format_node_as_markdown(self, node: models.GraphNode) -> str:
         """formats a graph node as an obsidian-style markdown file"""
