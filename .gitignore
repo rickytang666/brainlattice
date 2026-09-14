@@ -33,3 +33,7 @@ plan/
 .neonrc
 .wrangler/
 .workspace/
+
+# markdown
+CLAUDE.md
+AGENTS.md
