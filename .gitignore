@@ -32,3 +32,4 @@ plan/
 .neon
 .neonrc
 .wrangler/
+.workspace/
