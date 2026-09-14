@@ -15,16 +15,32 @@ export function getSessionId(): string {
   return sessionId;
 }
 
-export function apiFetch(input: RequestInfo | URL, init?: RequestInit, clerkUserId?: string | null): Promise<Response> {
-  const sessionId = getSessionId();
+// apiFetch isn't a hook, so it reads clerk off window instead of calling useAuth()
+async function getClerkToken(): Promise<string | null> {
+  const clerk = (window as unknown as { Clerk?: { session?: { getToken: () => Promise<string | null> } } }).Clerk;
+  if (!clerk?.session) return null;
+  try {
+    return await clerk.session.getToken();
+  } catch {
+    return null;
+  }
+}
+
+export async function apiFetch(input: RequestInfo | URL, init?: RequestInit, clerkUserId?: string | null): Promise<Response> {
   const apiKey = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
   const openAiKey = localStorage.getItem(OPENAI_KEY_STORAGE) || "";
   const openRouterKey = localStorage.getItem(OPENROUTER_KEY_STORAGE) || "";
 
-  const userId = clerkUserId || sessionId;
-
   const headers = new Headers(init?.headers);
-  headers.set("X-User-Id", userId);
+
+  // the backend ignores X-User-Id when a token is present; signed-out users send the uuid
+  const token = clerkUserId ? await getClerkToken() : null;
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  } else {
+    headers.set("X-User-Id", getSessionId());
+  }
+
   if (apiKey) {
     headers.set("X-Gemini-API-Key", apiKey);
   }
@@ -34,7 +50,7 @@ export function apiFetch(input: RequestInfo | URL, init?: RequestInit, clerkUser
   if (openRouterKey) {
     headers.set("X-OpenRouter-API-Key", openRouterKey);
   }
-  
+
   return fetch(input, {
     ...init,
     headers
