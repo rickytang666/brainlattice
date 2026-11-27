@@ -3,6 +3,7 @@ import asyncio
 
 import httpx
 import openai
+import pydantic
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -14,6 +15,10 @@ from routers import worker
 from services import export_processor, ingestion_processor
 
 REQUEST = httpx.Request("POST", "https://openrouter.ai/api/v1/chat/completions")
+
+
+class Strict(pydantic.BaseModel):
+    count: int
 
 
 def status_error(cls, code):
@@ -139,6 +144,17 @@ class TestIngest:
         assert res.json()["status"] == "failed"
         assert jobs.jobs["j1"]["status"] == "failed"
         assert jobs.jobs["j1"]["result"]["error"]
+
+    def test_value_error_subclass_text_not_recorded(self, client, jobs, monkeypatch):
+        try:
+            Strict(count="sentinel-internal-value")
+        except pydantic.ValidationError as e:
+            error = e
+        monkeypatch.setattr(ingestion_processor, "IngestionProcessor", failing_processor(error))
+        res = client.post("/worker", json=INGEST)
+        assert res.status_code == 200
+        assert "sentinel-internal-value" not in res.text
+        assert jobs.jobs["j1"]["result"] == {"error": "ValidationError"}
 
     def test_processor_error_not_overwritten(self, client, jobs, monkeypatch):
         jobs.jobs["j1"].update(status="failed", result={"error": "specific reason"})

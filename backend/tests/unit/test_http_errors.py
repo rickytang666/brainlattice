@@ -1,17 +1,19 @@
 """client mistakes get a 4xx the caller can act on; server faults never echo exception text."""
 import asyncio
 import io
+import json
 import uuid
 
 import httpx
 import openai
+import pydantic
 import pytest
 from botocore.exceptions import ClientError as BotoClientError
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.exc import DataError
 
 from core.dependencies import UserContext
-from core.errors import to_http_error
+from core.errors import UserFacingError, to_http_error
 from db import models
 from routers import export, ingest, project
 from services import task_orchestrator
@@ -23,6 +25,27 @@ USER = "user_owner"
 
 def provider_error(cls, code, message="Incorrect API key provided: sk-abc***"):
     return cls(message, response=httpx.Response(code, request=REQUEST), body=None)
+
+
+SENTINEL = "sentinel-internal-value"
+
+
+class Strict(pydantic.BaseModel):
+    count: int
+
+
+def pydantic_error():
+    try:
+        Strict(count=SENTINEL)
+    except pydantic.ValidationError as e:
+        return e
+
+
+def json_error():
+    try:
+        json.loads("{" + SENTINEL)
+    except json.JSONDecodeError as e:
+        return e
 
 
 def ctx():
@@ -56,6 +79,17 @@ class TestMapping:
         err = to_http_error(ValueError("gemini_key is required"), "note generation")
         assert err.status_code == 400
         assert "gemini_key is required" in err.detail
+
+    @pytest.mark.parametrize("make_error", [pydantic_error, json_error], ids=["pydantic", "json"])
+    def test_value_error_subclass_text_not_echoed(self, make_error):
+        err = to_http_error(make_error(), "get")
+        assert err.status_code == 500
+        assert SENTINEL not in err.detail
+
+    def test_user_facing_subclass_is_400(self):
+        err = to_http_error(UserFacingError("re-export with the ingest keys"), "export")
+        assert err.status_code == 400
+        assert "re-export with the ingest keys" in err.detail
 
     def test_bad_input_to_the_database_is_400(self):
         err = to_http_error(DataError("SELECT ... WHERE id = 'nope'", {}, Exception("invalid uuid")), "get")

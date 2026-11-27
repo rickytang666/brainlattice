@@ -6,6 +6,17 @@ from typing import Iterator, Optional
 TRANSIENT_STATUSES = {408, 429}
 
 
+class UserFacingError(ValueError):
+    """a ValueError subclass whose message is written for the user and safe to show"""
+
+
+def user_message(error: BaseException) -> Optional[str]:
+    """the message of a plain ValueError or UserFacingError; subclasses like pydantic's can echo internal values"""
+    if (type(error) is ValueError or isinstance(error, UserFacingError)) and str(error):
+        return str(error)
+    return None
+
+
 def iter_causes(error: BaseException, max_depth: int = 8) -> Iterator[BaseException]:
     """yield the error and what it wraps: tenacity retries, `raise from`, and re-raises in except blocks"""
     from tenacity import RetryError
@@ -82,9 +93,7 @@ def describe_error(error: BaseException) -> str:
         if _is_network_error(e):
             return "connection error"
     root = list(iter_causes(error))[-1]
-    if isinstance(root, ValueError) and str(root):
-        return str(root)
-    return type(root).__name__
+    return user_message(root) or type(root).__name__
 
 
 def to_http_error(error: BaseException, action: str) -> "HTTPException":
@@ -113,8 +122,9 @@ def to_http_error(error: BaseException, action: str) -> "HTTPException":
     if any(isinstance(e, sa_errors.DataError) for e in causes):
         return HTTPException(status_code=400, detail=f"{action} failed: invalid request data")
     # our own ValueErrors carry user-facing messages (missing byok key, malformed id)
-    if isinstance(causes[-1], ValueError) and str(causes[-1]):
-        return HTTPException(status_code=400, detail=f"{action} failed: {causes[-1]}")
+    message = user_message(causes[-1])
+    if message:
+        return HTTPException(status_code=400, detail=f"{action} failed: {message}")
 
     logging.getLogger(__name__).exception(f"{action} failed")
     return HTTPException(status_code=500, detail=f"{action} failed")

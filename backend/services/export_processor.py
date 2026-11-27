@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from db.session import SessionLocal
 from db import models
-from core.errors import describe_error, is_transient
+from core.errors import UserFacingError, describe_error, is_transient
 from services.embedding_service import EmbeddingService
 from services.llm.note_service import NodeNoteService
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 MAX_NOTE_ATTEMPTS = 2
 LEGACY_FAILED_NOTE_PREFIX = "failed to generate note for "
 
-class EmbeddingProviderMismatch(ValueError):
+class EmbeddingProviderMismatch(UserFacingError):
     """the export's embedding provider differs from the one that embedded the project's chunks"""
 
 
