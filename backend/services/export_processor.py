@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from db.session import SessionLocal
 from db import models
-from core.errors import UserFacingError, describe_error, is_transient
+from core.errors import UserFacingError, describe_error, is_transient, provider_status
 from services.embedding_service import EmbeddingService
 from services.llm.note_service import NodeNoteService
 
@@ -19,6 +19,15 @@ LEGACY_FAILED_NOTE_PREFIX = "failed to generate note for "
 
 class EmbeddingProviderMismatch(UserFacingError):
     """the export's embedding provider differs from the one that embedded the project's chunks"""
+
+
+class ProviderRejected(UserFacingError):
+    """the ai provider refused a note request in a way every later note would repeat (bad key, no credit)"""
+
+
+def _rejected_status(error: Optional[BaseException]) -> Optional[int]:
+    status = provider_status(error, ai_only=True) if error is not None else None
+    return status if status is not None and 400 <= status <= 404 else None
 
 
 class ExportProcessor:
@@ -186,6 +195,13 @@ class ExportProcessor:
         # save all completed generation contents
         db.commit()
         self._update_metadata(db, {"note_failures": note_failures})
+
+        rejected = next((s for s in (_rejected_status(e) for _, _, e in results) if s is not None), None)
+        if rejected is not None:
+            raise ProviderRejected(
+                f"note generation stopped: the ai provider rejected the request (http {rejected}). "
+                "check your api key and credit."
+            )
 
     async def _enqueue_next_step(self):
         """re-publishes the same export task to the queue"""

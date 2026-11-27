@@ -25,6 +25,11 @@ def timeout():
     return openai.APITimeoutError(request=REQUEST)
 
 
+def empty_note():
+    # a per-note failure: other notes can still succeed
+    return ValueError("model returned an empty note")
+
+
 class FakeQuery:
     def __init__(self, rows):
         self.rows = rows
@@ -137,7 +142,7 @@ class TestPartialFailure:
     def test_failed_notes_reported_not_shipped(self, harness):
         concepts = [f"concept {i}" for i in range(14)] + ["thylakoid", "stroma"]
         processor, project, nodes, storage, _ = harness(
-            concepts, {"thylakoid": client_error, "stroma": client_error}
+            concepts, {"thylakoid": empty_note, "stroma": empty_note}
         )
 
         result = run_until_done(processor)
@@ -173,11 +178,39 @@ class TestBoundedAttempts:
         assert export_meta(project)["note_failures"]["stroma"]["attempts"] == MAX_NOTE_ATTEMPTS
         assert export_meta(project)["failed_notes"] == 1
 
-    def test_client_error_not_retried(self, harness):
-        processor, project, *_ = harness(["grana", "stroma"], {"stroma": lambda: client_error(402)})
+    def test_permanent_note_failure_not_retried(self, harness):
+        processor, project, *_ = harness(["grana", "stroma"], {"stroma": empty_note})
         run_until_done(processor)
         assert processor.note_service.calls["stroma"] == 1
-        assert export_meta(project)["note_failures"]["stroma"]["error"] == "provider returned http 402"
+        assert export_meta(project)["note_failures"]["stroma"]["error"] == "model returned an empty note"
+
+
+class TestProviderRejection:
+    @pytest.mark.parametrize("code", [400, 401, 402, 403, 404])
+    def test_rejection_fails_the_export_without_later_batches(self, harness, code):
+        concepts = [f"concept {i:02d}" for i in range(25)]
+        processor, project, nodes, storage, enqueued = harness(
+            concepts, {"concept 03": lambda: client_error(code)}
+        )
+
+        result = run_until_done(processor)
+
+        meta = export_meta(project)
+        assert result["export_status"] == "failed"
+        assert meta["status"] == "failed"
+        assert f"http {code}" in meta["error"]
+        assert "api key" in meta["error"]
+        assert set(processor.note_service.calls) == set(concepts[:10])
+        assert enqueued == []
+        assert storage.uploads == {}
+        # notes that succeeded in the failing batch are still saved
+        assert nodes[0].content.endswith("real note")
+
+    def test_transient_failure_does_not_stop_the_export(self, harness):
+        processor, project, *_ = harness([f"c{i}" for i in range(12)], {"c1": timeout})
+        run_until_done(processor)
+        assert export_meta(project)["status"] == "complete"
+        assert export_meta(project)["failed_notes"] == 1
 
     def test_legacy_placeholder_regenerated(self, harness):
         processor, project, nodes, *_ = harness(
@@ -191,7 +224,7 @@ class TestBoundedAttempts:
 class TestTotalFailure:
     def test_every_note_failing_fails_the_export(self, harness):
         processor, project, _, storage, _ = harness(
-            ["grana", "stroma"], {"grana": client_error, "stroma": client_error}
+            ["grana", "stroma"], {"grana": empty_note, "stroma": empty_note}
         )
         result = run_until_done(processor)
         assert result["export_status"] == "failed"
