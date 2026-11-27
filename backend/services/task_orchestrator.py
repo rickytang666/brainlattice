@@ -12,6 +12,10 @@ from core.config import get_settings
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
+class ProjectNotFound(Exception):
+    """the project doesn't exist or belongs to another user"""
+
+
 class TaskOrchestrator:
     """
     handles high-level api ingestion and task dispatching:
@@ -94,13 +98,14 @@ class TaskOrchestrator:
         db = SessionLocal()
         try:
             project = db.query(models.Project).filter(models.Project.id == project_id).first()
-            if project:
-                meta = project.project_metadata or {}
-                meta["job_id"] = job_id
-                project.project_metadata = meta
-                from sqlalchemy.orm.attributes import flag_modified
-                flag_modified(project, "project_metadata")
-                db.commit()
+            if not project or project.user_id != user_id:
+                raise ProjectNotFound(project_id)
+            meta = project.project_metadata or {}
+            meta["job_id"] = job_id
+            project.project_metadata = meta
+            from sqlalchemy.orm.attributes import flag_modified
+            flag_modified(project, "project_metadata")
+            db.commit()
         finally:
             db.close()
 
