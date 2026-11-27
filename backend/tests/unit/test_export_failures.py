@@ -1,0 +1,219 @@
+"""a note that fails to generate must be reported, never shipped as a real note or as 100%."""
+import asyncio
+import io
+import uuid
+import zipfile
+
+import httpx
+import openai
+import pytest
+
+from db import models
+from services import export_processor, storage_service
+from services.export_processor import MAX_NOTE_ATTEMPTS, ExportProcessor
+
+PROJECT_ID = uuid.uuid4()
+REQUEST = httpx.Request("POST", "https://openrouter.ai/api/v1/chat/completions")
+
+
+def client_error(code=400):
+    return openai.BadRequestError("bad request", response=httpx.Response(code, request=REQUEST), body=None)
+
+
+def timeout():
+    return openai.APITimeoutError(request=REQUEST)
+
+
+class FakeQuery:
+    def __init__(self, rows):
+        self.rows = rows
+
+    def filter(self, *args):
+        return self
+
+    def limit(self, n):
+        return FakeQuery(self.rows[:n])
+
+    def first(self):
+        return self.rows[0] if self.rows else None
+
+    def all(self):
+        return list(self.rows)
+
+    def count(self):
+        return len(self.rows)
+
+
+class FakeDB:
+    def __init__(self, project, nodes):
+        self.project = project
+        self.nodes = nodes
+
+    def query(self, model):
+        return FakeQuery([self.project] if model is models.Project else self.nodes)
+
+    def commit(self):
+        pass
+
+    def rollback(self):
+        pass
+
+    def close(self):
+        pass
+
+
+class FakeNotes:
+    """fails each concept in `failures` with its error; counts calls per concept"""
+
+    def __init__(self, failures):
+        self.failures = failures
+        self.calls = {}
+
+    async def generate_note(self, db, project_id, concept_id, outbound_links=None):
+        self.calls[concept_id] = self.calls.get(concept_id, 0) + 1
+        if concept_id in self.failures:
+            raise self.failures[concept_id]()
+        return f"# {concept_id}\nreal note"
+
+
+class FakeStorage:
+    def __init__(self):
+        self.uploads = {}
+
+    def upload_file(self, content, key):
+        self.uploads[key] = content
+
+
+@pytest.fixture
+def harness(monkeypatch):
+    def build(concepts, failures, content=None):
+        project = models.Project(id=PROJECT_ID, title="bio", project_metadata={"export": {"status": "pending"}})
+        nodes = [
+            models.GraphNode(project_id=PROJECT_ID, concept_id=c, content=(content or {}).get(c), aliases=[])
+            for c in concepts
+        ]
+        db = FakeDB(project, nodes)
+        storage = FakeStorage()
+        monkeypatch.setattr(export_processor, "SessionLocal", lambda: db)
+        monkeypatch.setattr(storage_service, "get_storage_service", lambda: storage)
+
+        def pending(self, _db, exhausted):
+            return FakeQuery(
+                [n for n in nodes if not ExportProcessor._has_note(n) and n.concept_id not in exhausted]
+            )
+
+        monkeypatch.setattr(ExportProcessor, "_pending_query", pending)
+
+        processor = ExportProcessor(project_id=str(PROJECT_ID), user_id="u", gemini_key="test-key")
+        processor.note_service = FakeNotes(failures)
+        enqueued = []
+
+        async def enqueue():
+            enqueued.append(1)
+
+        processor._enqueue_next_step = enqueue
+        return processor, project, nodes, storage, enqueued
+
+    return build
+
+
+def run_until_done(processor, max_steps=20):
+    for _ in range(max_steps):
+        result = asyncio.run(processor.process())
+        if result["export_status"] != "batch_partial":
+            return result
+    raise AssertionError("export never finished")
+
+
+def export_meta(project):
+    return project.project_metadata["export"]
+
+
+class TestPartialFailure:
+    def test_failed_notes_reported_not_shipped(self, harness):
+        concepts = [f"concept {i}" for i in range(14)] + ["thylakoid", "stroma"]
+        processor, project, nodes, storage, _ = harness(
+            concepts, {"thylakoid": client_error, "stroma": client_error}
+        )
+
+        result = run_until_done(processor)
+
+        meta = export_meta(project)
+        assert result["export_status"] == "assembly_completed"
+        assert meta["status"] == "complete"
+        assert meta["failed_notes"] == 2
+        assert meta["failed_concepts"] == ["stroma", "thylakoid"]
+        assert meta["progress"] < 100
+        assert "2 of 16 notes failed" in meta["message"]
+
+        by_id = {n.concept_id: n for n in nodes}
+        assert by_id["stroma"].content is None
+        assert by_id["concept 0"].content.endswith("real note")
+
+        archive = zipfile.ZipFile(io.BytesIO(storage.uploads[f"exports/{PROJECT_ID}.zip"]))
+        assert "failed to generate" not in archive.read("stroma.md").decode()
+
+    def test_clean_export_reports_zero_failures(self, harness):
+        processor, project, *_ = harness(["grana", "stroma"], {})
+        run_until_done(processor)
+        meta = export_meta(project)
+        assert meta["failed_notes"] == 0
+        assert meta["progress"] == 100
+
+
+class TestBoundedAttempts:
+    def test_transient_failure_retried_up_to_the_limit(self, harness):
+        processor, project, *_ = harness(["grana", "stroma"], {"stroma": timeout})
+        run_until_done(processor)
+        assert processor.note_service.calls["stroma"] == MAX_NOTE_ATTEMPTS
+        assert export_meta(project)["note_failures"]["stroma"]["attempts"] == MAX_NOTE_ATTEMPTS
+        assert export_meta(project)["failed_notes"] == 1
+
+    def test_client_error_not_retried(self, harness):
+        processor, project, *_ = harness(["grana", "stroma"], {"stroma": lambda: client_error(402)})
+        run_until_done(processor)
+        assert processor.note_service.calls["stroma"] == 1
+        assert export_meta(project)["note_failures"]["stroma"]["error"] == "provider returned http 402"
+
+    def test_legacy_placeholder_regenerated(self, harness):
+        processor, project, nodes, *_ = harness(
+            ["stroma"], {}, content={"stroma": "failed to generate note for stroma."}
+        )
+        run_until_done(processor)
+        assert nodes[0].content.endswith("real note")
+        assert export_meta(project)["failed_notes"] == 0
+
+
+class TestTotalFailure:
+    def test_every_note_failing_fails_the_export(self, harness):
+        processor, project, _, storage, _ = harness(
+            ["grana", "stroma"], {"grana": client_error, "stroma": client_error}
+        )
+        result = run_until_done(processor)
+        assert result["export_status"] == "failed"
+        assert export_meta(project)["status"] == "failed"
+        assert "no notes could be generated" in export_meta(project)["error"]
+        assert storage.uploads == {}
+
+
+class TestStepFailures:
+    def test_transient_step_failure_reraised_for_queue_retry(self, harness):
+        processor, *_ = harness(["grana"], {})
+
+        async def enqueue():
+            raise timeout()
+
+        processor._enqueue_next_step = enqueue
+        with pytest.raises(openai.APITimeoutError):
+            asyncio.run(processor.process())
+
+    def test_permanent_step_failure_recorded(self, harness):
+        processor, project, *_ = harness(["grana"], {})
+
+        async def enqueue():
+            raise client_error(401)
+
+        processor._enqueue_next_step = enqueue
+        result = asyncio.run(processor.process())
+        assert result == {"export_status": "failed", "error": "provider returned http 401"}
+        assert export_meta(project)["status"] == "failed"

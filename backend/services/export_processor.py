@@ -1,7 +1,8 @@
 import logging
 import asyncio
 import re
-from typing import List, Optional
+from typing import Dict, List, Optional
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from db.session import SessionLocal
@@ -10,6 +11,10 @@ from core.errors import describe_error, is_transient
 from services.llm.note_service import NodeNoteService
 
 logger = logging.getLogger(__name__)
+
+# each attempt already includes the note service's own retries
+MAX_NOTE_ATTEMPTS = 2
+LEGACY_FAILED_NOTE_PREFIX = "failed to generate note for "
 
 class ExportProcessor:
     """
@@ -43,24 +48,23 @@ class ExportProcessor:
             if not project:
                 raise ValueError("project not found")
 
-            from sqlalchemy import or_
+            export_meta = (project.project_metadata or {}).get("export") or {}
+            note_failures = dict(export_meta.get("note_failures") or {})
+            exhausted = {
+                cid for cid, f in note_failures.items() if f.get("attempts", 0) >= MAX_NOTE_ATTEMPTS
+            }
 
-            # find nodes missing content (batch processing)
-            missing_nodes = db.query(models.GraphNode).filter(
-                models.GraphNode.project_id == self.project_id,
-                or_(models.GraphNode.content == None, models.GraphNode.content == "")
-            ).limit(10).all() # process in batches of 10
+            missing_nodes = self._pending_query(db, exhausted).limit(10).all()
 
             if missing_nodes:
-                await self._process_batch(db, missing_nodes)
+                await self._process_batch(db, missing_nodes, note_failures, exhausted)
                 # self-enqueue to continue
                 await self._enqueue_next_step()
                 return {"export_status": "batch_partial", "nodes_processed": len(missing_nodes)}
             else:
-                # all notes generated, move to assembly
-                logger.info(f"all notes generated for project {self.project_id}. moving to assembly.")
-                await self._assemble_vault(db)
-                return {"export_status": "assembly_completed"}
+                logger.info(f"no notes left to generate for project {self.project_id}. moving to assembly.")
+                summary = await self._assemble_vault(db, note_failures)
+                return {"export_status": "assembly_completed", **summary}
 
         except Exception as e:
             logger.exception(f"export processing failed for project {self.project_id}")
@@ -73,26 +77,43 @@ class ExportProcessor:
         finally:
             db.close()
 
-    async def _process_batch(self, db: Session, nodes: List[models.GraphNode]):
-        """generates notes for a batch of nodes"""
-        from sqlalchemy import or_
-        total_missing = db.query(models.GraphNode).filter(
+    def _pending_query(self, db: Session, exhausted: set[str]):
+        """nodes still needing a note, skipping ones that ran out of attempts"""
+        query = db.query(models.GraphNode).filter(
             models.GraphNode.project_id == self.project_id,
-            or_(models.GraphNode.content == None, models.GraphNode.content == "")
-        ).count()
-        
+            or_(
+                models.GraphNode.content == None,
+                models.GraphNode.content == "",
+                # older builds saved this placeholder as the note when generation failed
+                models.GraphNode.content.like(f"{LEGACY_FAILED_NOTE_PREFIX}%"),
+            ),
+        )
+        if exhausted:
+            query = query.filter(models.GraphNode.concept_id.notin_(exhausted))
+        return query
+
+    async def _process_batch(
+        self,
+        db: Session,
+        nodes: List[models.GraphNode],
+        note_failures: Dict[str, dict],
+        exhausted: set[str],
+    ):
+        """generates notes for a batch of nodes, recording failures in note_failures"""
         total_nodes = db.query(models.GraphNode).filter(
             models.GraphNode.project_id == self.project_id
         ).count()
+        pending = self._pending_query(db, exhausted).count()
+        done = total_nodes - pending
 
-        progress = int(((total_nodes - total_missing) / total_nodes) * 100) if total_nodes > 0 else 0
+        progress = int((done / total_nodes) * 100) if total_nodes > 0 else 0
         
-        logger.info(f"project {self.project_id} export progress: {progress}% ({total_nodes - total_missing}/{total_nodes})")
+        logger.info(f"project {self.project_id} export progress: {progress}% ({done}/{total_nodes})")
         
         self._update_metadata(db, {
             "status": "generating",
             "progress": progress,
-            "message": f"generating notes: {total_nodes - total_missing}/{total_nodes}"
+            "message": f"generating notes: {done}/{total_nodes}"
         })
 
         sem = asyncio.Semaphore(10)
@@ -114,14 +135,26 @@ class ExportProcessor:
         results = await asyncio.gather(*(process_node(node) for node in nodes))
 
         for node, note_content, error in results:
-            if error:
-                logger.error(f"failed to generate note for {node.concept_id}: {error}")
-            elif note_content:
+            if error is None and note_content:
                 node.content = note_content
+                note_failures.pop(node.concept_id, None)
                 logger.info(f"generated note for {node.concept_id}")
-                
+                continue
+
+            reason = describe_error(error) if error else "empty note"
+            attempts = note_failures.get(node.concept_id, {}).get("attempts", 0) + 1
+            # a rejected request (bad key, no credit) fails the same way on every attempt
+            if error is not None and not is_transient(error):
+                attempts = MAX_NOTE_ATTEMPTS
+            note_failures[node.concept_id] = {"attempts": attempts, "error": reason}
+            logger.error(
+                f"note generation failed for {node.concept_id} "
+                f"(attempt {attempts}/{MAX_NOTE_ATTEMPTS}): {reason}"
+            )
+
         # save all completed generation contents
         db.commit()
+        self._update_metadata(db, {"note_failures": note_failures})
 
     async def _enqueue_next_step(self):
         """re-publishes the same export task to the queue"""
@@ -135,7 +168,7 @@ class ExportProcessor:
             openrouter_key=self.openrouter_key
         )
 
-    async def _assemble_vault(self, db: Session):
+    async def _assemble_vault(self, db: Session, note_failures: Dict[str, dict]) -> dict:
         """
         gathers all nodes, generates markdown, and zips them for export.
         """
@@ -147,6 +180,13 @@ class ExportProcessor:
             nodes = db.query(models.GraphNode).filter(models.GraphNode.project_id == self.project_id).all()
             if not nodes:
                 raise ValueError("no nodes found for project export")
+
+            failed = sorted(
+                n.concept_id for n in nodes if n.concept_id in note_failures and not self._has_note(n)
+            )
+            if len(failed) == len(nodes):
+                reason = note_failures[failed[0]].get("error", "unknown error")
+                raise ValueError(f"no notes could be generated ({reason})")
 
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
@@ -161,14 +201,28 @@ class ExportProcessor:
             zip_filename = f"exports/{self.project_id}.zip"
             storage.upload_file(zip_buffer.getvalue(), zip_filename)
 
-            # update metadata
+            total = len(nodes)
+            message = "vault assembly complete."
+            if failed:
+                message = f"vault assembly complete. {len(failed)} of {total} notes failed to generate."
+            summary = {
+                "total_notes": total,
+                "failed_notes": len(failed),
+                "failed_concepts": failed,
+            }
             self._update_metadata(db, {
                 "status": "complete",
-                "progress": 100,
-                "message": "vault assembly complete.",
-                "download_url": zip_filename # frontend will convert to public url or signed url
+                # a partial vault never reads as 100%
+                "progress": int((total - len(failed)) / total * 100),
+                "message": message,
+                "download_url": zip_filename, # frontend will convert to public url or signed url
+                **summary,
             })
-            logger.info(f"successfully assembled and uploaded vault for project {self.project_id}")
+            logger.info(
+                f"assembled vault for project {self.project_id}: {total - len(failed)}/{total} notes, "
+                f"{len(failed)} failed"
+            )
+            return summary
 
         except Exception as e:
             raise RuntimeError(f"vault assembly failed: {describe_error(e)}") from e
@@ -190,6 +244,10 @@ class ExportProcessor:
         used.add(candidate.lower())
         return candidate
 
+    @staticmethod
+    def _has_note(node: models.GraphNode) -> bool:
+        return bool(node.content) and not node.content.startswith(LEGACY_FAILED_NOTE_PREFIX)
+
     def _format_node_as_markdown(self, node: models.GraphNode) -> str:
         """formats a graph node as an obsidian-style markdown file"""
         # frontmatter
@@ -201,7 +259,7 @@ class ExportProcessor:
         lines.append("")
 
         # content
-        if node.content:
+        if self._has_note(node):
             lines.append(node.content)
             lines.append("")
 

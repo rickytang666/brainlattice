@@ -48,30 +48,28 @@ class NodeNoteService:
             context_chunks=context_chunks,
         )
 
-        try:
-            config = {"temperature": 0.0}
-            response = await self._generate_content_with_retry(prompt, config)
+        # failures propagate: a placeholder note would be saved and shipped as if it were real
+        config = {"temperature": 0.0}
+        response = await self._generate_content_with_retry(prompt, config)
 
-            note_content = response.text.strip().lower()
-            valid_ids = {n.concept_id for n in db.query(models.GraphNode).filter(
-                models.GraphNode.project_id == project_id
-            ).all()}
-            note_content = repair_note_markdown(note_content, valid_concept_ids=valid_ids)
+        note_content = (response.text or "").strip().lower()
+        if not note_content:
+            raise ValueError(f"model returned an empty note for {concept_id}")
+        valid_ids = {n.concept_id for n in db.query(models.GraphNode).filter(
+            models.GraphNode.project_id == project_id
+        ).all()}
+        note_content = repair_note_markdown(note_content, valid_concept_ids=valid_ids)
 
-            # append missing links to content
-            if outbound_links:
-                lower_content = note_content.lower()
-                missing_links = [link for link in outbound_links if f"[[{link.lower()}]]" not in lower_content]
-                
-                if missing_links:
-                    note_content += "\n\n## related\n\n" + "\n".join([f"- [[{link}]]" for link in missing_links])
+        # append missing links to content
+        if outbound_links:
+            lower_content = note_content.lower()
+            missing_links = [link for link in outbound_links if f"[[{link.lower()}]]" not in lower_content]
 
-            logger.info(f"successfully generated {len(note_content)} chars for {concept_id} (included {len(outbound_links) if outbound_links else 0} links)")
-            return note_content
-            
-        except Exception as e:
-            logger.error(f"failed to generate note for {concept_id}: {e}")
-            return f"failed to generate note for {concept_id}."
+            if missing_links:
+                note_content += "\n\n## related\n\n" + "\n".join([f"- [[{link}]]" for link in missing_links])
+
+        logger.info(f"successfully generated {len(note_content)} chars for {concept_id} (included {len(outbound_links) if outbound_links else 0} links)")
+        return note_content
 
     @retry(wait=wait_exponential(multiplier=1, max=10), stop=stop_after_attempt(3))
     async def _generate_content_with_retry(self, prompt: str, config: dict):
