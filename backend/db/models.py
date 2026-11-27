@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Index, func
+from sqlalchemy import Column, String, Text, Integer, DateTime, ForeignKey, Index, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from pgvector.sqlalchemy import Vector
 from db.session import Base
@@ -36,8 +36,41 @@ class Chunk(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
-        Index("chunks_embedding_idx", "embedding", postgresql_using="hnsw", postgresql_with={"m": 16, "ef_construction": 64}),
+        Index(
+            "idx_chunk_embedding",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
     )
+
+class Job(Base):
+    """async job state"""
+    __tablename__ = "jobs"
+
+    id = Column(String, primary_key=True)
+    job_type = Column(String, nullable=False)
+    status = Column(String, nullable=False, default="pending")
+    progress = Column(Integer, nullable=False, default=0)
+    # never holds byok keys; see core.auth.BYOK_FIELDS
+    job_metadata = Column(JSONB, server_default="{}")
+    result = Column(JSONB, nullable=True)
+    extraction_cache = Column(JSONB, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        Index("idx_jobs_updated_at", "updated_at"),
+    )
+
+
+class Counter(Base):
+    """simple named counters (e.g. cli copy tracking)"""
+    __tablename__ = "counters"
+
+    name = Column(String, primary_key=True)
+    value = Column(Integer, nullable=False, default=0)
+
 
 class GraphNode(Base):
     __tablename__ = "graph_nodes"

@@ -10,7 +10,7 @@ engine_kwargs = {
     "pool_pre_ping": True
 }
 
-# pooled connection for neon (serverless-friendly) or local postgres
+# pooled connection for neon or local postgres
 engine = create_engine(settings.DATABASE_URL, **engine_kwargs)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

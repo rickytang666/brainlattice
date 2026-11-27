@@ -87,7 +87,7 @@ class TestJobRetry:
         monkeypatch.setattr(task_orchestrator, "get_storage_service", lambda: None)
         monkeypatch.setattr(task_orchestrator, "get_job_service", lambda: jobs)
         monkeypatch.setattr(task_orchestrator, "get_queue_service", lambda: queue)
-        monkeypatch.setenv("WORKER_PUBLIC_URL", "https://worker.invalid")
+        monkeypatch.setattr(task_orchestrator.settings, "WORKER_PUBLIC_URL", "https://worker.invalid")
 
         caller = ctx(OWNER, gemini_key="g2", openrouter_key="r2")
         asyncio.run(ingest.retry_ingest("job_1", background_tasks=None, context=caller))
@@ -193,7 +193,7 @@ class TestFinalizeUpload:
         monkeypatch.setattr(task_orchestrator, "get_storage_service", lambda: None)
         monkeypatch.setattr(task_orchestrator, "get_job_service", lambda: jobs)
         monkeypatch.setattr(task_orchestrator, "get_queue_service", lambda: FakeQueue())
-        monkeypatch.setenv("WORKER_PUBLIC_URL", "https://worker.invalid")
+        monkeypatch.setattr(task_orchestrator.settings, "WORKER_PUBLIC_URL", "https://worker.invalid")
 
     def finalize(self, monkeypatch, project, caller):
         monkeypatch.setattr("db.session.SessionLocal", lambda: FakeProjectDb(project))

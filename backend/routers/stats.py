@@ -2,17 +2,13 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 import httpx
 import logging
-from core.config import get_settings
+from sqlalchemy import text
+from db.session import SessionLocal
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-settings = get_settings()
 
-def get_redis_client():
-    if settings.UPSTASH_REDIS_REST_URL and settings.UPSTASH_REDIS_REST_TOKEN:
-        from upstash_redis import Redis
-        return Redis(url=settings.UPSTASH_REDIS_REST_URL, token=settings.UPSTASH_REDIS_REST_TOKEN)
-    return None
+COPIES_COUNTER = "cli_copies"
 
 class DownloadStats(BaseModel):
     npm_downloads: int
@@ -33,13 +29,17 @@ async def get_download_stats():
         logger.error(f"failed to fetch npm stats: {e}")
 
     copies_count = 0
-    redis = get_redis_client()
-    if redis:
-        try:
-            val = redis.get("brainlattice:stats:copies")
-            copies_count = int(val) if val else 0
-        except Exception as e:
-            logger.error(f"failed to fetch copies count from redis: {e}")
+    db = SessionLocal()
+    try:
+        row = db.execute(
+            text("SELECT value FROM counters WHERE name = :name"),
+            {"name": COPIES_COUNTER},
+        ).first()
+        copies_count = row[0] if row else 0
+    except Exception as e:
+        logger.error(f"failed to fetch copies count: {e}")
+    finally:
+        db.close()
 
     return DownloadStats(
         npm_downloads=npm_count,
@@ -49,13 +49,20 @@ async def get_download_stats():
 
 @router.post("/copy")
 async def track_cli_copy():
-    redis = get_redis_client()
-    if redis:
-        try:
-            # increment the copy counter
-            redis.incr("brainlattice:stats:copies")
-            return {"status": "ok"}
-        except Exception as e:
-            logger.error(f"failed to increment copies count in redis: {e}")
-            return {"status": "error", "message": "redis error"}
-    return {"status": "error", "message": "redis not configured"}
+    db = SessionLocal()
+    try:
+        db.execute(
+            text(
+                "INSERT INTO counters (name, value) VALUES (:name, 1) "
+                "ON CONFLICT (name) DO UPDATE SET value = counters.value + 1"
+            ),
+            {"name": COPIES_COUNTER},
+        )
+        db.commit()
+        return {"status": "ok"}
+    except Exception as e:
+        db.rollback()
+        logger.error(f"failed to increment copies count: {e}")
+        return {"status": "error", "message": "counter unavailable"}
+    finally:
+        db.close()

@@ -21,12 +21,14 @@ class ExportProcessor:
         project_id: str, 
         user_id: str, 
         gemini_key: str, 
-        openai_key: Optional[str] = None
+        openai_key: Optional[str] = None,
+        openrouter_key: Optional[str] = None
     ):
         self.project_id = project_id
         self.user_id = user_id
         self.gemini_key = gemini_key
         self.openai_key = openai_key
+        self.openrouter_key = openrouter_key
         self.note_service = NodeNoteService(gemini_key=gemini_key, openai_key=openai_key)
 
     async def process(self):
@@ -124,7 +126,8 @@ class ExportProcessor:
             project_id=self.project_id,
             user_id=self.user_id,
             gemini_key=self.gemini_key,
-            openai_key=self.openai_key
+            openai_key=self.openai_key,
+            openrouter_key=self.openrouter_key
         )
 
     async def _assemble_vault(self, db: Session):

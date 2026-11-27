@@ -19,7 +19,7 @@ class ProjectNotFound(Exception):
 class TaskOrchestrator:
     """
     handles high-level api ingestion and task dispatching:
-    upload to r2 -> create job in redis -> publish task to qstash
+    upload to r2 -> create job -> publish task to the queue
     """
 
     def __init__(self):
@@ -116,7 +116,7 @@ class TaskOrchestrator:
         )
         
         # publish task to worker
-        worker_url = os.getenv("WORKER_PUBLIC_URL")
+        worker_url = settings.WORKER_PUBLIC_URL
         if not worker_url or not self.queue:
             msg_id = "local_only"
             if background_tasks:
@@ -216,12 +216,12 @@ class TaskOrchestrator:
             )
             
             # publish task to worker
-            worker_url = os.getenv("WORKER_PUBLIC_URL")
+            worker_url = settings.WORKER_PUBLIC_URL
             if not worker_url or not self.queue:
                 if not worker_url:
-                    logger.warning("WORKER_PUBLIC_URL not set. running locally via background task.")
+                    logger.warning("worker_public_url not set, running locally via background task")
                 else:
-                    logger.warning("QStash service not configured. running locally via background task.")
+                    logger.warning("queue service not configured, running locally via background task")
                     
                 msg_id = "local_only"
                 if background_tasks:
@@ -271,7 +271,7 @@ class TaskOrchestrator:
     ) -> Dict[str, Any]:
         """
         re-triggers ingestion for an existing job ID
-        looks up details from Redis and re-publishes to QStash
+        looks up the stored job and re-publishes it to the worker
         """
         try:
             job = self.jobs.get_job(job_id)
@@ -303,12 +303,12 @@ class TaskOrchestrator:
             self.jobs.update_progress(job_id, "pending", 0)
             
             # re-publish to worker
-            worker_url = os.getenv("WORKER_PUBLIC_URL")
+            worker_url = settings.WORKER_PUBLIC_URL
             if not worker_url or not self.queue:
                 if not worker_url:
-                    logger.warning("worker_public_url not set. skipping qstash publish, running locally instead.")
+                    logger.warning("worker_public_url not set, running locally instead")
                 else:
-                    logger.warning("qstash service not configured. running locally instead.")
+                    logger.warning("queue service not configured, running locally instead")
                     
                 msg_id = "local_only"
                 if background_tasks:
@@ -360,7 +360,7 @@ class TaskOrchestrator:
         triggers the vault export process by publishing a prepare_export task
         """
         try:
-            worker_url = os.getenv("WORKER_PUBLIC_URL")
+            worker_url = settings.WORKER_PUBLIC_URL
             payload = {
                 "action": "prepare_export",
                 "project_id": project_id,
@@ -379,6 +379,7 @@ class TaskOrchestrator:
                         user_id=user_id,
                         gemini_key=gemini_key,
                         openai_key=openai_key,
+                        openrouter_key=openrouter_key,
                     )
                     background_tasks.add_task(processor.process)
                     logger.info(f"[local] export triggered for project {project_id}")

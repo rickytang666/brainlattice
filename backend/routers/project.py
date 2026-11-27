@@ -57,7 +57,7 @@ async def list_all_projects(
     db: Session = Depends(get_db),
     context: UserContext = Depends(get_user_context)
 ):
-    """list all projects from postgres filtered by user_id, with live redis progress"""
+    """list all projects for the caller, with live job progress"""
     try:
         projects = db.query(models.Project).filter(
             models.Project.user_id == context.user_id
@@ -85,7 +85,7 @@ async def list_all_projects(
                     if job:
                         base_p["progress"] = job.get("progress", 0)
                         
-                        # handle edge case where job failed in redis but db hasn't updated
+                        # job failed but the project row hasn't caught up yet
                         if job.get("status") == "failed":
                             base_p["status"] = "failed"
                 else:
