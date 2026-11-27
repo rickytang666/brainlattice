@@ -1,6 +1,9 @@
 -- one graph node per (project_id, concept_id) so re-ingest updates notes in place
 BEGIN;
 
+-- 002 created `description`; prod gained `content` outside the migrations, so fresh databases need it here
+ALTER TABLE graph_nodes ADD COLUMN IF NOT EXISTS content TEXT;
+
 -- drop duplicates first: keep a row with a real note, then the most recently updated
 WITH ranked AS (
     SELECT

@@ -133,6 +133,11 @@ class TestUniqueness:
         constraint = sql.index("UNIQUE (project_id, concept_id)")
         assert dedupe < constraint
 
+    def test_migration_adds_content_before_reading_it(self):
+        # 002 never created content, so a fresh database needs 008 to add it before the dedupe reads it
+        sql = MIGRATION.read_text()
+        assert sql.index("ADD COLUMN IF NOT EXISTS content TEXT") < sql.index("content IS NOT NULL")
+
 
 class TestOverlappingIngest:
     """a concurrent or redelivered ingest may insert the same concept between our read and our write"""
