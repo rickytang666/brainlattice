@@ -10,6 +10,7 @@ from openai import AsyncOpenAI
 from tenacity import retry, wait_exponential, stop_after_attempt
 
 from services.llm.prompt_service import get_prompt_service
+from services.llm.utils import strip_code_fence
 
 logger = logging.getLogger(__name__)
 
@@ -66,10 +67,7 @@ class SeedExtractor:
 
     def _parse_json_array(self, raw: str) -> List[str]:
         """parse json array from string, handling common wrapper patterns."""
-        if raw.startswith("```json"):
-            raw = raw[7:-3].strip()
-        elif raw.startswith("```"):
-            raw = raw[3:-3].strip()
+        raw = strip_code_fence(raw)
         arr = json.loads(raw)
         if not isinstance(arr, list):
             return []

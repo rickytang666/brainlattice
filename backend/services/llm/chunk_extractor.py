@@ -12,6 +12,7 @@ from tenacity import retry, wait_exponential, stop_after_attempt
 from pydantic import ValidationError
 from schemas.graph import GraphData
 from services.llm.prompt_service import get_prompt_service
+from services.llm.utils import strip_code_fence
 
 logger = logging.getLogger(__name__)
 
@@ -71,10 +72,7 @@ class ChunkExtractor:
 
     def _parse_graph_data(self, raw: str) -> GraphData:
         """parse json to graphdata, handling common wrapper patterns."""
-        if raw.startswith("```json"):
-            raw = raw[7:-3].strip()
-        elif raw.startswith("```"):
-            raw = raw[3:-3].strip()
+        raw = strip_code_fence(raw)
         try:
             data = json.loads(raw)
             if isinstance(data, dict) and "nodes" in data:
