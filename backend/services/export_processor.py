@@ -8,6 +8,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from db.session import SessionLocal
 from db import models
 from core.errors import describe_error, is_transient
+from services.embedding_service import EmbeddingService
 from services.llm.note_service import NodeNoteService
 
 logger = logging.getLogger(__name__)
@@ -15,6 +16,10 @@ logger = logging.getLogger(__name__)
 # each attempt already includes the note service's own retries
 MAX_NOTE_ATTEMPTS = 2
 LEGACY_FAILED_NOTE_PREFIX = "failed to generate note for "
+
+class EmbeddingProviderMismatch(ValueError):
+    """the export's embedding provider differs from the one that embedded the project's chunks"""
+
 
 class ExportProcessor:
     """
@@ -57,6 +62,7 @@ class ExportProcessor:
             missing_nodes = self._pending_query(db, exhausted).limit(10).all()
 
             if missing_nodes:
+                self._check_embedding_provider(db)
                 await self._process_batch(db, missing_nodes, note_failures, exhausted)
                 # self-enqueue to continue
                 await self._enqueue_next_step()
@@ -76,6 +82,31 @@ class ExportProcessor:
             return {"export_status": "failed", "error": describe_error(e)}
         finally:
             db.close()
+
+    def _check_embedding_provider(self, db: Session):
+        """note retrieval compares against stored chunk vectors, so both must come from one provider"""
+        current = EmbeddingService.provider_for(gemini_key=self.gemini_key, openai_key=self.openai_key)
+        stored = self._stored_embedding_providers(db)
+        mismatched = sorted(stored - {current})
+        if mismatched:
+            raise EmbeddingProviderMismatch(
+                f"this project was embedded with {', '.join(mismatched)} but this export would use {current}. "
+                "export with the same api keys used for ingest (an openai key selects openai embeddings, "
+                "otherwise gemini is used)."
+            )
+
+    def _stored_embedding_providers(self, db: Session) -> set[str]:
+        rows = (
+            db.query(models.Chunk.embedding_provider)
+            .join(models.File, models.Chunk.file_id == models.File.id)
+            .filter(
+                models.File.project_id == self.project_id,
+                models.Chunk.embedding_provider.isnot(None),
+            )
+            .distinct()
+            .all()
+        )
+        return {provider for (provider,) in rows}
 
     def _pending_query(self, db: Session, exhausted: set[str]):
         """nodes still needing a note, skipping ones that ran out of attempts"""

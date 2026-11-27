@@ -161,6 +161,7 @@ class IngestionProcessor:
                     file_id=db_file.id,
                     content=chunk.page_content,
                     embedding=vectors[i],
+                    embedding_provider=self.embedder.provider,
                     chunk_metadata=chunk.metadata
                 ) for i, chunk in enumerate(chunks)
             ]

@@ -1,4 +1,5 @@
-"""a note that fails to generate must be reported, never shipped as a real note or as 100%."""
+"""a note that fails to generate must be reported, never shipped as a real note or as 100%;
+and an export must not mix embedding providers with the chunks it retrieves."""
 import asyncio
 import io
 import uuid
@@ -86,7 +87,7 @@ class FakeStorage:
 
 @pytest.fixture
 def harness(monkeypatch):
-    def build(concepts, failures, content=None):
+    def build(concepts, failures, content=None, stored_providers=frozenset(), openai_key=None):
         project = models.Project(id=PROJECT_ID, title="bio", project_metadata={"export": {"status": "pending"}})
         nodes = [
             models.GraphNode(project_id=PROJECT_ID, concept_id=c, content=(content or {}).get(c), aliases=[])
@@ -103,8 +104,11 @@ def harness(monkeypatch):
             )
 
         monkeypatch.setattr(ExportProcessor, "_pending_query", pending)
+        monkeypatch.setattr(ExportProcessor, "_stored_embedding_providers", lambda self, _db: set(stored_providers))
 
-        processor = ExportProcessor(project_id=str(PROJECT_ID), user_id="u", gemini_key="test-key")
+        processor = ExportProcessor(
+            project_id=str(PROJECT_ID), user_id="u", gemini_key="test-key", openai_key=openai_key
+        )
         processor.note_service = FakeNotes(failures)
         enqueued = []
 
@@ -217,3 +221,33 @@ class TestStepFailures:
         result = asyncio.run(processor.process())
         assert result == {"export_status": "failed", "error": "provider returned http 401"}
         assert export_meta(project)["status"] == "failed"
+
+
+class TestEmbeddingProvider:
+    def test_mismatched_provider_fails_before_generating(self, harness):
+        processor, project, nodes, storage, _ = harness(["stroma"], {}, stored_providers={"gemini"}, openai_key="sk-test")
+        result = asyncio.run(processor.process())
+
+        meta = export_meta(project)
+        assert result["export_status"] == "failed"
+        assert meta["status"] == "failed"
+        assert "embedded with gemini" in meta["error"]
+        assert "would use openai" in meta["error"]
+        assert processor.note_service.calls == {}
+        assert nodes[0].content is None
+
+    def test_matching_provider_exports(self, harness):
+        processor, project, *_ = harness(["stroma"], {}, stored_providers={"gemini"})
+        run_until_done(processor)
+        assert export_meta(project)["status"] == "complete"
+
+    def test_legacy_chunks_without_provider_export(self, harness):
+        processor, project, *_ = harness(["stroma"], {}, stored_providers=set(), openai_key="sk-test")
+        run_until_done(processor)
+        assert export_meta(project)["status"] == "complete"
+
+    def test_mismatch_is_not_retried_by_the_queue(self, harness):
+        from core.errors import is_transient
+        from services.export_processor import EmbeddingProviderMismatch
+
+        assert not is_transient(EmbeddingProviderMismatch("x"))

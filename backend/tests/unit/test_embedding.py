@@ -58,3 +58,15 @@ def test_get_embeddings_batch(mock_openai):
     assert len(embeddings) == 2
     assert embeddings[0] == [0.1]
     assert embeddings[1] == [0.2]
+
+
+def test_provider_for_matches_constructor_precedence(mock_openai):
+    assert EmbeddingService.provider_for(gemini_key="g", openai_key="o") == "openai"
+    assert EmbeddingService(gemini_key="g", openai_key="o").provider == "openai"
+    assert EmbeddingService.provider_for(gemini_key="g") == "gemini"
+
+
+def test_chunk_model_records_provider():
+    from db.models import Chunk
+
+    assert "embedding_provider" in Chunk.__table__.columns
