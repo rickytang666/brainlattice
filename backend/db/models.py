@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Integer, DateTime, ForeignKey, Index, func
+from sqlalchemy import Column, String, Text, Integer, DateTime, ForeignKey, Index, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from pgvector.sqlalchemy import Vector
 from db.session import Base
@@ -86,7 +86,7 @@ class GraphNode(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    # index for fast concept lookup within a project
+    # one row per concept; re-ingest updates it in place so notes survive
     __table_args__ = (
-        Index("idx_project_concept", "project_id", "concept_id"),
+        UniqueConstraint("project_id", "concept_id", name="uq_graph_nodes_project_concept"),
     )
