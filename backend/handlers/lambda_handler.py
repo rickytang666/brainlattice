@@ -1,23 +1,15 @@
 from mangum import Mangum
 from main import app
 import json
-import os
 import asyncio
 
-# pipeline services
-from db.session import get_db, SessionLocal
-from db import models
-
-# api handler
 api_handler = Mangum(app)
 
-# worker handler
+
 def worker_handler(event, context):
     """
     processes async background tasks triggered by qstash webhook
     """
-    print(f"[WORKER] received event: {json.dumps(event)}")
-    
     try:
         # extract payload
         body = event.get("body")
@@ -31,7 +23,10 @@ def worker_handler(event, context):
         openai_key = payload.get("openai_key")
         openrouter_key = payload.get("openrouter_key")
         user_id = payload.get("user_id")
-        
+
+        # never log the event itself: the payload carries byok api keys.
+        print(f"[WORKER] job={job_id} action={action}")
+
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError:

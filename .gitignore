@@ -32,3 +32,8 @@ plan/
 .neon
 .neonrc
 .wrangler/
+.workspace/
+
+# markdown
+CLAUDE.md
+AGENTS.md

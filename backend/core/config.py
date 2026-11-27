@@ -7,6 +7,14 @@ class Settings(BaseSettings):
     APP_NAME: str = "BrainLattice API"
     DEBUG: bool = False
     INTERNAL_SECRET_KEY: Optional[str] = None
+
+    # clerk auth (jwt verification). set at least one of these in production;
+    # without them the backend cannot verify identity.
+    CLERK_JWKS_URL: Optional[str] = None
+    CLERK_ISSUER: Optional[str] = None
+
+    # comma-separated list of allowed browser origins. "*" only for local dev.
+    CORS_ALLOW_ORIGINS: str = "*"
     
     # database (neon postgres)
     DATABASE_URL: str

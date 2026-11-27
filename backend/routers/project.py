@@ -1,12 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from core.dependencies import get_user_context, UserContext
+from core.auth import is_anonymous_id
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from db.session import get_db
 from db import models
 from schemas.project import ProjectSaveRequest, ProjectSaveResponse, ProjectGetResponse, UpdateTitleRequest, ProjectTransferRequest, ProjectTransferResponse
-from fastapi import Header
-import uuid
 from services.job_service import get_job_service
 
 router = APIRouter()
@@ -284,12 +283,19 @@ async def transfer_projects(
     db: Session = Depends(get_db),
     context: UserContext = Depends(get_user_context)
 ):
-    """transfer projects from one user to another (used during auth migration)"""
+    """claim an anonymous session's projects for the signed-in caller"""
     try:
-        # require request sender to be the target owner
-        if context.user_id != request.target_id:
+        # the caller must hold a verified session, and may only claim for itself
+        if context.is_anonymous or context.user_id != request.target_id:
             raise HTTPException(status_code=403, detail="unauthorized transfer")
-            
+
+        # the source must be an anonymous session id, never another real account
+        if not is_anonymous_id(request.source_id):
+            raise HTTPException(
+                status_code=403,
+                detail="only anonymous sessions can be claimed",
+            )
+
         projects = db.query(models.Project).filter(models.Project.user_id == request.source_id).all()
         count = len(projects)
         

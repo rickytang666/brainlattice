@@ -6,10 +6,15 @@ from typing import Dict, Any, Optional
 from services.storage_service import get_storage_service
 from services.job_service import get_job_service
 from services.queue_service import get_queue_service
+from core.auth import BYOK_FIELDS
 from core.config import get_settings
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
+
+class ProjectNotFound(Exception):
+    """the project doesn't exist or belongs to another user"""
+
 
 class TaskOrchestrator:
     """
@@ -79,14 +84,12 @@ class TaskOrchestrator:
         Phase 2: Once file is in R2, trigger the processing job.
         """
         job_id = str(uuid.uuid4())
+        # byok keys never enter job state; they travel only in the queue payload
         metadata = {
             "filename": filename, 
             "s3_key": s3_key,
             "project_id": project_id,
             "user_id": user_id,
-            "gemini_key": gemini_key,
-            "openai_key": openai_key,
-            "openrouter_key": openrouter_key
         }
         
         # update project metadata with job_id for frontend tracking
@@ -95,13 +98,14 @@ class TaskOrchestrator:
         db = SessionLocal()
         try:
             project = db.query(models.Project).filter(models.Project.id == project_id).first()
-            if project:
-                meta = project.project_metadata or {}
-                meta["job_id"] = job_id
-                project.project_metadata = meta
-                from sqlalchemy.orm.attributes import flag_modified
-                flag_modified(project, "project_metadata")
-                db.commit()
+            if not project or project.user_id != user_id:
+                raise ProjectNotFound(project_id)
+            meta = project.project_metadata or {}
+            meta["job_id"] = job_id
+            project.project_metadata = meta
+            from sqlalchemy.orm.attributes import flag_modified
+            flag_modified(project, "project_metadata")
+            db.commit()
         finally:
             db.close()
 
@@ -196,15 +200,13 @@ class TaskOrchestrator:
             
             # create job record
             job_id = str(uuid.uuid4())
+            # byok keys never enter job state (see finalize_ingestion)
             metadata = {
                 "filename": filename, 
                 "file_id": file_id, 
                 "s3_key": s3_key,
                 "project_id": project_id,
                 "user_id": user_id,
-                "gemini_key": gemini_key,
-                "openai_key": openai_key,
-                "openrouter_key": openrouter_key
             }
             
             self.jobs.create_job(
@@ -283,16 +285,18 @@ class TaskOrchestrator:
             if not s3_key:
                 raise ValueError(f"missing s3_key in job {job_id} metadata")
 
-            # update metadata with fresh user_id/keys if provided
+            # keys are never persisted, so a retry must carry fresh ones.
+            if not gemini_key or not openrouter_key:
+                raise ValueError(
+                    "api keys are required to retry a job. they are not stored server-side."
+                )
+
             if user_id:
                 metadata["user_id"] = user_id
-            if gemini_key:
-                metadata["gemini_key"] = gemini_key
-            if openai_key:
-                metadata["openai_key"] = openai_key
-            if openrouter_key is not None:
-                metadata["openrouter_key"] = openrouter_key
-                
+            # scrub keys left by jobs created before they stopped being stored
+            for field in BYOK_FIELDS:
+                metadata.pop(field, None)
+
             self.jobs.create_job(job_id=job_id, job_type="ingest_pdf", metadata=metadata)
 
             # reset job status
@@ -312,9 +316,10 @@ class TaskOrchestrator:
                     processor = IngestionProcessor(
                         job_id=job_id,
                         file_key=s3_key,
-                        gemini_key=metadata.get("gemini_key"),
-                        openai_key=metadata.get("openai_key"),
-                        openrouter_key=metadata.get("openrouter_key")
+                        gemini_key=gemini_key,
+                        openai_key=openai_key,
+                        openrouter_key=openrouter_key,
+                        user_id=metadata.get("user_id"),
                     )
                     background_tasks.add_task(processor.process)
             else:
@@ -324,9 +329,9 @@ class TaskOrchestrator:
                         "job_id": job_id, 
                         "file_key": s3_key, 
                         "action": "ingest",
-                        "gemini_key": metadata.get("gemini_key"),
-                        "openai_key": metadata.get("openai_key"),
-                        "openrouter_key": metadata.get("openrouter_key"),
+                        "gemini_key": gemini_key,
+                        "openai_key": openai_key,
+                        "openrouter_key": openrouter_key,
                         "user_id": metadata.get("user_id")
                     }
                 )

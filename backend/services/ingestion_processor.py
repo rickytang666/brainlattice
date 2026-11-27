@@ -68,6 +68,7 @@ class IngestionProcessor:
         temp_path = f"/tmp/{self.job_id}.pdf"
         self.timings = {}
         pipeline_start = time.time()
+        project_id = None  # bound early so the except block can always read it
         
         try:
             self.jobs.update_progress(self.job_id, "processing", 10)
@@ -85,10 +86,10 @@ class IngestionProcessor:
             project_id = metadata.get("project_id")
             filename = metadata.get("filename", "unknown.pdf")
             
-            # prioritize keys from constructor over stale metadata
-            gemini_key = self.gemini_key or metadata.get("gemini_key")
-            openai_key = self.openai_key or metadata.get("openai_key")
-            openrouter_key = self.openrouter_key or metadata.get("openrouter_key")
+            # keys come only from the queue payload; they are never persisted.
+            gemini_key = self.gemini_key
+            openai_key = self.openai_key
+            openrouter_key = self.openrouter_key
             user_id = self.user_id or metadata.get("user_id")
             
             if not gemini_key:
@@ -251,10 +252,11 @@ class IngestionProcessor:
             
             # update project status to failed
             try:
-                project = db.query(models.Project).filter(models.Project.id == project_id).first()
-                if project:
-                    project.status = "failed"
-                    db.commit()
+                if project_id:
+                    project = db.query(models.Project).filter(models.Project.id == project_id).first()
+                    if project:
+                        project.status = "failed"
+                        db.commit()
             except Exception as db_err:
                 logger.exception(f"failed to update project status: {db_err}")
                 

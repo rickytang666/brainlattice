@@ -9,6 +9,8 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
+const CLI_JWT_TEMPLATE = "cli";
+
 export default function CliAuthRoute() {
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
@@ -28,13 +30,17 @@ export default function CliAuthRoute() {
       }
 
       try {
-        const token = await getToken();
+        // clerk's default token lives 60s, too short to store; the cli template extends it
+        const token = await getToken({ template: CLI_JWT_TEMPLATE }).catch(() => null);
+        if (!token) {
+          throw new Error(
+            `could not mint a CLI token. create a JWT template named "${CLI_JWT_TEMPLATE}" in the Clerk dashboard.`
+          );
+        }
         
         const callbackUrl = new URL(redirectUri);
         callbackUrl.searchParams.set("user_id", user.id);
-        if (token) {
-          callbackUrl.searchParams.set("token", token);
-        }
+        callbackUrl.searchParams.set("token", token);
 
         // ping the cli in the background
         await fetch(callbackUrl.toString(), { mode: 'no-cors' });

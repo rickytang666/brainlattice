@@ -1,12 +1,10 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks, Header
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
+from core.auth import BYOK_FIELDS
 from core.dependencies import get_user_context, UserContext
-from services.storage_service import S3StorageService
 from services.job_service import get_job_service
 
 from core.config import get_settings
 from schemas.ingest import RequestUploadRequest, FinalizeUploadRequest
-import uuid
-import os
 
 router = APIRouter()
 settings = get_settings()
@@ -35,8 +33,9 @@ async def finalize_upload(
     context: UserContext = Depends(get_user_context)
 ):
     """Phase 2: Trigger processing after the file has been uploaded to R2"""
+    from services.task_orchestrator import ProjectNotFound, TaskOrchestrator
+
     try:
-        from services.task_orchestrator import TaskOrchestrator
         orchestrator = TaskOrchestrator()
         result = await orchestrator.finalize_ingestion(
             project_id=request.project_id,
@@ -49,6 +48,8 @@ async def finalize_upload(
             openrouter_key=context.openrouter_key
         )
         return result
+    except ProjectNotFound:
+        raise HTTPException(status_code=404, detail="project not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"finalize failed: {str(e)}")
 
@@ -89,14 +90,25 @@ async def upload_file(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"ingest failed: {str(e)}")
 
-@router.get("/ingest/status/{job_id}")
-async def get_status(job_id: str):
-    """check job status"""
-    jobs = get_job_service()
-    job = jobs.get_job(job_id)
-    if not job:
+def _get_owned_job(job_id: str, user_id: str) -> dict:
+    job = get_job_service().get_job(job_id)
+    # 404 rather than 403 for a non-owner: don't confirm the job exists
+    if not job or (job.get("metadata") or {}).get("user_id") != user_id:
         raise HTTPException(status_code=404, detail="job not found")
     return job
+
+@router.get("/ingest/status/{job_id}")
+async def get_status(
+    job_id: str,
+    context: UserContext = Depends(get_user_context)
+):
+    """check job status. only the job's owner may read it."""
+    job = _get_owned_job(job_id, context.user_id)
+    metadata = job.get("metadata") or {}
+
+    # strip keys left on jobs created before they stopped being stored
+    safe_metadata = {k: v for k, v in metadata.items() if k not in BYOK_FIELDS}
+    return {**job, "metadata": safe_metadata}
 
 @router.post("/ingest/retry/{job_id}")
 async def retry_ingest(
@@ -105,6 +117,8 @@ async def retry_ingest(
     context: UserContext = Depends(get_user_context)
 ):
     """manually retry a failed ingestion job using its ID"""
+    # retry rewrites the job's user_id to the caller, so it must check ownership first
+    _get_owned_job(job_id, context.user_id)
     try:
         from services.task_orchestrator import TaskOrchestrator
         orchestrator = TaskOrchestrator()
@@ -118,6 +132,8 @@ async def retry_ingest(
         )
         return result
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        # missing job is 404; anything else (e.g. absent api keys) is a bad request
+        status = 404 if "not found" in str(e).lower() else 400
+        raise HTTPException(status_code=status, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"retry failed: {str(e)}")
