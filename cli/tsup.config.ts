@@ -10,7 +10,8 @@ export default defineConfig({
   minify: true,
   sourcemap: true,
   env: {
-    BRAINLATTICE_API_URL: process.env.BRAINLATTICE_API_URL || 'https://api.brainlattice.rickytang.dev/api',
+    // not BRAINLATTICE_API_URL: tsup would inline it and kill the runtime override
+    BRAINLATTICE_DEFAULT_API_URL: process.env.BRAINLATTICE_DEFAULT_API_URL || 'https://api.brainlattice.rickytang.dev/api',
     BRAINLATTICE_FRONTEND_URL: process.env.BRAINLATTICE_FRONTEND_URL || 'https://brainlattice.rickytang.dev',
   }
 });

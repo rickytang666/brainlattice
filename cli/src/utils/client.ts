@@ -2,8 +2,11 @@ import axios, { AxiosInstance } from 'axios';
 import { getConfig } from './config.js';
 import chalk from 'chalk';
 
-// normalize backend url
-const rawUrl = process.env.BRAINLATTICE_API_URL || 'https://api.brainlattice.com/api';
+// BRAINLATTICE_API_URL is read at runtime, so self-hosters can point the cli at their own backend
+const rawUrl =
+  process.env.BRAINLATTICE_API_URL ||
+  process.env.BRAINLATTICE_DEFAULT_API_URL ||
+  'https://api.brainlattice.rickytang.dev/api';
 export const BACKEND_URL = rawUrl.endsWith('/') ? rawUrl : `${rawUrl}/`;
 
 export function createApiClient(): AxiosInstance {
