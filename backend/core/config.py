@@ -26,15 +26,15 @@ class Settings(BaseSettings):
     R2_SECRET_ACCESS_KEY: Optional[str] = None
     R2_S3_API_URL: Optional[str] = None
 
-    # upstash redis (job status tracking)
-    UPSTASH_REDIS_REST_URL: Optional[str] = None
-    UPSTASH_REDIS_REST_TOKEN: Optional[str] = None
+    # google cloud (async task queue)
+    GCP_PROJECT_ID: Optional[str] = None
+    CLOUD_TASKS_QUEUE: Optional[str] = None
+    CLOUD_TASKS_LOCATION: str = "us-central1"
+    # service account the queue mints oidc tokens as; the worker verifies it
+    CLOUD_TASKS_INVOKER_SA: Optional[str] = None
 
-    # qstash (async task queue)
-    QSTASH_URL: str = "https://qstash.upstash.io"
-    QSTASH_TOKEN: Optional[str] = None
-    QSTASH_CURRENT_SIGNING_KEY: str = ""
-    QSTASH_NEXT_SIGNING_KEY: str = ""
+    # full url of the /worker route: the queue's delivery target and the oidc audience
+    WORKER_PUBLIC_URL: Optional[str] = None
 
     model_config = SettingsConfigDict(
         env_file=".env",

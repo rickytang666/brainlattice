@@ -60,7 +60,7 @@ async def upload_file(
     context: UserContext = Depends(get_user_context)
 ):
     """
-    uploads file to r2, creates job in redis, triggers async worker via qstash or locally
+    uploads file to r2, creates a job, and dispatches it to the worker
     """
     try:
         from services.task_orchestrator import TaskOrchestrator
