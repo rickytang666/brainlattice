@@ -34,8 +34,10 @@ export async function apiFetch(input: RequestInfo | URL, init?: RequestInit, cle
   const headers = new Headers(init?.headers);
 
   // the backend ignores X-User-Id when a token is present; signed-out users send the uuid
-  const token = clerkUserId ? await getClerkToken() : null;
-  if (token) {
+  if (clerkUserId) {
+    const token = await getClerkToken();
+    // falling back to the anonymous uuid here would silently hide the user's projects
+    if (!token) throw new Error("Your session expired. Sign in again.");
     headers.set("Authorization", `Bearer ${token}`);
   } else {
     headers.set("X-User-Id", getSessionId());
