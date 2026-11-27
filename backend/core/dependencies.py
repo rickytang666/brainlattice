@@ -3,6 +3,8 @@ from typing import Optional
 from pydantic import BaseModel
 import logging
 
+import jwt
+
 from core.auth import (
     CLERK_ID_PREFIX,
     InvalidToken,
@@ -31,6 +33,13 @@ def _bearer_token(authorization: Optional[str]) -> Optional[str]:
     return token.strip() or None
 
 
+def _unverified_sub(token: str) -> Optional[str]:
+    try:
+        return jwt.decode(token, options={"verify_signature": False}).get("sub")
+    except jwt.PyJWTError:
+        return None
+
+
 def get_user_context(
     authorization: Optional[str] = Header(None, alias="Authorization"),
     x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
@@ -50,7 +59,10 @@ def get_user_context(
     }
 
     token = _bearer_token(authorization)
-    if token:
+    if token and not clerk_configured():
+        # local dev: frontend has clerk, backend doesn't; trust the token's sub like an unverified header
+        x_user_id = _unverified_sub(token) or x_user_id
+    elif token:
         try:
             claims = verify_clerk_token(token)
         except InvalidToken as e:

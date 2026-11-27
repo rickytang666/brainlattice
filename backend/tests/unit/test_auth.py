@@ -1,9 +1,4 @@
-"""
-covers the identity boundary: who the backend believes the caller is.
-
-these exist because the previous behaviour (trusting X-User-Id outright) was
-not caught by any test, and a regression here is silent.
-"""
+"""the identity boundary: who the backend believes the caller is."""
 import uuid
 
 import pytest
@@ -18,12 +13,7 @@ CLERK_ID = "user_2abcdefghijklmnop"
 
 
 def resolve(**overrides):
-    """
-    call the dependency directly.
-
-    fastapi normally fills the Header(...) defaults, so a bare call would pass
-    Header objects into UserContext. supply every parameter explicitly instead.
-    """
+    # every param is passed explicitly; a bare call would leak Header() defaults into UserContext
     kwargs = {
         "authorization": None,
         "x_user_id": None,
@@ -92,6 +82,10 @@ class TestImpersonation:
 
 
 class TestBearerTokens:
+    @pytest.fixture(autouse=True)
+    def clerk_on(self, monkeypatch):
+        monkeypatch.setattr("core.dependencies.clerk_configured", lambda: True)
+
     def test_valid_token_wins_over_header(self, monkeypatch):
         """X-User-Id must be ignored entirely when a token is present."""
         monkeypatch.setattr(
@@ -121,3 +115,36 @@ class TestBearerTokens:
         ctx = resolve(authorization=header, x_user_id=ANON)
         assert ctx.user_id == ANON
         assert ctx.is_anonymous
+
+
+class TestLocalDevTokens:
+    """frontend signed in through clerk while the backend has no clerk config"""
+
+    @pytest.fixture(autouse=True)
+    def clerk_off(self, monkeypatch):
+        monkeypatch.setattr("core.dependencies.clerk_configured", lambda: False)
+
+    def test_token_sub_used_without_verification(self):
+        import jwt
+
+        token = jwt.encode({"sub": CLERK_ID}, "local-dev-secret-at-least-32-bytes", algorithm="HS256")
+        ctx = resolve(authorization=f"Bearer {token}")
+        assert ctx.user_id == CLERK_ID
+
+    def test_undecodable_token_falls_back_to_header(self):
+        ctx = resolve(authorization="Bearer not-a-jwt", x_user_id=ANON)
+        assert ctx.user_id == ANON
+
+    def test_configured_clerk_never_trusts_unverified_sub(self, monkeypatch):
+        import jwt
+        from core.auth import InvalidToken
+
+        def reject(_):
+            raise InvalidToken("bad signature")
+
+        monkeypatch.setattr("core.dependencies.clerk_configured", lambda: True)
+        monkeypatch.setattr("core.dependencies.verify_clerk_token", reject)
+        forged = jwt.encode({"sub": CLERK_ID}, "attacker-secret-at-least-32-bytes", algorithm="HS256")
+        with pytest.raises(HTTPException) as exc:
+            resolve(authorization=f"Bearer {forged}")
+        assert exc.value.status_code == 401
