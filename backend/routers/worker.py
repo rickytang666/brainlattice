@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 
 from core.config import get_settings
+from core.errors import describe_error, is_transient
+from services.job_service import get_job_service
 
 router = APIRouter()
 settings = get_settings()
@@ -71,11 +73,36 @@ async def run_task(
 ) -> Dict[str, Any]:
     # never log the task body: it carries byok api keys
     logger.info(f"worker job={task.job_id} action={task.action}")
+    _validate(task)
 
+    try:
+        result = await _dispatch(task)
+    except Exception as e:
+        reason = describe_error(e)
+        # cloud tasks retries any non-2xx, so only failures a retry can fix get a 500
+        if is_transient(e):
+            logger.warning(f"worker job={task.job_id} action={task.action} transient failure: {reason}")
+            raise HTTPException(status_code=500, detail="transient failure, retry")
+        logger.error(f"worker job={task.job_id} action={task.action} failed: {reason}")
+        _record_failure(task, reason)
+        return {"status": "failed", "error": reason}
+
+    return {"status": "completed", **(result or {})}
+
+
+def _validate(task: WorkerTask):
     if task.action == "ingest":
         if not task.job_id or not task.file_key:
             raise HTTPException(status_code=400, detail="missing job_id or file_key")
+    elif task.action == "prepare_export":
+        if not task.project_id:
+            raise HTTPException(status_code=400, detail="missing project_id")
+    else:
+        raise HTTPException(status_code=400, detail=f"unknown action: {task.action}")
 
+
+async def _dispatch(task: WorkerTask) -> Optional[Dict[str, Any]]:
+    if task.action == "ingest":
         from services.ingestion_processor import IngestionProcessor
 
         processor = IngestionProcessor(
@@ -86,24 +113,31 @@ async def run_task(
             openrouter_key=task.openrouter_key,
             user_id=task.user_id,
         )
-        result = await processor.process()
+        return await processor.process()
 
-    elif task.action == "prepare_export":
-        if not task.project_id:
-            raise HTTPException(status_code=400, detail="missing project_id")
+    from services.export_processor import ExportProcessor
 
-        from services.export_processor import ExportProcessor
+    processor = ExportProcessor(
+        project_id=task.project_id,
+        user_id=task.user_id,
+        gemini_key=task.gemini_key,
+        openai_key=task.openai_key,
+        openrouter_key=task.openrouter_key,
+    )
+    return await processor.process()
 
-        processor = ExportProcessor(
-            project_id=task.project_id,
-            user_id=task.user_id,
-            gemini_key=task.gemini_key,
-            openai_key=task.openai_key,
-            openrouter_key=task.openrouter_key,
-        )
-        result = await processor.process()
 
-    else:
-        raise HTTPException(status_code=400, detail=f"unknown action: {task.action}")
+def _record_failure(task: WorkerTask, reason: str):
+    """mark the job failed unless the processor already recorded a more specific error"""
+    try:
+        if task.action == "ingest":
+            jobs = get_job_service()
+            job = jobs.get_job(task.job_id)
+            if job and job.get("status") != "failed":
+                jobs.update_progress(task.job_id, "failed", details={"error": reason})
+        else:
+            from services.export_processor import mark_export_failed
 
-    return {"status": "completed", **(result or {})}
+            mark_export_failed(task.project_id, reason)
+    except Exception:
+        logger.exception(f"could not record failure for job={task.job_id} action={task.action}")

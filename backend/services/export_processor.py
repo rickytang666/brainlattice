@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from db.session import SessionLocal
 from db import models
+from core.errors import describe_error, is_transient
 from services.llm.note_service import NodeNoteService
 
 logger = logging.getLogger(__name__)
@@ -63,8 +64,12 @@ class ExportProcessor:
 
         except Exception as e:
             logger.exception(f"export processing failed for project {self.project_id}")
-            self._update_metadata(db, {"status": "failed", "error": str(e)})
-            return {"export_status": "failed", "error": str(e)}
+            db.rollback()
+            self._update_metadata(db, {"status": "failed", "error": describe_error(e)})
+            # let the worker answer 500 so cloud tasks retries this step
+            if is_transient(e):
+                raise
+            return {"export_status": "failed", "error": describe_error(e)}
         finally:
             db.close()
 
@@ -166,8 +171,7 @@ class ExportProcessor:
             logger.info(f"successfully assembled and uploaded vault for project {self.project_id}")
 
         except Exception as e:
-            logger.exception(f"vault assembly failed for project {self.project_id}")
-            self._update_metadata(db, {"status": "failed", "error": f"assembly failed: {str(e)}"})
+            raise RuntimeError(f"vault assembly failed: {describe_error(e)}") from e
 
     @staticmethod
     def _safe_filename(concept_id: str, used: set[str]) -> str:
@@ -205,12 +209,28 @@ class ExportProcessor:
 
     def _update_metadata(self, db: Session, update: dict):
         """updates the project_metadata['export'] field"""
-        project = db.query(models.Project).filter(models.Project.id == self.project_id).first()
-        if project:
-            metadata = project.project_metadata or {}
-            export_meta = metadata.get("export") or {}
-            export_meta.update(update)
-            metadata["export"] = export_meta
-            project.project_metadata = metadata
-            flag_modified(project, "project_metadata")
-            db.commit()
+        _update_export_metadata(db, self.project_id, update)
+
+
+def _update_export_metadata(db: Session, project_id: str, update: dict):
+    project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if project:
+        metadata = project.project_metadata or {}
+        export_meta = metadata.get("export") or {}
+        export_meta.update(update)
+        metadata["export"] = export_meta
+        project.project_metadata = metadata
+        flag_modified(project, "project_metadata")
+        db.commit()
+
+
+def mark_export_failed(project_id: str, error: str):
+    """record a failure raised outside process(), keeping any error it already wrote"""
+    db = SessionLocal()
+    try:
+        project = db.query(models.Project).filter(models.Project.id == project_id).first()
+        export_meta = ((project.project_metadata or {}).get("export") or {}) if project else {}
+        if project and export_meta.get("status") != "failed":
+            _update_export_metadata(db, project_id, {"status": "failed", "error": error})
+    finally:
+        db.close()
