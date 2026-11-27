@@ -3,10 +3,11 @@ import uuid
 from pathlib import Path
 
 from sqlalchemy import UniqueConstraint
+from sqlalchemy.dialects import postgresql
 
 from db import models
 from schemas.graph import GraphData, GraphNode as GraphNodeSchema
-from services.graph.persistence_service import GraphPersistenceService
+from services.graph.persistence_service import GraphPersistenceService, upsert_nodes_statement
 
 PROJECT_ID = uuid.uuid4()
 MIGRATION = Path(__file__).resolve().parents[2] / "migrations" / "008_unique_graph_nodes.sql"
@@ -26,7 +27,7 @@ class FakeQuery:
 class FakeSession:
     def __init__(self, rows):
         self.rows = list(rows)
-        self.added = []
+        self.statements = []
         self.deleted = []
         self.committed = False
 
@@ -36,8 +37,18 @@ class FakeSession:
     def delete(self, row):
         self.deleted.append(row)
 
-    def add_all(self, rows):
-        self.added.extend(rows)
+    def execute(self, statement):
+        self.statements.append(statement)
+
+    @property
+    def added(self):
+        """concept ids the session's upserts would insert, in order"""
+        ids = []
+        for stmt in self.statements:
+            params = stmt.compile(dialect=postgresql.dialect()).params
+            keys = [k for k in params if k.startswith("concept_id_m")]
+            ids += [params[k] for k in sorted(keys, key=lambda k: int(k.rsplit("_m", 1)[1]))]
+        return ids
 
     def commit(self):
         self.committed = True
@@ -83,7 +94,7 @@ class TestReingest:
             str(PROJECT_ID), graph(("stroma", []), ("thylakoid", []))
         )
 
-        assert [n.concept_id for n in session.added] == ["thylakoid"]
+        assert session.added == ["thylakoid"]
         assert session.deleted == [stale]
 
     def test_legacy_duplicates_collapse_to_the_row_with_content(self):
@@ -104,7 +115,7 @@ class TestReingest:
             str(PROJECT_ID), graph(("stroma", []), ("stroma", ["x"]))
         )
 
-        assert [n.concept_id for n in session.added] == ["stroma"]
+        assert session.added == ["stroma"]
 
 
 class TestUniqueness:
@@ -121,3 +132,30 @@ class TestUniqueness:
         dedupe = sql.index("DELETE FROM graph_nodes")
         constraint = sql.index("UNIQUE (project_id, concept_id)")
         assert dedupe < constraint
+
+
+class TestOverlappingIngest:
+    """a concurrent or redelivered ingest may insert the same concept between our read and our write"""
+
+    def compiled(self):
+        rows = [{"id": uuid.uuid4(), "project_id": PROJECT_ID, "concept_id": "stroma", "aliases": [],
+                 "outbound_links": ["thylakoid"], "inbound_links": [], "node_metadata": {}}]
+        return str(upsert_nodes_statement(rows).compile(dialect=postgresql.dialect()))
+
+    def test_insert_conflicts_on_project_concept_instead_of_raising(self):
+        assert "ON CONFLICT (project_id, concept_id) DO UPDATE" in self.compiled()
+
+    def test_conflict_updates_links_but_keeps_note_content(self):
+        update = self.compiled().split("DO UPDATE SET", 1)[1]
+        assert "outbound_links = excluded.outbound_links" in update
+        assert "content" not in update
+
+    def test_new_nodes_go_through_the_upsert(self):
+        session = FakeSession([])
+        GraphPersistenceService(session).save_graph(str(PROJECT_ID), graph(("stroma", [])))
+        assert "ON CONFLICT" in str(session.statements[0].compile(dialect=postgresql.dialect()))
+
+    def test_no_statement_when_nothing_is_new(self):
+        session = FakeSession([db_node("stroma", content="note")])
+        GraphPersistenceService(session).save_graph(str(PROJECT_ID), graph(("stroma", [])))
+        assert session.statements == []

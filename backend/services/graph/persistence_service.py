@@ -1,3 +1,8 @@
+import uuid
+from typing import Any, Dict, List
+
+from sqlalchemy import func
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 from db import models
 from schemas.graph import GraphData
@@ -44,14 +49,15 @@ class GraphPersistenceService:
 
                 db_node = by_concept.get(node.id)
                 if db_node is None:
-                    new_nodes.append(models.GraphNode(
-                        project_id=project_id,
-                        concept_id=node.id,
-                        aliases=node.aliases,
-                        outbound_links=node.outbound_links,
-                        inbound_links=node.inbound_links,
-                        node_metadata={},
-                    ))
+                    new_nodes.append({
+                        "id": uuid.uuid4(),
+                        "project_id": project_id,
+                        "concept_id": node.id,
+                        "aliases": node.aliases,
+                        "outbound_links": node.outbound_links,
+                        "inbound_links": node.inbound_links,
+                        "node_metadata": {},
+                    })
                 else:
                     db_node.aliases = node.aliases
                     db_node.outbound_links = node.outbound_links
@@ -61,7 +67,8 @@ class GraphPersistenceService:
             for node in stale:
                 self.db.delete(node)
 
-            self.db.add_all(new_nodes)
+            if new_nodes:
+                self.db.execute(upsert_nodes_statement(new_nodes))
             self.db.commit()
             logger.info(
                 f"persisted graph for project {project_id}: "
@@ -72,3 +79,18 @@ class GraphPersistenceService:
             self.db.rollback()
             logger.error(f"failed to persist graph for project {project_id}: {e}")
             raise e
+
+
+def upsert_nodes_statement(rows: List[Dict[str, Any]]):
+    """insert graph nodes, updating links in place if an overlapping ingest already inserted the concept"""
+    stmt = pg_insert(models.GraphNode).values(rows)
+    # content is not in set_, so a note the other ingest's row already has survives
+    return stmt.on_conflict_do_update(
+        index_elements=[models.GraphNode.project_id, models.GraphNode.concept_id],
+        set_={
+            "aliases": stmt.excluded.aliases,
+            "outbound_links": stmt.excluded.outbound_links,
+            "inbound_links": stmt.excluded.inbound_links,
+            "updated_at": func.now(),
+        },
+    )
