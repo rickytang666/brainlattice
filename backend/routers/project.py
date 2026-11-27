@@ -283,13 +283,7 @@ async def transfer_projects(
     db: Session = Depends(get_db),
     context: UserContext = Depends(get_user_context)
 ):
-    """
-    claim anonymous projects after signing in.
-
-    only ever moves projects FROM an anonymous uuid session TO the verified
-    caller. previously this checked only that the sender was the target, which
-    - with a self-asserted user id - let anyone drain any account.
-    """
+    """claim an anonymous session's projects for the signed-in caller"""
     try:
         # the caller must hold a verified session, and may only claim for itself
         if context.is_anonymous or context.user_id != request.target_id:

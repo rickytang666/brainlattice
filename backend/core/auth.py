@@ -1,6 +1,5 @@
 """clerk jwt verification."""
 import logging
-import time
 from typing import Any, Dict, Optional
 from uuid import UUID
 
@@ -19,9 +18,7 @@ CLERK_ID_PREFIX = "user_"
 BYOK_FIELDS = ("gemini_key", "openai_key", "openrouter_key")
 
 _jwk_client: Optional[PyJWKClient] = None
-_issuer: Optional[str] = None
-_issuer_fetched_at: float = 0.0
-_ISSUER_TTL = 3600.0
+_JWKS_PATH = "/.well-known/jwks.json"
 
 
 def clerk_configured() -> bool:
@@ -30,21 +27,12 @@ def clerk_configured() -> bool:
 
 def _resolve_issuer() -> Optional[str]:
     # clerk publishes jwks at <issuer>/.well-known/jwks.json, so the url implies the issuer
-    global _issuer, _issuer_fetched_at
-
     if settings.CLERK_ISSUER:
         return settings.CLERK_ISSUER
 
-    now = time.monotonic()
-    if _issuer and (now - _issuer_fetched_at) < _ISSUER_TTL:
-        return _issuer
-
     jwks_url = settings.CLERK_JWKS_URL or ""
-    marker = "/.well-known/jwks.json"
-    if jwks_url.endswith(marker):
-        _issuer = jwks_url[: -len(marker)]
-        _issuer_fetched_at = now
-        return _issuer
+    if jwks_url.endswith(_JWKS_PATH):
+        return jwks_url[: -len(_JWKS_PATH)]
 
     return None
 
@@ -58,7 +46,7 @@ def _get_jwk_client() -> Optional[PyJWKClient]:
 
     jwks_url = settings.CLERK_JWKS_URL
     if not jwks_url and settings.CLERK_ISSUER:
-        jwks_url = f"{settings.CLERK_ISSUER.rstrip('/')}/.well-known/jwks.json"
+        jwks_url = f"{settings.CLERK_ISSUER.rstrip('/')}{_JWKS_PATH}"
 
     if not jwks_url:
         return None
