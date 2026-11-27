@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import project, ingest, export, internal, stats
+from core.auth import clerk_configured
 from core.config import get_settings
 from core.logger import setup_logger
 import logging
+import os
 
 # initialize custom ansi lowercase logging
 setup_logger()
@@ -11,6 +13,10 @@ logger = logging.getLogger(__name__)
 
 # initialize settings
 settings = get_settings()
+
+# without clerk, any caller can claim any user id; cloud run always sets K_SERVICE
+if os.getenv("K_SERVICE") and not clerk_configured():
+    raise RuntimeError("CLERK_JWKS_URL or CLERK_ISSUER must be set when deployed")
 
 app = FastAPI(
     title="BrainLattice API",
