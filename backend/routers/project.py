@@ -85,6 +85,9 @@ async def list_all_projects(
                     job = jobs.get_job(job_id)
                     if job:
                         base_p["progress"] = job.get("progress", 0)
+                        message = (job.get("metadata") or {}).get("message")
+                        if message:
+                            base_p["message"] = message
                         
                         # job failed but the project row hasn't caught up yet
                         if job.get("status") == "failed":

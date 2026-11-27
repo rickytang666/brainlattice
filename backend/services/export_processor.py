@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from db.session import SessionLocal
 from db import models
-from core.errors import UserFacingError, describe_error, is_transient, provider_status
+from core.errors import RETRYING_MESSAGE, UserFacingError, describe_error, is_transient, provider_status
 from services.embedding_service import EmbeddingService
 from services.llm.note_service import NodeNoteService
 
@@ -42,9 +42,12 @@ class ExportProcessor:
         user_id: str, 
         gemini_key: str, 
         openai_key: Optional[str] = None,
-        openrouter_key: Optional[str] = None
+        openrouter_key: Optional[str] = None,
+        retry_pending: bool = False,
     ):
         self.project_id = project_id
+        # true when the queue will redeliver this step after a transient failure
+        self.retry_pending = retry_pending
         self.user_id = user_id
         self.gemini_key = gemini_key
         self.openai_key = openai_key
@@ -84,10 +87,11 @@ class ExportProcessor:
         except Exception as e:
             logger.exception(f"export processing failed for project {self.project_id}")
             db.rollback()
-            self._update_metadata(db, {"status": "failed", "error": describe_error(e)})
-            # let the worker answer 500 so cloud tasks retries this step
-            if is_transient(e):
+            if is_transient(e) and self.retry_pending:
+                # keep the in-progress status so the ui keeps polling; the worker's 500 makes the queue retry
+                self._update_metadata(db, {"message": RETRYING_MESSAGE, "retrying": True})
                 raise
+            self._update_metadata(db, {"status": "failed", "error": describe_error(e), "retrying": False})
             return {"export_status": "failed", "error": describe_error(e)}
         finally:
             db.close()
@@ -153,7 +157,8 @@ class ExportProcessor:
         self._update_metadata(db, {
             "status": "generating",
             "progress": progress,
-            "message": f"generating notes: {done}/{total_nodes}"
+            "message": f"generating notes: {done}/{total_nodes}",
+            "retrying": False,
         })
 
         sem = asyncio.Semaphore(10)
@@ -263,6 +268,7 @@ class ExportProcessor:
                 "progress": int((total - len(failed)) / total * 100),
                 "message": message,
                 "download_url": zip_filename, # frontend will convert to public url or signed url
+                "retrying": False,
                 **summary,
             })
             logger.info(

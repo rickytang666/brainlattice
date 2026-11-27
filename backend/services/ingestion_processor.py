@@ -6,7 +6,7 @@ import logging
 import time
 from typing import Dict, Any, List, Tuple
 
-from core.errors import describe_error
+from core.errors import RETRYING_MESSAGE, describe_error, is_transient
 
 from services.storage_service import get_storage_service
 from services.pdf_service import PDFService
@@ -51,8 +51,11 @@ class IngestionProcessor:
         openai_key: str = None,
         openrouter_key: str = None,
         user_id: str = None,
+        retry_pending: bool = False,
     ):
         self.job_id = job_id
+        # true when the queue will redeliver this job after a transient failure
+        self.retry_pending = retry_pending
         self.file_key = file_key
         self.gemini_key = gemini_key
         self.openai_key = openai_key
@@ -86,6 +89,9 @@ class IngestionProcessor:
             # check if we have keys from constructor or fallback to metadata
             job_info = self.jobs.get_job(self.job_id)
             metadata = job_info.get("metadata", {})
+            if metadata.get("message"):
+                # a new attempt is running, so the previous attempt's retry notice no longer applies
+                self.jobs.update_metadata(self.job_id, {"message": None})
             
             project_id = metadata.get("project_id")
             filename = metadata.get("filename", "unknown.pdf")
@@ -258,6 +264,10 @@ class IngestionProcessor:
 
         except Exception as e:
             logger.exception(f"pipeline failed: {e}")
+            if is_transient(e) and self.retry_pending:
+                # job and project stay "processing" so the ui keeps polling; the worker's 500 makes the queue retry
+                self.jobs.update_metadata(self.job_id, {"message": RETRYING_MESSAGE})
+                raise
             self.jobs.update_progress(self.job_id, "failed", details={"error": str(e)})
             
             # update project status to failed

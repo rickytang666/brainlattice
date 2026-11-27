@@ -9,6 +9,7 @@ import httpx
 import openai
 import pytest
 
+from core.errors import RETRYING_MESSAGE
 from db import models
 from services import export_processor, storage_service
 from services.export_processor import MAX_NOTE_ATTEMPTS, ExportProcessor
@@ -235,7 +236,8 @@ class TestTotalFailure:
 
 class TestStepFailures:
     def test_transient_step_failure_reraised_for_queue_retry(self, harness):
-        processor, *_ = harness(["grana"], {})
+        processor, project, *_ = harness(["grana"], {})
+        processor.retry_pending = True
 
         async def enqueue():
             raise timeout()
@@ -243,6 +245,27 @@ class TestStepFailures:
         processor._enqueue_next_step = enqueue
         with pytest.raises(openai.APITimeoutError):
             asyncio.run(processor.process())
+        meta = export_meta(project)
+        assert meta["status"] == "generating"
+        assert meta["retrying"] is True
+        assert meta["message"] == RETRYING_MESSAGE
+
+    def test_transient_step_failure_with_no_retry_coming_fails(self, harness):
+        processor, project, *_ = harness(["grana"], {})
+
+        async def enqueue():
+            raise timeout()
+
+        processor._enqueue_next_step = enqueue
+        result = asyncio.run(processor.process())
+        assert result == {"export_status": "failed", "error": "timed out"}
+        assert export_meta(project)["status"] == "failed"
+
+    def test_next_attempt_clears_the_retry_notice(self, harness):
+        processor, project, *_ = harness(["grana"], {})
+        project.project_metadata["export"].update(retrying=True, message=RETRYING_MESSAGE)
+        run_until_done(processor)
+        assert export_meta(project)["retrying"] is False
 
     def test_permanent_step_failure_recorded(self, harness):
         processor, project, *_ = harness(["grana"], {})

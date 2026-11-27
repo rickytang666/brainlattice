@@ -5,6 +5,9 @@ from typing import Iterator, Optional
 # provider statuses that mean "try again later" rather than "this request is wrong"
 TRANSIENT_STATUSES = {408, 429}
 
+# shown instead of "failed" while the queue still has an attempt left
+RETRYING_MESSAGE = "retrying after a temporary error"
+
 
 class UserFacingError(ValueError):
     """a ValueError subclass whose message is written for the user and safe to show"""
