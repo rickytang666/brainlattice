@@ -1,4 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
+from core.errors import to_http_error
 from core.auth import BYOK_FIELDS
 from core.dependencies import get_user_context, UserContext
 from services.job_service import get_job_service
@@ -24,7 +25,7 @@ async def request_upload(
         )
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"upload request failed: {str(e)}")
+        raise to_http_error(e, "upload request")
 
 @router.post("/ingest/finalize-upload")
 async def finalize_upload(
@@ -51,7 +52,7 @@ async def finalize_upload(
     except ProjectNotFound:
         raise HTTPException(status_code=404, detail="project not found")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"finalize failed: {str(e)}")
+        raise to_http_error(e, "finalize")
 
 @router.post("/ingest/upload")
 async def upload_file(
@@ -88,7 +89,7 @@ async def upload_file(
         return result
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"ingest failed: {str(e)}")
+        raise to_http_error(e, "ingest")
 
 def _get_owned_job(job_id: str, user_id: str) -> dict:
     job = get_job_service().get_job(job_id)
@@ -136,4 +137,4 @@ async def retry_ingest(
         status = 404 if "not found" in str(e).lower() else 400
         raise HTTPException(status_code=status, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"retry failed: {str(e)}")
+        raise to_http_error(e, "retry")

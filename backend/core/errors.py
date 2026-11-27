@@ -21,8 +21,8 @@ def iter_causes(error: BaseException, max_depth: int = 8) -> Iterator[BaseExcept
             current = current.__cause__ or current.__context__
 
 
-def provider_status(error: BaseException) -> Optional[int]:
-    """http status returned by an upstream provider (openai, openrouter, gemini, r2), if any"""
+def provider_status(error: BaseException, ai_only: bool = False) -> Optional[int]:
+    """http status returned by an upstream provider (openai, openrouter, gemini, and r2 unless ai_only)"""
     import httpx
     import openai
     from botocore.exceptions import ClientError as BotoClientError
@@ -35,7 +35,7 @@ def provider_status(error: BaseException) -> Optional[int]:
             return e.code
         if isinstance(e, httpx.HTTPStatusError):
             return e.response.status_code
-        if isinstance(e, BotoClientError):
+        if isinstance(e, BotoClientError) and not ai_only:
             return e.response.get("ResponseMetadata", {}).get("HTTPStatusCode")
     return None
 
@@ -85,3 +85,36 @@ def describe_error(error: BaseException) -> str:
     if isinstance(root, ValueError) and str(root):
         return str(root)
     return type(root).__name__
+
+
+def to_http_error(error: BaseException, action: str) -> "HTTPException":
+    """map a request failure to a status the client can act on, never echoing internal exception text"""
+    import logging
+
+    from fastapi import HTTPException
+    from sqlalchemy import exc as sa_errors
+
+    if isinstance(error, HTTPException):
+        return error
+
+    # a storage 4xx is our misconfiguration, not the caller's, so only ai providers map to 400
+    status = provider_status(error, ai_only=True)
+    if status is not None and 400 <= status <= 404:
+        return HTTPException(
+            status_code=400,
+            detail=f"{action} failed: the ai provider rejected the request (http {status}). check your api key and credit.",
+        )
+    if status == 429:
+        return HTTPException(status_code=429, detail=f"{action} failed: the ai provider is rate limiting. try again shortly.")
+    if is_transient(error):
+        return HTTPException(status_code=503, detail=f"{action} failed: a dependency is unavailable. try again shortly.")
+
+    causes = list(iter_causes(error))
+    if any(isinstance(e, sa_errors.DataError) for e in causes):
+        return HTTPException(status_code=400, detail=f"{action} failed: invalid request data")
+    # our own ValueErrors carry user-facing messages (missing byok key, malformed id)
+    if isinstance(causes[-1], ValueError) and str(causes[-1]):
+        return HTTPException(status_code=400, detail=f"{action} failed: {causes[-1]}")
+
+    logging.getLogger(__name__).exception(f"{action} failed")
+    return HTTPException(status_code=500, detail=f"{action} failed")

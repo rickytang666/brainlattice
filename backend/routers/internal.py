@@ -47,6 +47,6 @@ async def sweep_failed_jobs(authorized: bool = Depends(verify_internal_key)):
     except Exception as e:
         db.rollback()
         logger.error(f"sweeper job failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="sweeper failed")
     finally:
         db.close()

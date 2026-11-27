@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from core.errors import to_http_error
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from db.session import get_db
@@ -47,11 +48,9 @@ async def trigger_obsidian_export(
         )
 
         return {"success": True, "message": "export triggered"}
-    except HTTPException:
-        raise
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"export trigger error: {str(e)}")
+        raise to_http_error(e, "export trigger")
 
 @router.get("/project/{project_id}/export/status")
 async def get_export_status(
@@ -71,7 +70,7 @@ async def get_export_status(
         metadata = project.project_metadata or {}
         return metadata.get("export", {"status": "none"})
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"status error: {str(e)}")
+        raise to_http_error(e, "status")
 
 @router.get("/project/{project_id}/export/download")
 async def download_obsidian_export(
@@ -103,7 +102,5 @@ async def download_obsidian_export(
         download_url = storage.get_download_url(file_key)
 
         return {"download_url": download_url}
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"download error: {str(e)}")
+        raise to_http_error(e, "download")

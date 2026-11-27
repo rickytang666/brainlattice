@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
+from core.errors import to_http_error
 from core.dependencies import get_user_context, UserContext
 from core.auth import is_anonymous_id
 from sqlalchemy.orm import Session
@@ -27,7 +28,7 @@ async def whoami(
             "success": True
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"whoami error: {str(e)}")
+        raise to_http_error(e, "whoami")
 
 
 @router.post("/project/save", response_model=ProjectSaveResponse)
@@ -50,7 +51,7 @@ async def save_project(
         return ProjectSaveResponse(project_id=str(project.id), success=True)
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"save error: {str(e)}")
+        raise to_http_error(e, "save")
 
 @router.get("/projects/list")
 async def list_all_projects(
@@ -104,7 +105,7 @@ async def list_all_projects(
             
         return formatted
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"list error: {str(e)}")
+        raise to_http_error(e, "list")
 
 @router.get("/project/{project_id}", response_model=ProjectGetResponse)
 async def get_project(
@@ -130,10 +131,8 @@ async def get_project(
                 success=True
             )
         raise HTTPException(status_code=404, detail="not found")
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"get error: {str(e)}")
+        raise to_http_error(e, "get")
 
 @router.patch("/project/{project_id}/title")
 async def update_title(
@@ -153,11 +152,9 @@ async def update_title(
             db.commit()
             return {"success": True, "message": "updated"}
         raise HTTPException(status_code=404, detail="not found")
-    except HTTPException:
-        raise
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"update error: {str(e)}")
+        raise to_http_error(e, "update")
 
 @router.delete("/project/{project_id}")
 async def delete_project(
@@ -178,11 +175,9 @@ async def delete_project(
             db.commit()
             return {"success": True, "message": "deleted"}
         raise HTTPException(status_code=404, detail="not found")
-    except HTTPException:
-        raise
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"delete error: {str(e)}")
+        raise to_http_error(e, "delete")
 
 @router.get("/project/{project_id}/graph")
 async def get_project_graph(
@@ -214,7 +209,7 @@ async def get_project_graph(
             
         return {"nodes": formatted_nodes}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"graph get error: {str(e)}")
+        raise to_http_error(e, "graph get")
 
 @router.get("/project/{project_id}/node/{concept_id}/note")
 async def get_node_note(
@@ -271,11 +266,9 @@ async def get_node_note(
             "cached": False
         }
         
-    except HTTPException:
-        raise
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"note generation error: {str(e)}")
+        raise to_http_error(e, "note generation")
 
 @router.post("/project/transfer", response_model=ProjectTransferResponse)
 async def transfer_projects(
@@ -304,8 +297,6 @@ async def transfer_projects(
             
         db.commit()
         return ProjectTransferResponse(transferred_count=count, success=True)
-    except HTTPException:
-        raise
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"transfer error: {str(e)}")
+        raise to_http_error(e, "transfer")
