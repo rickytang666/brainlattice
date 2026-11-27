@@ -7,12 +7,12 @@ fastapi-based extraction engine. ingests pdfs, extracts unified knowledge graphs
 **mandatory keys** (`backend/.env`):
 
 - `DATABASE_URL`: required for persistence. The application heavily utilizes `pgvector` and `JSONB` for storing text embeddings and complex extraction logic. **SQLite is completely unsupported.**
-  - **Local Development / Serverless Postgres:** Use a managed postgres database like [Neon](https://neon.tech) or a local Postgres instance. Create a database, configure `pgvector`, and set your connection string.
+  - **Local development:** Use a managed postgres database like [Neon](https://neon.tech) or a local Postgres instance. Create a database, configure `pgvector`, and set your connection string.
     - `DATABASE_URL=postgres://user:password@host/neondb?sslmode=require`
 
 **note:** no AI API keys are required in the backend environment _for the web app_. the frontend web app strictly uses keys provided by the client in the request headers (BYOK). **however**, if you want to run the local test script (`test_local_pipeline.py`), you must provide `GEMINI_API_KEY` and `OPENROUTER_API_KEY` in `backend/.env` (and optionally `OPENAI_API_KEY` for embeddings).
 
-other keys (R2, Upstash) are optional for local dev.
+other keys (R2, Cloud Tasks) are optional for local dev. without a queue configured, jobs run as in-process background tasks.
 
 **run database migrations (if using postgres):**
 
@@ -20,6 +20,8 @@ other keys (R2, Upstash) are optional for local dev.
 # install the base schema and the critical pgvector hnsw indices
 psql $DATABASE_URL -f migrations/001_initial_schema.sql
 psql $DATABASE_URL -f migrations/006_add_hnsw_index.sql
+# job state and counters
+psql $DATABASE_URL -f migrations/007_jobs_and_counters.sql
 ```
 
 **run local server:**
@@ -32,7 +34,8 @@ uv run uvicorn main:app --reload
 **run tests:**
 
 ```bash
-uv run pytest tests/ -v
+# plain `uv run pytest` can't import `core`
+uv run python -m pytest tests/unit -v
 ```
 
 **run local pipeline (e2e):**
@@ -53,13 +56,14 @@ uv run python scripts/test_local_pipeline.py --file path/to/doc.pdf
 
 ## production deployment
 
-taking the backend from 0 to 1 on aws lambda requires setting up the surrounding serverless infrastructure first.
+the backend runs as a container (`Dockerfile`) on cloud run, with cloud tasks as the job queue.
 
-### 1. neon (serverless postgres)
+### 1. neon (postgres)
 
 - create a project on [neon.tech](https://neon.tech)
 - copy the pooled connection string
 - add to `.env` as `DATABASE_URL`
+- run every file in `migrations/` in order
 
 ### 2. cloudflare r2 (object storage)
 
@@ -72,35 +76,11 @@ taking the backend from 0 to 1 on aws lambda requires setting up the surrounding
   - `R2_SECRET_ACCESS_KEY`
   - `R2_S3_API_URL` (looks like `https://<account_id>.r2.cloudflarestorage.com`)
 
-### 3. upstash (redis & qstash)
+### 3. google cloud tasks (job queue)
 
-- **redis**: create a database. copy the `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
-- **qstash**: grab your `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY`, and `QSTASH_NEXT_SIGNING_KEY` from the qstash dashboard.
-
-### 4. aws & serverless framework
-
-the backend deploys as a lambda container using `mangum`.
-
-**pre-requisites:**
-
-- `aws configure` set up locally with an iam user that has lambda/ecr permissions.
-- serverless framework installed globally: `npm i -g serverless`
-- docker daemon running locally.
-
-**deploy steps:**
-
-1. create an ecr repository in aws (or let serverless try to create it, but explicit is better).
-2. authenticate your local docker daemon to aws ecr (replace `<region>` and `<aws_account_id>`):
-
-```bash
-aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.<region>.amazonaws.com
-```
-
-3. deploy the stack (this automatically builds the docker image, pushes it to ecr, and wires up lambda/api gateway):
-
-```bash
-BUILDX_NO_DEFAULT_ATTESTATIONS=1 sls deploy
-```
+- `GCP_PROJECT_ID`, `CLOUD_TASKS_QUEUE`, `CLOUD_TASKS_LOCATION`: the queue jobs are published to
+- `CLOUD_TASKS_INVOKER_SA`: the service account the queue signs oidc tokens as. `/worker` rejects every other caller, and returns 503 if a queue is configured without it
+- `WORKER_PUBLIC_URL`: the full url of the `/worker` route, also the token audience
 
 ## internal pipeline tracking
 
