@@ -18,6 +18,7 @@ interface Project {
   title: string;
   status: string;
   progress?: number;
+  message?: string;
   created_at: string;
 }
 
@@ -523,7 +524,7 @@ export default function LandingPage() {
                                     {p.status === "uploading"
                                       ? "uploading"
                                       : p.status === "processing"
-                                        ? "synthesizing"
+                                        ? (p.message ?? "synthesizing")
                                         : p.status}
                                   </span>
                                   {p.progress !== undefined &&

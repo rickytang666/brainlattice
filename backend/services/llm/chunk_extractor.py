@@ -12,8 +12,13 @@ from tenacity import retry, wait_exponential, stop_after_attempt
 from pydantic import ValidationError
 from schemas.graph import GraphData
 from services.llm.prompt_service import get_prompt_service
+from services.llm.utils import strip_code_fence
 
 logger = logging.getLogger(__name__)
+
+
+class ExtractionParseError(ValueError):
+    """the model answered, but not with a graph we can read"""
 
 
 class ChunkExtractor:
@@ -53,12 +58,9 @@ class ChunkExtractor:
             seed_list=seed_list or [],
         )
 
-        try:
-            raw = await self._call_openrouter(prompt)
-            return self._parse_graph_data(raw)
-        except Exception as e:
-            logger.error(f"chunk extraction failed: {e}")
-            return GraphData(nodes=[])
+        # failures propagate so the caller can count them instead of reading them as empty chunks
+        raw = await self._call_openrouter(prompt)
+        return self._parse_graph_data(raw)
 
     @retry(wait=wait_exponential(multiplier=1, max=10), stop=stop_after_attempt(3))
     async def _call_openrouter(self, prompt: str) -> str:
@@ -71,17 +73,13 @@ class ChunkExtractor:
 
     def _parse_graph_data(self, raw: str) -> GraphData:
         """parse json to graphdata, handling common wrapper patterns."""
-        if raw.startswith("```json"):
-            raw = raw[7:-3].strip()
-        elif raw.startswith("```"):
-            raw = raw[3:-3].strip()
+        raw = strip_code_fence(raw)
         try:
             data = json.loads(raw)
             if isinstance(data, dict) and "nodes" in data:
                 return GraphData(**data)
             if isinstance(data, list):
                 return GraphData(nodes=data)
-            return GraphData(nodes=[])
         except (json.JSONDecodeError, TypeError, ValidationError) as e:
-            logger.warning(f"failed to parse chunk extraction response: {e}")
-            return GraphData(nodes=[])
+            raise ExtractionParseError(f"unparseable chunk extraction response: {e}") from e
+        raise ExtractionParseError(f"unexpected chunk extraction shape: {type(data).__name__}")

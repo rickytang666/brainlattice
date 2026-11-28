@@ -1,3 +1,8 @@
+import uuid
+from typing import Any, Dict, List
+
+from sqlalchemy import func
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session
 from db import models
 from schemas.graph import GraphData
@@ -9,42 +14,83 @@ class GraphPersistenceService:
     """
     manages saving and retrieving concept graphs from postgresql.
     """
-    
+
     def __init__(self, db: Session):
         self.db = db
 
     def save_graph(self, project_id: str, graph_data: GraphData):
         """
-        wipes old nodes for a project and saves the new, consolidated graph state.
-        effectively an atomic refresh for the conceptual network.
+        refreshes the project's graph to match graph_data in one commit.
+        nodes that survive keep their generated note content; stale ones are removed.
         """
         try:
-            # 1. remove existing nodes for this project
-            num_deleted = self.db.query(models.GraphNode).filter(
+            existing = self.db.query(models.GraphNode).filter(
                 models.GraphNode.project_id == project_id
-            ).delete()
-            
-            if num_deleted > 0:
-                logger.info(f"purged {num_deleted} nodes for project {project_id}")
-            
-            # 2. prepare db models from pydantic data
-            db_nodes = []
+            ).all()
+
+            by_concept: dict[str, models.GraphNode] = {}
+            for node in existing:
+                kept = by_concept.get(node.concept_id)
+                # rows from before the unique constraint can repeat; keep the one with a note
+                if kept is None or (not kept.content and node.content):
+                    if kept is not None:
+                        self.db.delete(kept)
+                    by_concept[node.concept_id] = node
+                else:
+                    self.db.delete(node)
+
+            incoming_ids: set[str] = set()
+            new_nodes = []
             for node in graph_data.nodes:
-                db_nodes.append(models.GraphNode(
-                    project_id=project_id,
-                    concept_id=node.id,
-                    aliases=node.aliases,
-                    outbound_links=node.outbound_links,
-                    inbound_links=node.inbound_links,
-                    node_metadata={} 
-                ))
-            
-            # 3. commit
-            self.db.bulk_save_objects(db_nodes)
+                if node.id in incoming_ids:
+                    logger.warning(f"skipping duplicate concept {node.id} in graph for project {project_id}")
+                    continue
+                incoming_ids.add(node.id)
+
+                db_node = by_concept.get(node.id)
+                if db_node is None:
+                    new_nodes.append({
+                        "id": uuid.uuid4(),
+                        "project_id": project_id,
+                        "concept_id": node.id,
+                        "aliases": node.aliases,
+                        "outbound_links": node.outbound_links,
+                        "inbound_links": node.inbound_links,
+                        "node_metadata": {},
+                    })
+                else:
+                    db_node.aliases = node.aliases
+                    db_node.outbound_links = node.outbound_links
+                    db_node.inbound_links = node.inbound_links
+
+            stale = [n for cid, n in by_concept.items() if cid not in incoming_ids]
+            for node in stale:
+                self.db.delete(node)
+
+            if new_nodes:
+                self.db.execute(upsert_nodes_statement(new_nodes))
             self.db.commit()
-            logger.info(f"successfully persisted {len(db_nodes)} nodes for project {project_id}")
-            
+            logger.info(
+                f"persisted graph for project {project_id}: "
+                f"{len(new_nodes)} added, {len(incoming_ids) - len(new_nodes)} updated, {len(stale)} removed"
+            )
+
         except Exception as e:
             self.db.rollback()
             logger.error(f"failed to persist graph for project {project_id}: {e}")
             raise e
+
+
+def upsert_nodes_statement(rows: List[Dict[str, Any]]):
+    """insert graph nodes, updating links in place if an overlapping ingest already inserted the concept"""
+    stmt = pg_insert(models.GraphNode).values(rows)
+    # content is not in set_, so a note the other ingest's row already has survives
+    return stmt.on_conflict_do_update(
+        index_elements=[models.GraphNode.project_id, models.GraphNode.concept_id],
+        set_={
+            "aliases": stmt.excluded.aliases,
+            "outbound_links": stmt.excluded.outbound_links,
+            "inbound_links": stmt.excluded.inbound_links,
+            "updated_at": func.now(),
+        },
+    )

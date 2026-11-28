@@ -8,23 +8,29 @@ logger = logging.getLogger(__name__)
 class EmbeddingService:
     """embedding service with openai (primary) and gemini (fallback) gracefully supporting 1536 dimensions"""
     
+    @staticmethod
+    def provider_for(gemini_key: str = None, openai_key: str = None) -> str:
+        """which provider these keys select; __init__ uses it too, so the two can't drift"""
+        if openai_key:
+            return "openai"
+        if gemini_key:
+            return "gemini"
+        raise ValueError("No API key provided for EmbeddingService. Strict BYOK is enabled.")
+
     def __init__(self, gemini_key: str = None, openai_key: str = None):
         self.dimensions = 1536
-        
-        if openai_key:
+        self.provider = self.provider_for(gemini_key=gemini_key, openai_key=openai_key)
+
+        if self.provider == "openai":
             from openai import OpenAI
-            self.provider = "openai"
             self.openai_client = OpenAI(api_key=openai_key)
             self.openai_model = "text-embedding-3-small"
             logger.info("initialized openai embedding service (BYOK custom key)")
-        elif gemini_key:
+        else:
             from google import genai
-            self.provider = "gemini"
             self.gemini_client = genai.Client(api_key=gemini_key)
             self.gemini_model = "gemini-embedding-001"
             logger.info("initialized gemini embedding service (BYOK custom key)")
-        else:
-            raise ValueError("No API key provided for EmbeddingService. Strict BYOK is enabled.")
 
     def get_embedding(self, text: str) -> List[float]:
         """get single vector for text"""

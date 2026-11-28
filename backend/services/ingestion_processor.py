@@ -4,7 +4,9 @@ import json
 import asyncio
 import logging
 import time
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
+
+from core.errors import RETRYING_MESSAGE, describe_error, is_transient
 
 from services.storage_service import get_storage_service
 from services.pdf_service import PDFService
@@ -23,6 +25,8 @@ from db.session import SessionLocal
 from db import models
 
 logger = logging.getLogger(__name__)
+
+EXTRACTION_STAT_KEYS = ("extraction_chunks", "failed_chunks")
 
 
 def extract_headers_for_seed(text: str) -> str:
@@ -47,8 +51,11 @@ class IngestionProcessor:
         openai_key: str = None,
         openrouter_key: str = None,
         user_id: str = None,
+        retry_pending: bool = False,
     ):
         self.job_id = job_id
+        # true when the queue will redeliver this job after a transient failure
+        self.retry_pending = retry_pending
         self.file_key = file_key
         self.gemini_key = gemini_key
         self.openai_key = openai_key
@@ -82,6 +89,9 @@ class IngestionProcessor:
             # check if we have keys from constructor or fallback to metadata
             job_info = self.jobs.get_job(self.job_id)
             metadata = job_info.get("metadata", {})
+            if metadata.get("message"):
+                # a new attempt is running, so the previous attempt's retry notice no longer applies
+                self.jobs.update_metadata(self.job_id, {"message": None})
             
             project_id = metadata.get("project_id")
             filename = metadata.get("filename", "unknown.pdf")
@@ -157,6 +167,7 @@ class IngestionProcessor:
                     file_id=db_file.id,
                     content=chunk.page_content,
                     embedding=vectors[i],
+                    embedding_provider=self.embedder.provider,
                     chunk_metadata=chunk.metadata
                 ) for i, chunk in enumerate(chunks)
             ]
@@ -177,12 +188,15 @@ class IngestionProcessor:
                 # reconstruct pydantic objects from cached dicts
                 from schemas.graph import GraphData
                 graph_data = [GraphData(**g) for g in cached_extraction]
+                extraction_stats = {k: metadata.get(k, 0) for k in EXTRACTION_STAT_KEYS}
             else:
-                graph_data = await self._run_graph_extraction(
+                graph_data, extraction_stats = await self._run_graph_extraction(
                     markdown_content,
                     gemini_key=gemini_key,
                     openrouter_key=openrouter_key,
                 )
+                # stats live in metadata so a retry that reuses the cache still reports them
+                self.jobs.update_metadata(self.job_id, extraction_stats)
                 # cache the results for potential retries
                 self.jobs.set_extraction_cache(self.job_id, [g.model_dump() for g in graph_data])
                 
@@ -228,7 +242,8 @@ class IngestionProcessor:
                 "chunks_count": len(chunks),
                 "graph_nodes": len(connected_graph.nodes),
                 "graph_preview": graph_dump,
-                "timings": self.timings
+                "timings": self.timings,
+                **extraction_stats,
             })
             
             # update project status to complete
@@ -243,11 +258,16 @@ class IngestionProcessor:
                 "project_id": str(project_id),
                 "file_id": str(db_file.id),
                 "chunks": len(chunks),
-                "graph": graph_dump
+                "graph": graph_dump,
+                **extraction_stats,
             }
 
         except Exception as e:
             logger.exception(f"pipeline failed: {e}")
+            if is_transient(e) and self.retry_pending:
+                # job and project stay "processing" so the ui keeps polling; the worker's 500 makes the queue retry
+                self.jobs.update_metadata(self.job_id, {"message": RETRYING_MESSAGE})
+                raise
             self.jobs.update_progress(self.job_id, "failed", details={"error": str(e)})
             
             # update project status to failed
@@ -271,8 +291,8 @@ class IngestionProcessor:
         text: str,
         gemini_key: str = None,
         openrouter_key: str = None,
-    ) -> List[Any]:
-        """runs per-chunk extraction (step 1 seed + step 2 map). no gemini cache."""
+    ) -> Tuple[List[Any], Dict[str, int]]:
+        """runs per-chunk extraction (step 1 seed + step 2 map). returns graphs and chunk counts."""
 
         # step 1: global seed from headers (h1/h2/h3)
         header_text = self._extract_headers(text)
@@ -296,13 +316,22 @@ class IngestionProcessor:
         chunk_extractor = ChunkExtractor(openrouter_key=openrouter_key)
         sem = asyncio.Semaphore(5)  # limit concurrent OpenRouter calls
 
+        failures: List[Exception] = []
+
         async def extract_one(chunk_obj, idx: int):
             async with sem:
                 logger.info(f"extracting chunk {idx + 1}/{len(extraction_chunks)}...")
-                return await chunk_extractor.extract_from_chunk(
-                    chunk_obj.page_content,
-                    seed_list=seed_ids if seed_ids else None,
-                )
+                try:
+                    return await chunk_extractor.extract_from_chunk(
+                        chunk_obj.page_content,
+                        seed_list=seed_ids if seed_ids else None,
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"chunk {idx + 1}/{len(extraction_chunks)} extraction failed: {describe_error(e)}"
+                    )
+                    failures.append(e)
+                    return None
 
         extracted_graphs = await asyncio.gather(
             *(
@@ -311,7 +340,12 @@ class IngestionProcessor:
             )
         )
 
-        return [g for g in extracted_graphs if g and g.nodes]
+        # nothing extracted means an empty graph; surface the cause (e.g. a bad key) instead
+        if extraction_chunks and len(failures) == len(extraction_chunks):
+            raise failures[0]
+
+        stats = {"extraction_chunks": len(extraction_chunks), "failed_chunks": len(failures)}
+        return [g for g in extracted_graphs if g and g.nodes], stats
 
     def _extract_headers(self, text: str) -> str:
         """extracts h1/h2/h3 headers for seed extraction (regex)"""

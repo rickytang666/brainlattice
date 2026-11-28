@@ -51,6 +51,8 @@ export default function ProjectDashboard() {
     progress: number;
     message: string;
     download_url?: string;
+    failed_notes?: number;
+    retrying?: boolean;
   } | null>(null);
   const exportPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -397,6 +399,16 @@ export default function ProjectDashboard() {
                               ? "retry"
                               : "export"}
                       </button>
+
+                      {(exportStatus?.status === "generating" || exportStatus?.status === "pending") && exportStatus.retrying && (
+                        <span className="text-[11px] text-muted-foreground">{exportStatus.message}</span>
+                      )}
+
+                      {exportStatus?.status === "complete" && !!exportStatus.failed_notes && (
+                        <span className="text-[11px] text-destructive" title={exportStatus.message}>
+                          {exportStatus.failed_notes} {exportStatus.failed_notes === 1 ? "note" : "notes"} failed
+                        </span>
+                      )}
                     </div>
                   </div>
                   

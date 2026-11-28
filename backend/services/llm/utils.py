@@ -27,6 +27,19 @@ def clean_math_symbols(text: str) -> str:
     
     return text.strip()
 
+def strip_code_fence(raw: str) -> str:
+    """remove a leading ``` or ```json fence and its closing fence, if present"""
+    text = raw.strip()
+    opener = re.match(r"^```[\w-]*[ \t]*\n?", text)
+    if not opener:
+        return text
+    text = text[opener.end():].rstrip()
+    # models sometimes stop before writing the closing fence
+    if text.endswith("```"):
+        text = text[:-3]
+    return text.strip()
+
+
 def fix_json_response(response_text: str) -> str:
     """fix common json issues in ai responses"""
     # find first brace

@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     CLOUD_TASKS_LOCATION: str = "us-central1"
     # service account the queue mints oidc tokens as; the worker verifies it
     CLOUD_TASKS_INVOKER_SA: Optional[str] = None
+    # must match the queue's --max-attempts, or the last attempt is misjudged and the job never reads failed
+    CLOUD_TASKS_MAX_ATTEMPTS: int = 3
 
     # full url of the /worker route: the queue's delivery target and the oidc audience
     WORKER_PUBLIC_URL: Optional[str] = None
