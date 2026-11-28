@@ -2,9 +2,10 @@ from google import genai
 from services.embedding_service import EmbeddingService
 from services.llm.prompt_service import get_prompt_service
 from services.llm.utils import repair_note_markdown
-from sqlalchemy.orm import Session
+from db.session import SessionLocal
 from db import models
 from typing import List
+import asyncio
 import logging
 import time
 from collections import defaultdict
@@ -17,7 +18,7 @@ class NodeNoteService:
     generates concise, obsidian-style study notes for graph nodes using rag.
     student-focused: essential content, formulas from chunks when possible.
     """
-    
+
     def __init__(self, gemini_key: str, openai_key: str = None):
         if not gemini_key:
             raise ValueError("gemini_key is required for NodeNoteService. Strict BYOK is enabled.")
@@ -28,18 +29,28 @@ class NodeNoteService:
         # seconds summed across notes; concurrent notes overlap, so these can exceed wall-clock
         self.timings: dict[str, float] = defaultdict(float)
 
+    def embed_concepts(self, concept_ids: List[str]) -> List[List[float]]:
+        """rag query vectors for many concepts in one batched call"""
+        start = time.perf_counter()
+        try:
+            return self.embedder.get_embeddings(concept_ids)
+        finally:
+            self.timings["rag_embedding"] += time.perf_counter() - start
+
     async def generate_note(
         self,
-        db: Session,
         project_id: str,
         concept_id: str,
+        query_vector: List[float],
+        valid_concept_ids: set[str],
         outbound_links: List[str] | None = None,
     ) -> str:
         """
         Generates a short, study-focused note for a concept.
         Targeted synthesis - always uses RAG (top 3-5 chunks), no context cache.
         """
-        context_chunks = self._get_context(db, project_id, concept_id)
+        # the search is blocking db io; on the event loop it would stall every other note's request
+        context_chunks = await asyncio.to_thread(self._get_context, project_id, concept_id, query_vector)
         chunk_count = len(context_chunks.split("\n\n")) if context_chunks else 0
         logger.info(f"retrieved {chunk_count} RAG chunks for {concept_id}")
 
@@ -55,18 +66,15 @@ class NodeNoteService:
         # failures propagate: a placeholder note would be saved and shipped as if it were real
         config = {"temperature": 0.0}
         llm_start = time.perf_counter()
-        response = await self._generate_content_with_retry(prompt, config)
-        self.timings["llm"] += time.perf_counter() - llm_start
+        try:
+            response = await self._generate_content_with_retry(prompt, config)
+        finally:
+            self.timings["llm"] += time.perf_counter() - llm_start
 
         note_content = (response.text or "").strip().lower()
         if not note_content:
             raise ValueError(f"model returned an empty note for {concept_id}")
-        links_start = time.perf_counter()
-        valid_ids = {n.concept_id for n in db.query(models.GraphNode).filter(
-            models.GraphNode.project_id == project_id
-        ).all()}
-        self.timings["link_validation"] += time.perf_counter() - links_start
-        note_content = repair_note_markdown(note_content, valid_concept_ids=valid_ids)
+        note_content = repair_note_markdown(note_content, valid_concept_ids=valid_concept_ids)
 
         # append missing links to content
         if outbound_links:
@@ -87,28 +95,27 @@ class NodeNoteService:
             config=config
         )
 
-    def _get_context(self, db: Session, project_id: str, concept_id: str) -> str:
+    def _get_context(self, project_id: str, concept_id: str, query_vector: List[float]) -> str:
         """rag: vector search for top 5 chunks relevant to concept_id."""
+        start = time.perf_counter()
+        # runs in a worker thread, and sessions can't be shared across threads
+        db = SessionLocal()
         try:
-            # get query embedding
-            embed_start = time.perf_counter()
-            query_vector = self.embedder.get_embedding(concept_id)
-            self.timings["rag_embedding"] += time.perf_counter() - embed_start
-
-            search_start = time.perf_counter()
             # find top relevant chunks across all files in the project
             chunks = db.query(models.Chunk).join(models.File).filter(
                 models.File.project_id == project_id
             ).order_by(
                 models.Chunk.embedding.cosine_distance(query_vector)
             ).limit(5).all()
-            self.timings["rag_search"] += time.perf_counter() - search_start
 
             if not chunks:
                 return "no specific course context found."
-                
+
             return "\n\n".join([c.content for c in chunks])
-            
+
         except Exception as e:
             logger.error(f"failed to retrieve context for {concept_id}: {e}")
             return ""
+        finally:
+            db.close()
+            self.timings["rag_search"] += time.perf_counter() - start
