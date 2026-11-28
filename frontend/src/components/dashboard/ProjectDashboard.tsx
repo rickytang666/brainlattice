@@ -120,7 +120,7 @@ export default function ProjectDashboard() {
         const { download_url } = await res.json();
         // if local dev, prefix with api_base
         const fullUrl = download_url.startsWith("http") ? download_url : `${API_BASE}${download_url}`;
-        window.open(fullUrl, "_blank");
+        window.open(fullUrl, "_blank", "noopener");
       }
     } catch (err) {
       console.error(err);
