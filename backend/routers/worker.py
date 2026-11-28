@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from core.config import get_settings
 from core.errors import describe_error, is_transient
-from services.job_service import get_job_service
+from services import task_runner
 
 router = APIRouter()
 settings = get_settings()
@@ -113,44 +113,8 @@ def _validate(task: WorkerTask):
 
 
 async def _dispatch(task: WorkerTask, retry_pending: bool) -> Optional[Dict[str, Any]]:
-    if task.action == "ingest":
-        from services.ingestion_processor import IngestionProcessor
-
-        processor = IngestionProcessor(
-            job_id=task.job_id,
-            file_key=task.file_key,
-            gemini_key=task.gemini_key,
-            openai_key=task.openai_key,
-            openrouter_key=task.openrouter_key,
-            user_id=task.user_id,
-            retry_pending=retry_pending,
-        )
-        return await processor.process()
-
-    from services.export_processor import ExportProcessor
-
-    processor = ExportProcessor(
-        project_id=task.project_id,
-        user_id=task.user_id,
-        gemini_key=task.gemini_key,
-        openai_key=task.openai_key,
-        openrouter_key=task.openrouter_key,
-        retry_pending=retry_pending,
-    )
-    return await processor.process()
+    return await task_runner.run_task(task.model_dump(), retry_pending)
 
 
 def _record_failure(task: WorkerTask, reason: str):
-    """mark the job failed unless the processor already recorded a more specific error"""
-    try:
-        if task.action == "ingest":
-            jobs = get_job_service()
-            job = jobs.get_job(task.job_id)
-            if job and job.get("status") != "failed":
-                jobs.update_progress(task.job_id, "failed", details={"error": reason})
-        else:
-            from services.export_processor import mark_export_failed
-
-            mark_export_failed(task.project_id, reason)
-    except Exception:
-        logger.exception(f"could not record failure for job={task.job_id} action={task.action}")
+    task_runner.record_failure(task.model_dump(), reason)
