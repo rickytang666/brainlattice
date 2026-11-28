@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 # each attempt already includes the note service's own retries
 MAX_NOTE_ATTEMPTS = 2
 LEGACY_FAILED_NOTE_PREFIX = "failed to generate note for "
-NOTE_CONCURRENCY = 16
+# ~32 requests in flight stays far below gemini paid-tier rate limits
+NOTE_CONCURRENCY = 32
 # bounds the upfront embedding and retrieval a round does before its notes start
 NOTE_ROUND_SIZE = 200
 # no note starts after this, so a dispatch ends well inside cloud tasks' 1800s deadline and isn't redelivered

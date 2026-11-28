@@ -8,7 +8,7 @@ from export_harness import export_meta, harness, run_until_done, timeout  # noqa
 from services import export_processor
 from services.export_processor import MAX_NOTE_ATTEMPTS, NOTE_CONCURRENCY
 
-CONCEPTS = [f"concept {i:02d}" for i in range(40)]
+CONCEPTS = [f"concept {i:03d}" for i in range(NOTE_CONCURRENCY * 2 + 5)]
 
 
 @pytest.fixture
@@ -48,7 +48,7 @@ class TestWithinBudget:
 @pytest.mark.usefixtures("zero_budget")
 class TestBudgetSpent:
     def test_rest_of_the_notes_re_enqueued(self, harness):
-        processor, project, nodes, _, enqueued = harness(CONCEPTS[:25], {})
+        processor, project, nodes, _, enqueued = harness(CONCEPTS, {})
 
         result = asyncio.run(processor.process())
 
@@ -57,15 +57,15 @@ class TestBudgetSpent:
         assert enqueued == [1]
         assert sum(n.content is not None for n in nodes) == NOTE_CONCURRENCY
         # the next dispatch must see these notes, so they are committed before re-enqueueing
-        assert export_meta(project)["message"] == f"generating notes: {NOTE_CONCURRENCY}/25"
+        assert export_meta(project)["message"] == f"generating notes: {NOTE_CONCURRENCY}/{len(CONCEPTS)}"
 
     def test_split_export_generates_each_note_once(self, harness):
-        processor, project, nodes, _, enqueued = harness(CONCEPTS[:25], {})
+        processor, project, nodes, _, enqueued = harness(CONCEPTS, {})
 
         result = run_until_done(processor)
 
         assert result["export_status"] == "assembly_completed"
-        assert len(enqueued) == 25 // NOTE_CONCURRENCY
+        assert len(enqueued) == len(CONCEPTS) // NOTE_CONCURRENCY
         assert set(processor.note_service.calls.values()) == {1}
         assert export_meta(project)["failed_notes"] == 0
 
@@ -85,20 +85,20 @@ class TestConcurrency:
         assert processor.note_service.max_in_flight == NOTE_CONCURRENCY
 
     def test_rag_context_prepared_once_per_round(self, harness):
-        processor, *_ = harness(CONCEPTS, {"concept 07": timeout})
+        processor, *_ = harness(CONCEPTS, {"concept 007": timeout})
 
         asyncio.run(processor.process())
 
         # the second round only prepares the note being retried
-        assert processor.note_service.prepared == [CONCEPTS, ["concept 07"]]
+        assert processor.note_service.prepared == [CONCEPTS, ["concept 007"]]
 
     def test_rounds_capped_at_the_round_size(self, harness, monkeypatch):
-        monkeypatch.setattr(export_processor, "NOTE_ROUND_SIZE", 15)
+        monkeypatch.setattr(export_processor, "NOTE_ROUND_SIZE", 30)
         processor, _, nodes, _, enqueued = harness(CONCEPTS, {})
 
         asyncio.run(processor.process())
 
-        assert [len(r) for r in processor.note_service.prepared] == [15, 15, 10]
+        assert [len(r) for r in processor.note_service.prepared] == [30, 30, 9]
         assert enqueued == []
         assert all(n.content for n in nodes)
 
