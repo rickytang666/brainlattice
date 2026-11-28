@@ -226,6 +226,20 @@ class TestRetriedIngest:
         assert stored_texts(db) == expected_texts()
         assert len(FakeEmbedder.calls) == 2
 
+    def test_doubled_set_from_an_earlier_retry_is_collapsed(self, pipeline):
+        db, _, run = pipeline
+        with pytest.raises(openai.APITimeoutError):
+            run(extraction_error=openai.APITimeoutError(request=REQUEST))
+        db.chunks += [
+            models.Chunk(file_id=c.file_id, content=c.content, embedding_provider=c.embedding_provider)
+            for c in db.chunks
+        ]
+
+        run()
+
+        assert stored_texts(db) == expected_texts()
+        assert len(FakeEmbedder.calls) == 2
+
     def test_chunks_from_another_provider_are_replaced(self, pipeline):
         db, _, run = pipeline
         with pytest.raises(openai.APITimeoutError):
