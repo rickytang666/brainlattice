@@ -159,20 +159,7 @@ class IngestionProcessor:
             logger.info("chunking and embedding...")
             embed_start = time.time()
             chunks = self.splitter.split_text(markdown_content)
-            chunk_texts = [c.page_content for c in chunks]
-            vectors = self.embedder.get_embeddings(chunk_texts)
-            
-            db_chunks = [
-                models.Chunk(
-                    file_id=db_file.id,
-                    content=chunk.page_content,
-                    embedding=vectors[i],
-                    embedding_provider=self.embedder.provider,
-                    chunk_metadata=chunk.metadata
-                ) for i, chunk in enumerate(chunks)
-            ]
-            db.add_all(db_chunks)
-            db.commit()
+            self._save_chunks(db, db_file.id, chunks)
             self.timings['chunking_and_embedding'] = time.time() - embed_start
             self.jobs.update_progress(self.job_id, "processing", 60)
             await asyncio.sleep(0.1) # yield after heavy embeddings
@@ -285,6 +272,36 @@ class IngestionProcessor:
             db.close()
             if os.path.exists(temp_path):
                 os.remove(temp_path)
+
+    def _save_chunks(self, db, file_id, chunks) -> None:
+        """embeds and stores chunks unless a previous attempt already saved this exact set"""
+        chunk_texts = [c.page_content for c in chunks]
+        chunk_filter = models.Chunk.file_id == file_id
+        stored = db.query(models.Chunk.content, models.Chunk.embedding_provider).filter(chunk_filter).all()
+
+        if stored and sorted(content for content, _ in stored) == sorted(chunk_texts) and all(
+            provider == self.embedder.provider for _, provider in stored
+        ):
+            logger.info(f"reusing {len(stored)} saved chunks for file {file_id}")
+            return
+
+        vectors = self.embedder.get_embeddings(chunk_texts)
+
+        if stored:
+            logger.warning(f"replacing {len(stored)} stale chunks for file {file_id}")
+            # same transaction as the insert, so a failed attempt never leaves a partial or mixed set
+            db.query(models.Chunk).filter(chunk_filter).delete(synchronize_session=False)
+
+        db.add_all([
+            models.Chunk(
+                file_id=file_id,
+                content=chunk.page_content,
+                embedding=vectors[i],
+                embedding_provider=self.embedder.provider,
+                chunk_metadata=chunk.metadata
+            ) for i, chunk in enumerate(chunks)
+        ])
+        db.commit()
 
     async def _run_graph_extraction(
         self,
