@@ -75,6 +75,7 @@ class FakeNotes:
     def __init__(self, failures):
         self.failures = failures
         self.calls = {}
+        self.timings = {}
 
     async def generate_note(self, db, project_id, concept_id, outbound_links=None):
         self.calls[concept_id] = self.calls.get(concept_id, 0) + 1

@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import re
+import time
 from typing import Dict, List, Optional
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -53,12 +54,17 @@ class ExportProcessor:
         self.openai_key = openai_key
         self.openrouter_key = openrouter_key
         self.note_service = NodeNoteService(gemini_key=gemini_key, openai_key=openai_key)
+        # seconds per phase of the latest process() call
+        self.timings: Dict[str, float] = {}
 
     async def process(self):
         """
         main entry point for the export worker.
         decides whether to generate more notes or assemble the final vault.
         """
+        self.timings = {}
+        self.note_service.timings.clear()
+        start = time.perf_counter()
         db = SessionLocal()
         try:
             project = db.query(models.Project).filter(models.Project.id == self.project_id).first()
@@ -75,14 +81,22 @@ class ExportProcessor:
 
             if missing_nodes:
                 self._check_embedding_provider(db)
+                self.timings["setup"] = time.perf_counter() - start
                 await self._process_batch(db, missing_nodes, note_failures, exhausted)
                 # self-enqueue to continue
                 await self._enqueue_next_step()
-                return {"export_status": "batch_partial", "nodes_processed": len(missing_nodes)}
+                return {
+                    "export_status": "batch_partial",
+                    "nodes_processed": len(missing_nodes),
+                    "timings": self._finish_timings(start),
+                }
             else:
                 logger.info(f"no notes left to generate for project {self.project_id}. moving to assembly.")
+                self.timings["setup"] = time.perf_counter() - start
+                assembly_start = time.perf_counter()
                 summary = await self._assemble_vault(db, note_failures)
-                return {"export_status": "assembly_completed", **summary}
+                self.timings["assembly"] = time.perf_counter() - assembly_start
+                return {"export_status": "assembly_completed", **summary, "timings": self._finish_timings(start)}
 
         except Exception as e:
             logger.exception(f"export processing failed for project {self.project_id}")
@@ -95,6 +109,14 @@ class ExportProcessor:
             return {"export_status": "failed", "error": describe_error(e)}
         finally:
             db.close()
+
+    def _finish_timings(self, start: float) -> Dict[str, float]:
+        for phase, seconds in self.note_service.timings.items():
+            self.timings[f"notes_{phase}"] = seconds
+        self.timings["total"] = time.perf_counter() - start
+        rounded = {phase: round(seconds, 3) for phase, seconds in self.timings.items()}
+        logger.info(f"export timings for project {self.project_id}: {rounded}")
+        return rounded
 
     def _check_embedding_provider(self, db: Session):
         """note retrieval compares against stored chunk vectors, so both must come from one provider"""
@@ -177,7 +199,9 @@ class ExportProcessor:
                     return node, None, e
 
         # generate notes concurrently
+        generation_start = time.perf_counter()
         results = await asyncio.gather(*(process_node(node) for node in nodes))
+        self.timings["note_generation"] = time.perf_counter() - generation_start
 
         for node, note_content, error in results:
             if error is None and note_content:
@@ -198,8 +222,10 @@ class ExportProcessor:
             )
 
         # save all completed generation contents
+        save_start = time.perf_counter()
         db.commit()
         self._update_metadata(db, {"note_failures": note_failures})
+        self.timings["save"] = time.perf_counter() - save_start
 
         rejected = next((s for s in (_rejected_status(e) for _, _, e in results) if s is not None), None)
         if rejected is not None:

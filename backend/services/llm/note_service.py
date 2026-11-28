@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from db import models
 from typing import List
 import logging
+import time
+from collections import defaultdict
 from tenacity import retry, wait_exponential, stop_after_attempt
 
 logger = logging.getLogger(__name__)
@@ -23,6 +25,8 @@ class NodeNoteService:
         self.model_id = 'gemini-2.5-flash-lite'
         self.embedder = EmbeddingService(gemini_key=gemini_key, openai_key=openai_key)
         self.prompts = get_prompt_service()
+        # seconds summed across notes; concurrent notes overlap, so these can exceed wall-clock
+        self.timings: dict[str, float] = defaultdict(float)
 
     async def generate_note(
         self,
@@ -50,14 +54,18 @@ class NodeNoteService:
 
         # failures propagate: a placeholder note would be saved and shipped as if it were real
         config = {"temperature": 0.0}
+        llm_start = time.perf_counter()
         response = await self._generate_content_with_retry(prompt, config)
+        self.timings["llm"] += time.perf_counter() - llm_start
 
         note_content = (response.text or "").strip().lower()
         if not note_content:
             raise ValueError(f"model returned an empty note for {concept_id}")
+        links_start = time.perf_counter()
         valid_ids = {n.concept_id for n in db.query(models.GraphNode).filter(
             models.GraphNode.project_id == project_id
         ).all()}
+        self.timings["link_validation"] += time.perf_counter() - links_start
         note_content = repair_note_markdown(note_content, valid_concept_ids=valid_ids)
 
         # append missing links to content
@@ -83,15 +91,19 @@ class NodeNoteService:
         """rag: vector search for top 5 chunks relevant to concept_id."""
         try:
             # get query embedding
+            embed_start = time.perf_counter()
             query_vector = self.embedder.get_embedding(concept_id)
-            
+            self.timings["rag_embedding"] += time.perf_counter() - embed_start
+
+            search_start = time.perf_counter()
             # find top relevant chunks across all files in the project
             chunks = db.query(models.Chunk).join(models.File).filter(
                 models.File.project_id == project_id
             ).order_by(
                 models.Chunk.embedding.cosine_distance(query_vector)
             ).limit(5).all()
-            
+            self.timings["rag_search"] += time.perf_counter() - search_start
+
             if not chunks:
                 return "no specific course context found."
                 
