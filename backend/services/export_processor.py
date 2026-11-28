@@ -18,12 +18,14 @@ logger = logging.getLogger(__name__)
 MAX_NOTE_ATTEMPTS = 2
 LEGACY_FAILED_NOTE_PREFIX = "failed to generate note for "
 NOTE_CONCURRENCY = 16
+# bounds the upfront embedding and retrieval a round does before its notes start
+NOTE_ROUND_SIZE = 200
 # no note starts after this, so a dispatch ends well inside cloud tasks' 1800s deadline and isn't redelivered
 NOTE_TIME_BUDGET_SECONDS = 600
 # bounds a hung model request, which would otherwise hold a dispatch open past the budget
 NOTE_TIMEOUT_SECONDS = 120
 # finished notes are committed at this interval, so a crash loses at most this much work
-PROGRESS_SAVE_SECONDS = 2.0
+PROGRESS_SAVE_SECONDS = 5.0
 
 
 class EmbeddingProviderMismatch(UserFacingError):
@@ -182,14 +184,18 @@ class ExportProcessor:
 
         generation_start = time.perf_counter()
         try:
+            remaining = self._pending_query(db, self._exhausted(note_failures)).count()
+            logger.info(f"project {self.project_id} export progress: {total - remaining}/{total}")
+            self._save_progress(db, total - remaining, total, note_failures)
             while True:
-                pending = self._pending_query(db, self._exhausted(note_failures)).all()
-                if not pending:
+                if not remaining:
                     return True
                 if not self._may_start_note(deadline):
                     return False
+                pending = self._pending_query(db, self._exhausted(note_failures)).limit(NOTE_ROUND_SIZE).all()
                 # each round retries the previous round's transient failures until they run out of attempts
-                await self._generate_round(db, pending, total, valid_ids, note_failures, deadline)
+                await self._generate_round(db, pending, total - remaining, total, valid_ids, note_failures, deadline)
+                remaining = self._pending_query(db, self._exhausted(note_failures)).count()
         finally:
             self.timings["note_generation"] = time.perf_counter() - generation_start
 
@@ -201,23 +207,24 @@ class ExportProcessor:
         self,
         db: Session,
         pending: List[models.GraphNode],
+        done: int,
         total: int,
         valid_ids: set[str],
         note_failures: Dict[str, dict],
         deadline: float,
     ):
         """generates notes for pending nodes through a sliding window, recording failures in note_failures"""
-        done = total - len(pending)
-        logger.info(f"project {self.project_id} export progress: {done}/{total}, generating {len(pending)}")
-        self._save_progress(db, done, total, note_failures)
-
-        vectors = await asyncio.to_thread(self.note_service.embed_concepts, [n.concept_id for n in pending])
+        # commits expire every loaded node, and reading an expired one is a blocking query per node
+        items = [(node, node.concept_id, node.outbound_links) for node in pending]
+        contexts = await asyncio.to_thread(
+            self.note_service.prepare_contexts, str(self.project_id), [cid for _, cid, _ in items]
+        )
 
         sem = asyncio.Semaphore(NOTE_CONCURRENCY)
         rejected: List[int] = []
         last_save = time.perf_counter()
 
-        async def run(node: models.GraphNode, vector: List[float]):
+        async def run(node: models.GraphNode, concept_id: str, links: Optional[List[str]], context: str):
             nonlocal done, last_save
             async with sem:
                 if rejected or not self._may_start_note(deadline):
@@ -225,20 +232,14 @@ class ExportProcessor:
                 self._notes_started += 1
                 try:
                     note_content = await asyncio.wait_for(
-                        self.note_service.generate_note(
-                            str(self.project_id),
-                            node.concept_id,
-                            vector,
-                            valid_ids,
-                            outbound_links=node.outbound_links,
-                        ),
+                        self.note_service.generate_note(concept_id, context, valid_ids, outbound_links=links),
                         NOTE_TIMEOUT_SECONDS,
                     )
                     error = None
                 except Exception as e:
                     note_content, error = None, e
 
-            if self._record_note(node, note_content, error, note_failures):
+            if self._record_note(node, concept_id, note_content, error, note_failures):
                 done += 1
             status = _rejected_status(error)
             if status is not None:
@@ -247,7 +248,7 @@ class ExportProcessor:
                 last_save = time.perf_counter()
                 self._save_progress(db, done, total, note_failures)
 
-        await asyncio.gather(*(run(node, vector) for node, vector in zip(pending, vectors)))
+        await asyncio.gather(*(run(*item, context) for item, context in zip(items, contexts)))
 
         save_start = time.perf_counter()
         self._save_progress(db, done, total, note_failures)
@@ -262,6 +263,7 @@ class ExportProcessor:
     def _record_note(
         self,
         node: models.GraphNode,
+        concept_id: str,
         note_content: Optional[str],
         error: Optional[BaseException],
         note_failures: Dict[str, dict],
@@ -269,18 +271,18 @@ class ExportProcessor:
         """applies one note's outcome; true when the node now has a note"""
         if error is None and note_content:
             node.content = note_content
-            note_failures.pop(node.concept_id, None)
-            logger.info(f"generated note for {node.concept_id}")
+            note_failures.pop(concept_id, None)
+            logger.info(f"generated note for {concept_id}")
             return True
 
         reason = describe_error(error) if error else "empty note"
-        attempts = note_failures.get(node.concept_id, {}).get("attempts", 0) + 1
+        attempts = note_failures.get(concept_id, {}).get("attempts", 0) + 1
         # a rejected request (bad key, no credit) fails the same way on every attempt
         if error is not None and not is_transient(error):
             attempts = MAX_NOTE_ATTEMPTS
-        note_failures[node.concept_id] = {"attempts": attempts, "error": reason}
+        note_failures[concept_id] = {"attempts": attempts, "error": reason}
         logger.error(
-            f"note generation failed for {node.concept_id} "
+            f"note generation failed for {concept_id} "
             f"(attempt {attempts}/{MAX_NOTE_ATTEMPTS}): {reason}"
         )
         return False

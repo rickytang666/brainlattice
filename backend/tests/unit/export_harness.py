@@ -77,16 +77,16 @@ class FakeNotes:
         self.failures = failures
         self.delay = delay
         self.calls = {}
-        self.embedded = []
+        self.prepared = []
         self.in_flight = 0
         self.max_in_flight = 0
         self.timings = {}
 
-    def embed_concepts(self, concept_ids):
-        self.embedded.append(list(concept_ids))
-        return [[0.0] for _ in concept_ids]
+    def prepare_contexts(self, project_id, concept_ids):
+        self.prepared.append(list(concept_ids))
+        return ["context" for _ in concept_ids]
 
-    async def generate_note(self, project_id, concept_id, query_vector, valid_concept_ids, outbound_links=None):
+    async def generate_note(self, concept_id, context_chunks, valid_concept_ids, outbound_links=None):
         self.calls[concept_id] = self.calls.get(concept_id, 0) + 1
         self.in_flight += 1
         self.max_in_flight = max(self.max_in_flight, self.in_flight)
