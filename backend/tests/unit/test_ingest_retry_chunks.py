@@ -208,7 +208,7 @@ class TestRetriedIngest:
         assert result["chunks"] == len(expected_texts())
 
     def test_retry_does_not_embed_saved_chunks(self, pipeline):
-        db, _, run = pipeline
+        _, _, run = pipeline
         with pytest.raises(openai.APITimeoutError):
             run(extraction_error=openai.APITimeoutError(request=REQUEST))
         run()
