@@ -129,8 +129,8 @@ uv run uvicorn main:app --reload
 
 ```bash
 cd frontend
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 The app will be live at `http://localhost:5173`.
