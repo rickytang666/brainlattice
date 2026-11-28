@@ -25,6 +25,8 @@ NOTE_ROUND_SIZE = 200
 NOTE_TIME_BUDGET_SECONDS = 600
 # bounds a hung model request, which would otherwise hold a dispatch open past the budget
 NOTE_TIMEOUT_SECONDS = 120
+# bounds a round's embedding call and vector search; openai's client defaults alone allow 3 tries of 600s
+ROUND_PREPARE_TIMEOUT_SECONDS = 120
 # finished notes are committed at this interval, so a crash loses at most this much work
 PROGRESS_SAVE_SECONDS = 5.0
 
@@ -217,8 +219,11 @@ class ExportProcessor:
         """generates notes for pending nodes through a sliding window, recording failures in note_failures"""
         # commits expire every loaded node, and reading an expired one is a blocking query per node
         items = [(node, node.concept_id, node.outbound_links) for node in pending]
-        contexts = await asyncio.to_thread(
-            self.note_service.prepare_contexts, str(self.project_id), [cid for _, cid, _ in items]
+        contexts = await asyncio.wait_for(
+            asyncio.to_thread(
+                self.note_service.prepare_contexts, str(self.project_id), [cid for _, cid, _ in items]
+            ),
+            ROUND_PREPARE_TIMEOUT_SECONDS,
         )
 
         sem = asyncio.Semaphore(NOTE_CONCURRENCY)

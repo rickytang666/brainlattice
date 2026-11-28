@@ -1,6 +1,7 @@
 """one export dispatch generates notes until its time budget, then re-enqueues the rest,
 so no dispatch runs into cloud tasks' deadline and gets redelivered."""
 import asyncio
+import time
 
 import pytest
 
@@ -159,3 +160,17 @@ class TestRoundFailure:
 
         assert result["export_status"] == "failed"
         assert sum(processor.note_service.calls.values()) == calls_at_return < len(CONCEPTS)
+
+    def test_hung_rag_lookup_fails_the_dispatch_instead_of_holding_it_open(self, harness, monkeypatch):
+        monkeypatch.setattr(export_processor, "ROUND_PREPARE_TIMEOUT_SECONDS", 0.01)
+        processor, project, *_ = harness(["grana"], {})
+
+        def hang(project_id, concept_ids):
+            time.sleep(0.2)
+            return ["context" for _ in concept_ids]
+
+        processor.note_service.prepare_contexts = hang
+        result = asyncio.run(processor.process())
+
+        assert result == {"export_status": "failed", "error": "timed out"}
+        assert processor.note_service.calls == {}
