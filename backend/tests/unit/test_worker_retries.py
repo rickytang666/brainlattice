@@ -12,7 +12,7 @@ from tenacity import retry, stop_after_attempt
 
 from core.errors import RETRYING_MESSAGE, describe_error, is_transient
 from routers import worker
-from services import export_processor, ingestion_processor
+from services import export_processor, ingestion_processor, task_runner
 
 REQUEST = httpx.Request("POST", "https://openrouter.ai/api/v1/chat/completions")
 
@@ -111,7 +111,7 @@ def client():
 @pytest.fixture
 def jobs(monkeypatch):
     fake = FakeJobs()
-    monkeypatch.setattr(worker, "get_job_service", lambda: fake)
+    monkeypatch.setattr(task_runner, "get_job_service", lambda: fake)
     return fake
 
 

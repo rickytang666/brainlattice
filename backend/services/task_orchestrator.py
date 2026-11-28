@@ -1,7 +1,8 @@
 import os
 import uuid
+import asyncio
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Set
 
 from services.storage_service import get_storage_service
 from services.job_service import get_job_service
@@ -16,6 +17,34 @@ class ProjectNotFound(Exception):
     """the project doesn't exist or belongs to another user"""
 
 
+# strong refs: the event loop holds only weak refs to tasks, so an unreferenced one can be collected mid-run
+_local_tasks: Set[asyncio.Task] = set()
+
+
+def _ingest_payload(job_id, file_key, user_id, gemini_key, openai_key, openrouter_key) -> Dict[str, Any]:
+    return {
+        "job_id": job_id,
+        "file_key": file_key,
+        "action": "ingest",
+        "gemini_key": gemini_key,
+        "openai_key": openai_key,
+        "openrouter_key": openrouter_key,
+        "user_id": user_id,
+    }
+
+
+async def _run_local(payload: Dict[str, Any]):
+    """the in-process stand-in for the /worker route; nothing retries, so every failure is final"""
+    from core.errors import describe_error
+    from services.task_runner import record_failure, run_task
+
+    try:
+        await run_task(payload)
+    except Exception as e:
+        logger.exception(f"in-process {payload.get('action')} task failed")
+        record_failure(payload, describe_error(e))
+
+
 class TaskOrchestrator:
     """
     handles high-level api ingestion and task dispatching:
@@ -26,6 +55,22 @@ class TaskOrchestrator:
         self.storage = get_storage_service()
         self.jobs = get_job_service()
         self.queue = get_queue_service()
+
+    def _dispatch(self, payload: Dict[str, Any], background_tasks: Optional[Any] = None) -> str:
+        """publishes a worker task to the queue, or runs it in-process when no queue is configured"""
+        worker_url = settings.WORKER_PUBLIC_URL
+        if worker_url and self.queue:
+            return self.queue.publish_task(destination_url=worker_url, payload=payload)
+
+        logger.warning(f"no task queue configured, running {payload['action']} in-process")
+        if background_tasks is not None:
+            background_tasks.add_task(_run_local, payload)
+        else:
+            # a running step re-enqueuing itself has no request to attach a background task to
+            task = asyncio.get_running_loop().create_task(_run_local(payload))
+            _local_tasks.add(task)
+            task.add_done_callback(_local_tasks.discard)
+        return "local_only"
 
     async def request_ingestion(
         self, 
@@ -115,34 +160,10 @@ class TaskOrchestrator:
             metadata=metadata
         )
         
-        # publish task to worker
-        worker_url = settings.WORKER_PUBLIC_URL
-        if not worker_url or not self.queue:
-            msg_id = "local_only"
-            if background_tasks:
-                from services.ingestion_processor import IngestionProcessor
-                processor = IngestionProcessor(
-                    job_id=job_id, 
-                    file_key=s3_key,
-                    gemini_key=gemini_key,
-                    openai_key=openai_key,
-                    openrouter_key=openrouter_key,
-                    user_id=user_id
-                )
-                background_tasks.add_task(processor.process)
-        else:
-            msg_id = self.queue.publish_task(
-                destination_url=worker_url,
-                payload={
-                    "job_id": job_id, 
-                    "file_key": s3_key, 
-                    "action": "ingest",
-                    "gemini_key": gemini_key,
-                    "openai_key": openai_key,
-                    "openrouter_key": openrouter_key,
-                    "user_id": user_id
-                }
-            )
+        msg_id = self._dispatch(
+            _ingest_payload(job_id, s3_key, user_id, gemini_key, openai_key, openrouter_key),
+            background_tasks,
+        )
         
         return {
             "status": "queued",
@@ -215,39 +236,10 @@ class TaskOrchestrator:
                 metadata=metadata
             )
             
-            # publish task to worker
-            worker_url = settings.WORKER_PUBLIC_URL
-            if not worker_url or not self.queue:
-                if not worker_url:
-                    logger.warning("worker_public_url not set, running locally via background task")
-                else:
-                    logger.warning("queue service not configured, running locally via background task")
-                    
-                msg_id = "local_only"
-                if background_tasks:
-                    from services.ingestion_processor import IngestionProcessor
-                    processor = IngestionProcessor(
-                        job_id=job_id, 
-                        file_key=s3_key,
-                        gemini_key=gemini_key,
-                        openai_key=openai_key,
-                        openrouter_key=openrouter_key,
-                        user_id=user_id
-                    )
-                    background_tasks.add_task(processor.process)
-            else:
-                msg_id = self.queue.publish_task(
-                    destination_url=worker_url,
-                    payload={
-                        "job_id": job_id, 
-                        "file_key": s3_key, 
-                        "action": "ingest",
-                        "gemini_key": gemini_key,
-                        "openai_key": openai_key,
-                        "openrouter_key": openrouter_key,
-                        "user_id": user_id
-                    }
-                )
+            msg_id = self._dispatch(
+                _ingest_payload(job_id, s3_key, user_id, gemini_key, openai_key, openrouter_key),
+                background_tasks,
+            )
             
             return {
                 "status": "queued",
@@ -302,39 +294,12 @@ class TaskOrchestrator:
             # reset job status
             self.jobs.update_progress(job_id, "pending", 0)
             
-            # re-publish to worker
-            worker_url = settings.WORKER_PUBLIC_URL
-            if not worker_url or not self.queue:
-                if not worker_url:
-                    logger.warning("worker_public_url not set, running locally instead")
-                else:
-                    logger.warning("queue service not configured, running locally instead")
-                    
-                msg_id = "local_only"
-                if background_tasks:
-                    from services.ingestion_processor import IngestionProcessor
-                    processor = IngestionProcessor(
-                        job_id=job_id,
-                        file_key=s3_key,
-                        gemini_key=gemini_key,
-                        openai_key=openai_key,
-                        openrouter_key=openrouter_key,
-                        user_id=metadata.get("user_id"),
-                    )
-                    background_tasks.add_task(processor.process)
-            else:
-                msg_id = self.queue.publish_task(
-                    destination_url=worker_url,
-                    payload={
-                        "job_id": job_id, 
-                        "file_key": s3_key, 
-                        "action": "ingest",
-                        "gemini_key": gemini_key,
-                        "openai_key": openai_key,
-                        "openrouter_key": openrouter_key,
-                        "user_id": metadata.get("user_id")
-                    }
-                )
+            msg_id = self._dispatch(
+                _ingest_payload(
+                    job_id, s3_key, metadata.get("user_id"), gemini_key, openai_key, openrouter_key
+                ),
+                background_tasks,
+            )
             
             return {
                 "status": "re-queued",
@@ -360,7 +325,6 @@ class TaskOrchestrator:
         triggers the vault export process by publishing a prepare_export task
         """
         try:
-            worker_url = settings.WORKER_PUBLIC_URL
             payload = {
                 "action": "prepare_export",
                 "project_id": project_id,
@@ -369,25 +333,7 @@ class TaskOrchestrator:
                 "openai_key": openai_key,
                 "openrouter_key": openrouter_key
             }
-
-            if not worker_url or not self.queue:
-                msg_id = "local_only"
-                if background_tasks:
-                    from services.export_processor import ExportProcessor
-                    processor = ExportProcessor(
-                        project_id=project_id,
-                        user_id=user_id,
-                        gemini_key=gemini_key,
-                        openai_key=openai_key,
-                        openrouter_key=openrouter_key,
-                    )
-                    background_tasks.add_task(processor.process)
-                    logger.info(f"[local] export triggered for project {project_id}")
-            else:
-                msg_id = self.queue.publish_task(
-                    destination_url=worker_url,
-                    payload=payload
-                )
+            msg_id = self._dispatch(payload, background_tasks)
             
             return msg_id
             
