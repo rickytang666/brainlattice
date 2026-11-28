@@ -129,3 +129,33 @@ class TestConcurrency:
 
         # dispatch start, one per note, round end, then assembly
         assert db.commits >= 5 + 2
+
+
+class TestRoundFailure:
+    def test_failed_save_stops_the_rest_of_the_round(self, harness, monkeypatch):
+        monkeypatch.setattr(export_processor, "PROGRESS_SAVE_SECONDS", 0)
+        processor, *_ = harness(CONCEPTS, {}, delay=0.01)
+        db = export_processor.SessionLocal()
+        commit = db.commit
+        failed = []
+
+        def fail_mid_round():
+            # the dispatch-start save succeeds, the first in-round save drops the connection
+            if db.commits == 1 and not failed:
+                failed.append(1)
+                raise ConnectionError("db connection dropped")
+            commit()
+
+        db.commit = fail_mid_round
+
+        async def dispatch_then_idle():
+            result = await processor.process()
+            calls_at_return = sum(processor.note_service.calls.values())
+            # the worker process outlives the request, so orphaned notes would keep running here
+            await asyncio.sleep(0.2)
+            return result, calls_at_return
+
+        result, calls_at_return = asyncio.run(dispatch_then_idle())
+
+        assert result["export_status"] == "failed"
+        assert sum(processor.note_service.calls.values()) == calls_at_return < len(CONCEPTS)

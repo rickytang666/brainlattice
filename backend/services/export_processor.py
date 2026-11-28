@@ -249,7 +249,15 @@ class ExportProcessor:
                 last_save = time.perf_counter()
                 self._save_progress(db, done, total, note_failures)
 
-        await asyncio.gather(*(run(*item, context) for item, context in zip(items, contexts)))
+        tasks = [asyncio.create_task(run(*item, context)) for item, context in zip(items, contexts)]
+        try:
+            await asyncio.gather(*tasks)
+        except BaseException:
+            # gather leaves siblings running, and they would keep generating notes after this dispatch fails
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise
 
         save_start = time.perf_counter()
         self._save_progress(db, done, total, note_failures)
