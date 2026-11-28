@@ -242,6 +242,7 @@ export default function LandingPage() {
       }
       try {
         const npmRes = await fetch("https://api.npmjs.org/downloads/point/last-year/brainlattice");
+        if (!npmRes.ok) return;
         const npmData = await npmRes.json();
         const count = npmData?.downloads;
         if (typeof count === "number") setTotalDownloads(count);
