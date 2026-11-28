@@ -27,6 +27,8 @@ export default function LandingPage() {
   const navigate = useNavigate();
 
   const [projects, setProjects] = useState<Project[]>([]);
+  // lets the poll interval read the latest projects without a side-effecting state updater
+  const projectsRef = useRef<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -51,6 +53,7 @@ export default function LandingPage() {
     }
 
     let index = 0;
+    let badgeTimeoutId: ReturnType<typeof setTimeout> | undefined;
     setHeroText(""); // reset on mount
     setIsTypingComplete(false);
     const intervalId = setInterval(() => {
@@ -59,11 +62,14 @@ export default function LandingPage() {
       if (index === fullText.length) {
         clearInterval(intervalId);
         sessionStorage.setItem("heroTyped", "true");
-        setTimeout(() => setIsTypingComplete(true), 300); // slight pause before dropping the badge
+        badgeTimeoutId = setTimeout(() => setIsTypingComplete(true), 300); // slight pause before dropping the badge
       }
     }, 35); // typing speed
 
-    return () => clearInterval(intervalId);
+    return () => {
+      clearInterval(intervalId);
+      clearTimeout(badgeTimeoutId);
+    };
   }, [isFirstLoad, fullText]);
 
   // cmd+k shortcut listener
@@ -96,16 +102,17 @@ export default function LandingPage() {
     if (!isLoaded) return;
     fetchProjects();
     const interval = setInterval(() => {
-      setProjects((prev) => {
-        // also fetch if actively uploading, in case backend hasn't saved project yet
-        if (uploading || prev.some((p) => p.status === "processing")) {
-          fetchProjects();
-        }
-        return prev;
-      });
+      // also fetch if actively uploading, in case backend hasn't saved project yet
+      if (uploading || projectsRef.current.some((p) => p.status === "processing")) {
+        fetchProjects();
+      }
     }, 2000);
     return () => clearInterval(interval);
   }, [fetchProjects, isLoaded, uploading]);
+
+  useEffect(() => {
+    projectsRef.current = projects;
+  }, [projects]);
 
   const selectProject = (id: string) => {
     navigate(`/${id}`);

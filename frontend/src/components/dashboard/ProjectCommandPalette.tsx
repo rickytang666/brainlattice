@@ -41,12 +41,12 @@ export function ProjectCommandPalette({
 
   // focus input and clear search when open
   useEffect(() => {
-    if (open) {
-      setTimeout(() => {
-        setSearchValue("");
-        inputRef.current?.focus();
-      }, 50);
-    }
+    if (!open) return;
+    const timeoutId = setTimeout(() => {
+      setSearchValue("");
+      inputRef.current?.focus();
+    }, 50);
+    return () => clearTimeout(timeoutId);
   }, [open]);
 
   // toggle state of the menu
