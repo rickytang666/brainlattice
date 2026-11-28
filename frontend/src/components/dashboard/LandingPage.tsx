@@ -53,7 +53,6 @@ export default function LandingPage() {
     }
 
     let index = 0;
-    let badgeTimeoutId: ReturnType<typeof setTimeout> | undefined;
     setHeroText(""); // reset on mount
     setIsTypingComplete(false);
     const intervalId = setInterval(() => {
@@ -62,15 +61,17 @@ export default function LandingPage() {
       if (index === fullText.length) {
         clearInterval(intervalId);
         sessionStorage.setItem("heroTyped", "true");
-        badgeTimeoutId = setTimeout(() => setIsTypingComplete(true), 300); // slight pause before dropping the badge
       }
     }, 35); // typing speed
 
-    return () => {
-      clearInterval(intervalId);
-      clearTimeout(badgeTimeoutId);
-    };
+    return () => clearInterval(intervalId);
   }, [isFirstLoad, fullText]);
+
+  useEffect(() => {
+    if (!isFirstLoad || heroText !== fullText) return;
+    const timeoutId = setTimeout(() => setIsTypingComplete(true), 300); // slight pause before dropping the badge
+    return () => clearTimeout(timeoutId);
+  }, [isFirstLoad, heroText, fullText]);
 
   // cmd+k shortcut listener
   useEffect(() => {
