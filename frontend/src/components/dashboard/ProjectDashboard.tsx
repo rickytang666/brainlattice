@@ -120,7 +120,7 @@ export default function ProjectDashboard() {
         const { download_url } = await res.json();
         // if local dev, prefix with api_base
         const fullUrl = download_url.startsWith("http") ? download_url : `${API_BASE}${download_url}`;
-        window.open(fullUrl, "_blank");
+        window.open(fullUrl, "_blank", "noopener");
       }
     } catch (err) {
       console.error(err);
@@ -291,6 +291,7 @@ export default function ProjectDashboard() {
             </div>
             <button 
               onClick={() => setError(null)}
+              aria-label="Dismiss error"
               className="p-1 text-red-400/50 hover:text-red-200 hover:bg-red-500/20 rounded transition-colors"
             >
               <IconX className="w-4 h-4" />
@@ -328,6 +329,7 @@ export default function ProjectDashboard() {
                       type="text"
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
+                      aria-label="Project title"
                       className="w-32 bg-muted border border-border rounded px-2 py-0.5 text-xs text-foreground outline-none focus:border-foreground font-sans normal-case"
                       autoFocus
                       onKeyDown={(e) => {
@@ -337,12 +339,14 @@ export default function ProjectDashboard() {
                     />
                     <button
                       onClick={handleRename}
+                      aria-label="Save title"
                       className="text-foreground hover:text-muted-foreground"
                     >
                       <IconCheck className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => setEditingTitle(false)}
+                      aria-label="Cancel rename"
                       className="text-muted-foreground hover:text-destructive"
                     >
                       <IconX className="w-3.5 h-3.5" />
@@ -358,6 +362,7 @@ export default function ProjectDashboard() {
                         setNewTitle(currentProject?.title || "");
                         setEditingTitle(true);
                       }}
+                      aria-label="Rename project"
                       className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
                     >
                       <IconPencil className="w-3 h-3" />

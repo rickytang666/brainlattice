@@ -21,14 +21,14 @@ export default function ConfigModal({ isOpen, onClose, onConfigSaved }: ConfigMo
   const [showOpenAI, setShowOpenAI] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      // defer state update to avoid synchronous cascading renders during mount
-      setTimeout(() => {
-        setApiKey(localStorage.getItem(GEMINI_KEY_STORAGE) || "");
-        setOpenAIKey(localStorage.getItem(OPENAI_KEY_STORAGE) || "");
-        setOpenRouterKey(localStorage.getItem(OPENROUTER_KEY_STORAGE) || "");
-      }, 0);
-    }
+    if (!isOpen) return;
+    // defer state update to avoid synchronous cascading renders during mount
+    const timeoutId = setTimeout(() => {
+      setApiKey(localStorage.getItem(GEMINI_KEY_STORAGE) || "");
+      setOpenAIKey(localStorage.getItem(OPENAI_KEY_STORAGE) || "");
+      setOpenRouterKey(localStorage.getItem(OPENROUTER_KEY_STORAGE) || "");
+    }, 0);
+    return () => clearTimeout(timeoutId);
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -51,6 +51,7 @@ export default function ConfigModal({ isOpen, onClose, onConfigSaved }: ConfigMo
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="p-1 text-muted-foreground hover:text-destructive transition-colors rounded"
           >
             <X className="w-4 h-4" />

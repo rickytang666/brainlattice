@@ -27,6 +27,8 @@ export default function LandingPage() {
   const navigate = useNavigate();
 
   const [projects, setProjects] = useState<Project[]>([]);
+  // lets the poll interval read the latest projects without a side-effecting state updater
+  const projectsRef = useRef<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -59,12 +61,17 @@ export default function LandingPage() {
       if (index === fullText.length) {
         clearInterval(intervalId);
         sessionStorage.setItem("heroTyped", "true");
-        setTimeout(() => setIsTypingComplete(true), 300); // slight pause before dropping the badge
       }
     }, 35); // typing speed
 
     return () => clearInterval(intervalId);
   }, [isFirstLoad, fullText]);
+
+  useEffect(() => {
+    if (!isFirstLoad || heroText !== fullText) return;
+    const timeoutId = setTimeout(() => setIsTypingComplete(true), 300); // slight pause before dropping the badge
+    return () => clearTimeout(timeoutId);
+  }, [isFirstLoad, heroText, fullText]);
 
   // cmd+k shortcut listener
   useEffect(() => {
@@ -96,16 +103,17 @@ export default function LandingPage() {
     if (!isLoaded) return;
     fetchProjects();
     const interval = setInterval(() => {
-      setProjects((prev) => {
-        // also fetch if actively uploading, in case backend hasn't saved project yet
-        if (uploading || prev.some((p) => p.status === "processing")) {
-          fetchProjects();
-        }
-        return prev;
-      });
+      // also fetch if actively uploading, in case backend hasn't saved project yet
+      if (uploading || projectsRef.current.some((p) => p.status === "processing")) {
+        fetchProjects();
+      }
     }, 2000);
     return () => clearInterval(interval);
   }, [fetchProjects, isLoaded, uploading]);
+
+  useEffect(() => {
+    projectsRef.current = projects;
+  }, [projects]);
 
   const selectProject = (id: string) => {
     navigate(`/${id}`);
@@ -234,6 +242,7 @@ export default function LandingPage() {
       }
       try {
         const npmRes = await fetch("https://api.npmjs.org/downloads/point/last-year/brainlattice");
+        if (!npmRes.ok) return;
         const npmData = await npmRes.json();
         const count = npmData?.downloads;
         if (typeof count === "number") setTotalDownloads(count);
@@ -458,6 +467,7 @@ export default function LandingPage() {
             </span>
             <button
               onClick={fetchProjects}
+              aria-label="Refresh projects"
               className="p-1 text-muted-foreground/40 hover:text-foreground transition-colors"
             >
               <IconRefresh className="w-3 h-3" />

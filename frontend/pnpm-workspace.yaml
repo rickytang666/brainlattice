@@ -1,0 +1,6 @@
+allowBuilds:
+  '@clerk/shared': false
+  esbuild: true
+overrides:
+  minimatch: ^10.2.1
+  '@tabler/icons': 3.37.1
