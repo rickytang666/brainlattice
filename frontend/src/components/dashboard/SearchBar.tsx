@@ -102,6 +102,7 @@ export default function SearchBar({ data, onSelectNode }: SearchBarProps) {
               setQuery("");
               setIsOpen(false);
             }}
+            aria-label="Clear search"
             className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
           >
             <IconX className="h-4 w-4" />

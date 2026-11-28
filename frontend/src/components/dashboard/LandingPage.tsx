@@ -466,6 +466,7 @@ export default function LandingPage() {
             </span>
             <button
               onClick={fetchProjects}
+              aria-label="Refresh projects"
               className="p-1 text-muted-foreground/40 hover:text-foreground transition-colors"
             >
               <IconRefresh className="w-3 h-3" />

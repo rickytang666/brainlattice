@@ -51,6 +51,7 @@ export default function ConfigModal({ isOpen, onClose, onConfigSaved }: ConfigMo
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="p-1 text-muted-foreground hover:text-destructive transition-colors rounded"
           >
             <X className="w-4 h-4" />
